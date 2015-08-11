@@ -1,0 +1,61 @@
+{
+  "exports": ["*"],
+  "src": ["src/**/*.js"],
+  "ignoreRequires": "^ol\\.",
+  "compile": {
+    "externs": [
+      "ol3/build/ol-externs.js",
+      "ol3/externs/esrijson.js",
+      "externs/olgmx.js"
+    ],
+    "define": [
+      "goog.DEBUG=true"
+    ],
+    "js": [
+    ],
+    "jscomp_error": [
+      "accessControls",
+      "ambiguousFunctionDecl",
+      "checkDebuggerStatement",
+      "checkEventfulObjectDisposal",
+      "checkProvides",
+      "checkRegExp",
+      "checkStructDictInheritance",
+      "checkVars",
+      "checkTypes",
+      "const",
+      "constantProperty",
+      "deprecated",
+      "duplicate",
+      "duplicateMessage",
+      "es3",
+      "externsValidation",
+      "fileoverviewTags",
+      "globalThis",
+      "internetExplorerChecks",
+      "invalidCasts",
+      "misplacedTypeAnnotation",
+      "missingProperties",
+      "nonStandardJsDocs",
+      "strictModuleDepCheck",
+      "suspiciousCode",
+      "typeInvalidation",
+      "tweakValidation",
+      "undefinedNames",
+      "undefinedVars",
+      "unknownDefines",
+      "uselessCode",
+      "violatedModuleDep",
+      "visibility"
+    ],
+    "extra_annotation_name": [
+      "api", "observable"
+    ],
+    "compilation_level": "ADVANCED_OPTIMIZATIONS",
+    "warning_level": "VERBOSE",
+    "output_wrapper": "(function(){%output%})();",
+    "use_types_for_optimization": true,
+    "create_source_map": "dist/ol3gm.js.map",
+    "source_map_format": "V3"
+  }
+}
