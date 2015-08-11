@@ -13,8 +13,15 @@ olgm.OLGoogleMaps = function(options) {
    * @type {!ol.Map}
    * @private
    */
-  this.map_ = options.map;
+  this.ol3map_ = options.ol3map;
 
-  console.log(this.map_);
+  /**
+   * @type {!google.maps.Map}
+   * @private
+   */
+  this.gmap_ = options.gmap;
+
+  console.log(this.ol3map_);
+  console.log(this.gmap_);
 
 };
