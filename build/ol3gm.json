@@ -6,7 +6,8 @@
     "externs": [
       "ol3/build/ol-externs.js",
       "ol3/externs/esrijson.js",
-      "externs/olgmx.js"
+      "externs/olgmx.js",
+      "externs/google_maps_api_v3_21.js"
     ],
     "define": [
       "goog.DEBUG=true"
