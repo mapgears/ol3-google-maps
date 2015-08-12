@@ -2,17 +2,35 @@ goog.provide('olgm.OLGoogleMaps');
 
 goog.require('goog.style');
 goog.require('olgm.Abstract');
+goog.require('olgm.FeatureHerald');
+goog.require('olgm.ViewHerald');
 
 
 
 /**
+ * The main component of this library. It binds an OpenLayers map to a
+ * GoogleMaps map and vice-versa.  It is responsible of creating the
+ * sub-components that directly interact with both of the
+ *
  * @param {!olgmx.OLGoogleMapsOptions} options Options.
  * @constructor
  * @extends {olgm.Abstract}
  * @api
  */
 olgm.OLGoogleMaps = function(options) {
+
+  /**
+   * @type {Array.<olgm.Herald>}
+   * @private
+   */
+  this.heralds_ = [];
+
   goog.base(this, options.ol3map, options.gmap);
+
+  // create the heralds
+  this.heralds_.push(new olgm.FeatureHerald(this.ol3map, this.gmap));
+  this.heralds_.push(new olgm.ViewHerald(this.ol3map, this.gmap));
+
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
 
@@ -32,26 +50,17 @@ olgm.OLGoogleMaps.prototype.gmapIsActive_ = null;
  * @api
  */
 olgm.OLGoogleMaps.prototype.activateGoogleMaps = function() {
+  if (this.gmapIsActive_ === null) {
+    this.activate_();
+  }
+
   if (this.gmapIsActive_ === true) {
     return;
   }
 
   this.deactivateOpenLayers_();
-
   this.toggleGoogleMapsContainer_(true);
-
-  var view = this.ol3map.getView();
-  var zoom = view.getZoom();
-  goog.asserts.assertNumber(zoom);
-  var projection = view.getProjection();
-  var center = view.getCenter();
-  goog.asserts.assertArray(center);
-  var centerLonLat = ol.proj.transform(center, projection, 'EPSG:4326');
-  goog.asserts.assertArray(centerLonLat);
-  var latLng = new google.maps.LatLng(centerLonLat[1], centerLonLat[0]);
-  this.gmap.setZoom(zoom);
-  this.gmap.setCenter(latLng);
-
+  this.switchMap_(olgm.MapType.GOOGLE_MAPS);
   this.gmapIsActive_ = true;
 };
 
@@ -65,21 +74,20 @@ olgm.OLGoogleMaps.prototype.activateOpenLayers = function() {
   }
 
   this.deactivateGoogleMaps_();
-
   this.toggleOpenLayersContainer_(true);
-
-  var view = this.ol3map.getView();
-  var projection = view.getProjection();
-  var latLng = this.gmap.getCenter();
-  var center = ol.proj.transform(
-      [latLng.lng(), latLng.lat()], 'EPSG:4326', projection);
-  goog.asserts.assertArray(center);
-  var zoom = this.gmap.getZoom();
-
-  view.setCenter(center);
-  view.setZoom(zoom);
-
+  this.switchMap_(olgm.MapType.OPENLAYERS);
   this.gmapIsActive_ = false;
+};
+
+
+/**
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.deactivate = function() {
+  this.deactivate_();
+  this.gmapIsActive_ = null;
+  this.toggleGoogleMapsContainer_(true);
+  this.toggleOpenLayersContainer_(true);
 };
 
 
@@ -98,6 +106,26 @@ olgm.OLGoogleMaps.prototype.toggle = function() {
 /**
  * @private
  */
+olgm.OLGoogleMaps.prototype.activate_ = function() {
+  for (var i = 0, len = this.heralds_.length; i < len; i++) {
+    this.heralds_[i].activate();
+  }
+};
+
+
+/**
+ * @private
+ */
+olgm.OLGoogleMaps.prototype.deactivate_ = function() {
+  for (var i = 0, len = this.heralds_.length; i < len; i++) {
+    this.heralds_[i].deactivate();
+  }
+};
+
+
+/**
+ * @private
+ */
 olgm.OLGoogleMaps.prototype.deactivateGoogleMaps_ = function() {
   this.toggleGoogleMapsContainer_(false);
 };
@@ -108,6 +136,17 @@ olgm.OLGoogleMaps.prototype.deactivateGoogleMaps_ = function() {
  */
 olgm.OLGoogleMaps.prototype.deactivateOpenLayers_ = function() {
   this.toggleOpenLayersContainer_(false);
+};
+
+
+/**
+ * @param {string} mapType
+ * @private
+ */
+olgm.OLGoogleMaps.prototype.switchMap_ = function(mapType) {
+  for (var i = 0, len = this.heralds_.length; i < len; i++) {
+    this.heralds_[i].switchMap(mapType);
+  }
 };
 
 

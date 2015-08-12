@@ -1,6 +1,15 @@
 goog.provide('olgm.Abstract');
 
 
+/**
+ * @enum {string}
+ */
+olgm.MapType = {
+  GOOGLE_MAPS: 'googlemaps',
+  OPENLAYERS: 'ol3map'
+};
+
+
 
 /**
  * Abstract class for most classes of this library, which receives a reference
