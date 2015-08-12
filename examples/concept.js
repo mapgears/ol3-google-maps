@@ -29,3 +29,8 @@ var olgm = new olgm.OLGoogleMaps({
 });
 
 
+olgm.toggle();
+
+document.getElementById('map-type').onchange = function() {
+  olgm.toggle();
+};

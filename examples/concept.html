@@ -10,10 +10,18 @@
   <body>
     <div id="ol3map" style="width:600px;height:400px;float:left;"></div>
     <div id="gmap" style="width:600px;height:400px;float:left;position:relative;"></div>
+    <div style="clear:left;"></div>
+    <br />
+    <select id="map-type">
+      <option value="gmap">Google Maps</option>
+      <option value="ol3map">OpenLayers</option>
+    </select>
+    <input type="button" value="Add a point"></input>
     <script src="../ol3/build/ol.js"></script>
     <script type="text/javascript"
             src="https://maps.googleapis.com/maps/api/js?v=3.21&key=AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ"></script>
     <script src="/@loader"></script>
+    <!--script src="../dist/ol3gm.js"></script-->
     <script src="concept.js"></script>
   </body>
 </html>
