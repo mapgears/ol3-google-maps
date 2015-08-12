@@ -15,13 +15,9 @@ var ol3map = new ol.Map({
   })
 });
 
-var gmap = new google.maps.Map(document.getElementById('gmap'), {
-  center: {
-    lat: lat,
-    lng: lng
-  },
-  zoom: zoom
-});
+// The GoogleMaps map doesn't get any initial center nor zoom.  It will
+// get them from the OL3 map upon activation.
+var gmap = new google.maps.Map(document.getElementById('gmap'));
 
 var olgm = new olgm.OLGoogleMaps({
   ol3map: ol3map,
