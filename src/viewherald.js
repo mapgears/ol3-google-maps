@@ -1,5 +1,7 @@
 goog.provide('olgm.ViewHerald');
 
+goog.require('goog.asserts');
+//goog.require('ol.proj');
 goog.require('olgm.Herald');
 
 

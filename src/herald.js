@@ -1,6 +1,7 @@
 // FIXME - deactivate doesn't work with ol.js, but works with ol-debug.js
 goog.provide('olgm.Herald');
 
+goog.require('goog.array');
 goog.require('goog.events');
 goog.require('olgm.Abstract');
 

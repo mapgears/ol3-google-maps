@@ -1,5 +1,7 @@
 goog.provide('olgm.OLGoogleMaps');
 
+goog.require('goog.asserts');
+goog.require('goog.dom');
 goog.require('goog.style');
 goog.require('olgm.Abstract');
 goog.require('olgm.FeatureHerald');
