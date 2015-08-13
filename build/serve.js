@@ -26,7 +26,7 @@ var options = nomnom.options({
 /** @type {string} */
 log.level = options.loglevel;
 
-log.info('ol3-cesium', 'Parsing dependencies ...');
+log.info('ol3-google-maps', 'Parsing dependencies ...');
 var manager = new closure.Manager({
   closure: true, // use the bundled Closure Library
   lib: [
@@ -35,7 +35,7 @@ var manager = new closure.Manager({
   ignoreRequires: '^ol\\.'
 });
 manager.on('error', function(e) {
-  log.error('ol3-cesium', e.message);
+  log.error('ol3-google-maps', e.message);
 });
 manager.on('ready', function() {
   var server = new closure.Server({
@@ -43,11 +43,11 @@ manager.on('ready', function() {
     loader: '/@loader'
   });
   server.listen(options.port, function() {
-    log.info('ol3-cesium', 'Listening on http://localhost:' +
+    log.info('ol3-google-maps', 'Listening on http://localhost:' +
         options.port + '/ (Ctrl+C to stop)');
   });
   server.on('error', function(err) {
-    log.error('ol3-cesium', 'Server failed to start: ' + err.message);
+    log.error('ol3-google-maps', 'Server failed to start: ' + err.message);
     process.exit(1);
   });
 });

@@ -9,12 +9,10 @@ JSDoc annotations are used for metadata used by the compiler, for defining the u
 In the simplest case, a JSDoc block can look like this:
 ```js
 /**
- * Enables/disables the Cesium.
- * This modifies the visibility style of the container element.
- * @param {boolean=} opt_enable
+ * Activate OpenLayers map
  * @api
  */
-olcs.OLCesium.prototype.setEnabled = function(opt_enable) {
+olgm.OLGoogleMaps.prototype.activateOpenLayers = function() {
   // ...
 };
 ```
