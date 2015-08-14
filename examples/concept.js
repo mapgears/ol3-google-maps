@@ -21,6 +21,12 @@ var ol3map = new ol.Map({
 // get them from the OL3 map upon activation.
 var gmap = new google.maps.Map(document.getElementById('gmap'));
 
+// FIXME - style override, this should be managed internally
+gmap.data.setStyle({
+  icon: 'resources/evouala.png'
+});
+
+
 var olgmMain = new olgm.OLGoogleMaps({
   ol3map: ol3map,
   gmap: gmap
