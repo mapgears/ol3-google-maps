@@ -2,8 +2,8 @@ goog.provide('olgm.OLGoogleMaps');
 
 goog.require('goog.asserts');
 goog.require('olgm.Abstract');
-goog.require('olgm.LayersHerald');
-goog.require('olgm.ViewHerald');
+goog.require('olgm.herald.Layers');
+goog.require('olgm.herald.View');
 
 
 
@@ -20,7 +20,7 @@ goog.require('olgm.ViewHerald');
 olgm.OLGoogleMaps = function(options) {
 
   /**
-   * @type {Array.<olgm.Herald>}
+   * @type {Array.<olgm.herald.Herald>}
    * @private
    */
   this.heralds_ = [];
@@ -30,9 +30,9 @@ olgm.OLGoogleMaps = function(options) {
   goog.base(this, options.ol3map, gmap);
 
   // create the heralds
-  this.heralds_.push(new olgm.LayersHerald(this.ol3map, this.gmap));
+  this.heralds_.push(new olgm.herald.Layers(this.ol3map, this.gmap));
 
-  //this.heralds_.push(new olgm.ViewHerald(this.ol3map, this.gmap));
+  //this.heralds_.push(new olgm.herald.View(this.ol3map, this.gmap));
 
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);

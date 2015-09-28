@@ -1,5 +1,5 @@
 // FIXME - deactivate doesn't work with ol.js, but works with ol-debug.js
-goog.provide('olgm.Herald');
+goog.provide('olgm.herald.Herald');
 
 goog.require('goog.array');
 goog.require('goog.events');
@@ -26,7 +26,7 @@ goog.require('olgm.Abstract');
  * @extends {olgm.Abstract}
  * @api
  */
-olgm.Herald = function(ol3map, gmap) {
+olgm.herald.Herald = function(ol3map, gmap) {
 
   /**
    * @type {Array.<goog.events.Key>}
@@ -36,21 +36,21 @@ olgm.Herald = function(ol3map, gmap) {
 
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.Herald, olgm.Abstract);
+goog.inherits(olgm.herald.Herald, olgm.Abstract);
 
 
 /**
  * Register all event listeners.
  * @api
  */
-olgm.Herald.prototype.activate = function() {};
+olgm.herald.Herald.prototype.activate = function() {};
 
 
 /**
  * Unregister all event listeners.
  * @api
  */
-olgm.Herald.prototype.deactivate = function() {
+olgm.herald.Herald.prototype.deactivate = function() {
   goog.array.forEach(this.listenerKeys, goog.events.unlistenByKey);
   this.listenerKeys.length = 0;
 };
@@ -61,4 +61,4 @@ olgm.Herald.prototype.deactivate = function() {
  * @param {string} mapType
  * @api
  */
-olgm.Herald.prototype.switchMap = function(mapType) {};
+olgm.herald.Herald.prototype.switchMap = function(mapType) {};

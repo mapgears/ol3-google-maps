@@ -1,8 +1,8 @@
-goog.provide('olgm.ViewHerald');
+goog.provide('olgm.herald.View');
 
 goog.require('goog.asserts');
 //goog.require('ol.proj');
-goog.require('olgm.Herald');
+goog.require('olgm.herald.Herald');
 
 
 
@@ -15,19 +15,19 @@ goog.require('olgm.Herald');
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
  * @constructor
- * @extends {olgm.Herald}
+ * @extends {olgm.herald.Herald}
  * @api
  */
-olgm.ViewHerald = function(ol3map, gmap) {
+olgm.herald.View = function(ol3map, gmap) {
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.ViewHerald, olgm.Herald);
+goog.inherits(olgm.herald.View, olgm.herald.Herald);
 
 
 /**
  * @inheritDoc
  */
-olgm.ViewHerald.prototype.switchMap = function(mapType) {
+olgm.herald.View.prototype.switchMap = function(mapType) {
 
   goog.base(this, 'switchMap', mapType);
 

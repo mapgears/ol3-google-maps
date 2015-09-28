@@ -1,9 +1,9 @@
-goog.provide('olgm.LayersHerald');
+goog.provide('olgm.herald.Layers');
 
 goog.require('goog.asserts');
 //goog.require('ol.layer.Base');
 //goog.require('ol.layer.Vector');
-goog.require('olgm.Herald');
+goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.VectorSource');
 
 
@@ -26,13 +26,13 @@ goog.require('olgm.herald.VectorSource');
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
  * @constructor
- * @extends {olgm.Herald}
+ * @extends {olgm.herald.Herald}
  * @api
  */
-olgm.LayersHerald = function(ol3map, gmap) {
+olgm.herald.Layers = function(ol3map, gmap) {
 
   /**
-   * @type {Array.<olgm.LayersHerald.VectorLayerCache>}
+   * @type {Array.<olgm.herald.Layers.VectorLayerCache>}
    * @private
    */
   this.vectorCache_ = [];
@@ -45,13 +45,13 @@ olgm.LayersHerald = function(ol3map, gmap) {
 
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.LayersHerald, olgm.Herald);
+goog.inherits(olgm.herald.Layers, olgm.herald.Herald);
 
 
 /**
  * @inheritDoc
  */
-olgm.LayersHerald.prototype.activate = function() {
+olgm.herald.Layers.prototype.activate = function() {
   goog.base(this, 'activate');
 
   // watch existing layers
@@ -72,7 +72,7 @@ olgm.LayersHerald.prototype.activate = function() {
  * @param {ol.CollectionEvent} event Collection event.
  * @private
  */
-olgm.LayersHerald.prototype.handleLayersAdd_ = function(event) {
+olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
   var layer = event.element;
   goog.asserts.assertInstanceof(layer, ol.layer.Base);
   this.watchLayer_(layer);
@@ -84,7 +84,7 @@ olgm.LayersHerald.prototype.handleLayersAdd_ = function(event) {
  * @param {ol.CollectionEvent} event Collection event.
  * @private
  */
-olgm.LayersHerald.prototype.handleLayersRemove_ = function(event) {
+olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
   var layer = event.element;
   goog.asserts.assertInstanceof(layer, ol.layer.Base);
   this.unwatchLayer_(layer);
@@ -96,7 +96,7 @@ olgm.LayersHerald.prototype.handleLayersRemove_ = function(event) {
  * @param {ol.layer.Base} layer
  * @private
  */
-olgm.LayersHerald.prototype.watchLayer_ = function(layer) {
+olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
   // vector layer
   if (layer instanceof ol.layer.Vector) {
     this.vectorLayers_.push(layer);
@@ -129,7 +129,7 @@ olgm.LayersHerald.prototype.watchLayer_ = function(layer) {
  * @param {ol.layer.Base} layer
  * @private
  */
-olgm.LayersHerald.prototype.unwatchLayer_ = function(layer) {
+olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   // vector layer
   if (layer instanceof ol.layer.Vector) {
     var index = this.vectorLayers_.indexOf(layer);
@@ -157,4 +157,4 @@ olgm.LayersHerald.prototype.unwatchLayer_ = function(layer) {
  *   opacity: (number)
  * }}
  */
-olgm.LayersHerald.VectorLayerCache;
+olgm.herald.Layers.VectorLayerCache;

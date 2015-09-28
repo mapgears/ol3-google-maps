@@ -3,7 +3,7 @@ goog.provide('olgm.herald.VectorSource');
 goog.require('goog.asserts');
 //goog.require('ol.Feature');
 goog.require('olgm.FeatureFactory');
-goog.require('olgm.Herald');
+goog.require('olgm.herald.Herald');
 
 
 
@@ -19,7 +19,7 @@ goog.require('olgm.Herald');
  * @param {!google.maps.Map} gmap
  * @param {!ol.source.Vector} source
  * @constructor
- * @extends {olgm.Herald}
+ * @extends {olgm.herald.Herald}
  * @api
  */
 olgm.herald.VectorSource = function(ol3map, gmap, source) {
@@ -38,7 +38,7 @@ olgm.herald.VectorSource = function(ol3map, gmap, source) {
 
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorSource, olgm.Herald);
+goog.inherits(olgm.herald.VectorSource, olgm.herald.Herald);
 
 
 /**
