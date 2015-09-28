@@ -1,10 +1,8 @@
 goog.provide('olgm.OLGoogleMaps');
 
 goog.require('goog.asserts');
-goog.require('goog.dom');
-goog.require('goog.style');
 goog.require('olgm.Abstract');
-goog.require('olgm.FeatureHerald');
+goog.require('olgm.LayersHerald');
 goog.require('olgm.ViewHerald');
 
 
@@ -27,58 +25,41 @@ olgm.OLGoogleMaps = function(options) {
    */
   this.heralds_ = [];
 
-  goog.base(this, options.ol3map, options.gmap);
+  var gmap = new google.maps.Map(document.createElement('div'));
+
+  goog.base(this, options.ol3map, gmap);
 
   // create the heralds
-  this.heralds_.push(new olgm.FeatureHerald(this.ol3map, this.gmap));
-  this.heralds_.push(new olgm.ViewHerald(this.ol3map, this.gmap));
+  this.heralds_.push(new olgm.LayersHerald(this.ol3map, this.gmap));
+
+  //this.heralds_.push(new olgm.ViewHerald(this.ol3map, this.gmap));
 
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
 
 
 /**
- * Flag used to determine which map is currently active:
- *  - GoogleMaps: `true`
- *  - OpenLayers: `false`
- *  - None: `null` (upon initialization only)
- * @type {?boolean}
+ * @type {boolean}
  * @private
  */
-olgm.OLGoogleMaps.prototype.gmapIsActive_ = null;
+olgm.OLGoogleMaps.prototype.active_ = false;
 
 
 /**
  * @api
  */
-olgm.OLGoogleMaps.prototype.activateGoogleMaps = function() {
-  if (this.gmapIsActive_ === null) {
-    this.activate_();
-  }
+olgm.OLGoogleMaps.prototype.activate = function() {
 
-  if (this.gmapIsActive_ === true) {
+  if (this.active_) {
     return;
   }
 
-  this.deactivateOpenLayers_();
-  this.toggleGoogleMapsContainer_(true);
-  this.switchMap_(olgm.MapType.GOOGLE_MAPS);
-  this.gmapIsActive_ = true;
-};
-
-
-/**
- * @api
- */
-olgm.OLGoogleMaps.prototype.activateOpenLayers = function() {
-  if (this.gmapIsActive_ === false) {
-    return;
+  // activate heralds
+  for (var i = 0, len = this.heralds_.length; i < len; i++) {
+    this.heralds_[i].activate();
   }
 
-  this.deactivateGoogleMaps_();
-  this.toggleOpenLayersContainer_(true);
-  this.switchMap_(olgm.MapType.OPENLAYERS);
-  this.gmapIsActive_ = false;
+  this.active_ = true;
 };
 
 
@@ -86,88 +67,15 @@ olgm.OLGoogleMaps.prototype.activateOpenLayers = function() {
  * @api
  */
 olgm.OLGoogleMaps.prototype.deactivate = function() {
-  this.deactivate_();
-  this.gmapIsActive_ = null;
-  this.toggleGoogleMapsContainer_(true);
-  this.toggleOpenLayersContainer_(true);
-};
 
-
-/**
- * @api
- */
-olgm.OLGoogleMaps.prototype.toggle = function() {
-  if (this.gmapIsActive_ === false || goog.isNull(this.gmapIsActive_)) {
-    this.activateGoogleMaps();
-  } else {
-    this.activateOpenLayers();
+  if (!this.active_) {
+    return;
   }
-};
 
-
-/**
- * @private
- */
-olgm.OLGoogleMaps.prototype.activate_ = function() {
-  for (var i = 0, len = this.heralds_.length; i < len; i++) {
-    this.heralds_[i].activate();
-  }
-};
-
-
-/**
- * @private
- */
-olgm.OLGoogleMaps.prototype.deactivate_ = function() {
+  // deactivate heralds
   for (var i = 0, len = this.heralds_.length; i < len; i++) {
     this.heralds_[i].deactivate();
   }
-};
 
-
-/**
- * @private
- */
-olgm.OLGoogleMaps.prototype.deactivateGoogleMaps_ = function() {
-  this.toggleGoogleMapsContainer_(false);
-};
-
-
-/**
- * @private
- */
-olgm.OLGoogleMaps.prototype.deactivateOpenLayers_ = function() {
-  this.toggleOpenLayersContainer_(false);
-};
-
-
-/**
- * @param {string} mapType
- * @private
- */
-olgm.OLGoogleMaps.prototype.switchMap_ = function(mapType) {
-  for (var i = 0, len = this.heralds_.length; i < len; i++) {
-    this.heralds_[i].switchMap(mapType);
-  }
-};
-
-
-/**
- * @param {boolean} show
- * @private
- */
-olgm.OLGoogleMaps.prototype.toggleGoogleMapsContainer_ = function(show) {
-  var div = /** @type {Element} */ (this.gmap.getDiv());
-  goog.style.setElementShown(div, show);
-};
-
-
-/**
- * @param {boolean} show
- * @private
- */
-olgm.OLGoogleMaps.prototype.toggleOpenLayersContainer_ = function(show) {
-  var parent = goog.dom.getParentElement(this.ol3map.getViewport());
-  goog.asserts.assertInstanceof(parent, Element);
-  goog.style.setElementShown(parent, show);
+  this.active_ = false;
 };

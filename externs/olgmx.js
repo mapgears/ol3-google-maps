@@ -30,3 +30,26 @@ olgmx.OLGoogleMapsOptions.prototype.gmap;
  * @api
  */
 olgmx.OLGoogleMapsOptions.prototype.ol3map;
+
+
+/**
+ * @type {Object}
+ */
+olgmx.layer = {};
+
+
+/**
+ * @typedef {{
+ *   mapTypeId: (string)
+ * }}
+ * @api
+ */
+olgmx.layer.GoogleOptions;
+
+
+/**
+ * The Google Maps mapTypeId of the layer
+ * @type {string}
+ * @api
+ */
+olgmx.layer.GoogleOptions.prototype.mapTypeId;

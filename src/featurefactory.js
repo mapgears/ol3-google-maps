@@ -1,6 +1,8 @@
 goog.provide('olgm.FeatureFactory');
 
 goog.require('goog.asserts');
+//goog.require('ol.geom.Point');
+//goog.require('ol.proj');
 goog.require('olgm.Abstract');
 
 

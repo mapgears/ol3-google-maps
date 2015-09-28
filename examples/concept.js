@@ -17,19 +17,16 @@ var ol3map = new ol.Map({
   })
 });
 
-// The GoogleMaps map doesn't get any initial center nor zoom.  It will
-// get them from the OL3 map upon activation.
-var gmap = new google.maps.Map(document.getElementById('gmap'));
-
 // FIXME - style override, this should be managed internally
+/*
 gmap.data.setStyle({
   icon: 'resources/evouala.png'
 });
+*/
 
 
 var olgmMain = new olgm.OLGoogleMaps({
-  ol3map: ol3map,
-  gmap: gmap
+  ol3map: ol3map
 });
 
 
@@ -38,8 +35,7 @@ var vector = new ol.layer.Vector({
 });
 ol3map.addLayer(vector);
 
-
-olgmMain.toggle();
+olgmMain.activate();
 
 document.getElementById('map-type').onchange = function() {
   olgmMain.toggle();
