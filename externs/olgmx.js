@@ -40,7 +40,7 @@ olgmx.layer = {};
 
 /**
  * @typedef {{
- *   mapTypeId: (string)
+ *   mapTypeId: (google.maps.MapTypeId.<(number|string)>|string|undefined)
  * }}
  * @api
  */
@@ -48,8 +48,9 @@ olgmx.layer.GoogleOptions;
 
 
 /**
- * The Google Maps mapTypeId of the layer
- * @type {string}
+ * The Google Maps mapTypeId of the layer. Defaults to
+ * `google.maps.MapTypeId.ROADMAP`.
+ * @type {google.maps.MapTypeId.<(number|string)>|string|undefined}
  * @api
  */
 olgmx.layer.GoogleOptions.prototype.mapTypeId;

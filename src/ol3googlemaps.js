@@ -25,7 +25,19 @@ olgm.OLGoogleMaps = function(options) {
    */
   this.heralds_ = [];
 
-  var gmap = new google.maps.Map(document.createElement('div'));
+  var gmapEl = document.createElement('div');
+  gmapEl.style.height = 'inherit';
+  gmapEl.style.width = 'inherit';
+
+  var gmap = new google.maps.Map(gmapEl, {
+    disableDefaultUI: true,
+    disableDoubleClickZoom: true,
+    draggable: false,
+    keyboardShortcuts: false,
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    scrollwheel: false,
+    streetViewControl: false
+  });
 
   goog.base(this, options.ol3map, gmap);
 

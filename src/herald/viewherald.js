@@ -27,33 +27,42 @@ goog.inherits(olgm.herald.View, olgm.herald.Herald);
 /**
  * @inheritDoc
  */
-olgm.herald.View.prototype.switchMap = function(mapType) {
+olgm.herald.View.prototype.activate = function() {
+  goog.base(this, 'activate');
 
-  goog.base(this, 'switchMap', mapType);
+  var view = this.ol3map.getView();
+  var keys = this.listenerKeys;
+  keys.push(view.on('change:center', this.setCenter_, this));
+  keys.push(view.on('change:resolution', this.setZoom_, this));
 
-  var center;
-  var latLng;
+  this.setCenter_();
+  this.setZoom_();
+
+  // FIXME - handle browser resize as well...
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.View.prototype.setCenter_ = function() {
   var view = this.ol3map.getView();
   var projection = view.getProjection();
-  var zoom;
+  var center = view.getCenter();
+  if (goog.isArray(center)) {
+    center = ol.proj.transform(center, projection, 'EPSG:4326');
+    goog.asserts.assertArray(center);
+    this.gmap.setCenter(new google.maps.LatLng(center[1], center[0]));
+  }
+};
 
-  if (mapType === olgm.MapType.GOOGLE_MAPS) {
-    zoom = view.getZoom();
-    goog.asserts.assertNumber(zoom);
-    center = view.getCenter();
-    goog.asserts.assertArray(center);
-    var centerLonLat = ol.proj.transform(center, projection, 'EPSG:4326');
-    goog.asserts.assertArray(centerLonLat);
-    latLng = new google.maps.LatLng(centerLonLat[1], centerLonLat[0]);
+
+/**
+ * @private
+ */
+olgm.herald.View.prototype.setZoom_ = function() {
+  var zoom = this.ol3map.getView().getZoom();
+  if (goog.isNumber(zoom)) {
     this.gmap.setZoom(zoom);
-    this.gmap.setCenter(latLng);
-  } else if (mapType === olgm.MapType.OPENLAYERS) {
-    latLng = this.gmap.getCenter();
-    center = ol.proj.transform(
-        [latLng.lng(), latLng.lat()], 'EPSG:4326', projection);
-    goog.asserts.assertArray(center);
-    zoom = this.gmap.getZoom();
-    view.setCenter(center);
-    view.setZoom(zoom);
   }
 };

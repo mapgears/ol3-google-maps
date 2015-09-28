@@ -5,10 +5,14 @@ var zoom = 5;
 var extent = [-9259955, 5467881, -6324773, 7424669];
 
 var ol3map = new ol.Map({
+  // kinetic dragPan is not recommended, thus disabled here
+  interactions: ol.interaction.defaults({
+    dragPan: false
+  }).extend([
+    new ol.interaction.DragPan()
+  ]),
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM()
-    })
+    new olgm.layer.Google()
   ],
   target: 'ol3map',
   view: new ol.View({
@@ -36,10 +40,6 @@ var vector = new ol.layer.Vector({
 ol3map.addLayer(vector);
 
 olgmMain.activate();
-
-document.getElementById('map-type').onchange = function() {
-  olgmMain.toggle();
-};
 
 document.getElementById('add-point').onclick = function() {
   vector.getSource().addFeature(generateFeature());

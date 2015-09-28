@@ -32,6 +32,12 @@ goog.require('olgm.herald.VectorSource');
 olgm.herald.Layers = function(ol3map, gmap) {
 
   /**
+   * @type {Array.<olgm.layer.Google>}
+   * @private
+   */
+  this.googleLayers_ = [];
+
+  /**
    * @type {Array.<olgm.herald.Layers.VectorLayerCache>}
    * @private
    */
@@ -42,6 +48,34 @@ olgm.herald.Layers = function(ol3map, gmap) {
    * @private
    */
   this.vectorLayers_ = [];
+
+  /**
+   * @type {olgm.herald.View}
+   * @private
+   */
+  this.viewHerald_ = new olgm.herald.View(ol3map, gmap);
+
+
+  // === Elements  === //
+
+  /**
+   * @type {Node}
+   * @private
+   */
+  this.gmapEl_ = gmap.getDiv();
+
+  /**
+   * @type {Element}
+   * @private
+   */
+  this.ol3mapEl_ = ol3map.getViewport();
+
+  /**
+   * @type {Element}
+   * @private
+   */
+  this.targetEl_ = ol3map.getTargetElement();
+
 
   goog.base(this, ol3map, gmap);
 };
@@ -97,30 +131,57 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
  * @private
  */
 olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
-  // vector layer
-  if (layer instanceof ol.layer.Vector) {
-    this.vectorLayers_.push(layer);
-
-    // a source is required to work with this layer
-    var source = layer.getSource();
-    if (!source) {
-      return;
-    }
-
-    // herald
-    var herald = new olgm.herald.VectorSource(this.ol3map, this.gmap, source);
-    herald.activate();
-
-    // opacity
-    var opacity = layer.getOpacity();
-    layer.setOpacity(0);
-
-    this.vectorCache_.push({
-      'herald': herald,
-      'layer': layer,
-      'opacity': opacity
-    });
+  if (layer instanceof olgm.layer.Google) {
+    this.watchGoogleLayer_(layer);
+  } else if (layer instanceof ol.layer.Vector) {
+    this.watchVectorLayer_(layer);
   }
+};
+
+
+/**
+ * Watch the google layer
+ * @param {olgm.layer.Google} layer
+ * @private
+ */
+olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
+  this.googleLayers_.push(layer);
+  this.setGoogleMapsMapType_();
+
+  if (this.googleLayers_.length === 1) {
+    this.activateGoogleMaps_();
+  }
+};
+
+
+/**
+ * Watch the vector layer
+ * @param {ol.layer.Vector} layer
+ * @private
+ */
+olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
+
+  // a source is required to work with this layer
+  var source = layer.getSource();
+  if (!source) {
+    return;
+  }
+
+  this.vectorLayers_.push(layer);
+
+  // herald
+  var herald = new olgm.herald.VectorSource(this.ol3map, this.gmap, source);
+  herald.activate();
+
+  // opacity
+  var opacity = layer.getOpacity();
+  layer.setOpacity(0);
+
+  this.vectorCache_.push({
+    'herald': herald,
+    'layer': layer,
+    'opacity': opacity
+  });
 };
 
 
@@ -130,23 +191,107 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
  * @private
  */
 olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
-  // vector layer
-  if (layer instanceof ol.layer.Vector) {
-    var index = this.vectorLayers_.indexOf(layer);
-    if (index !== -1) {
-      this.vectorLayers_.splice(index, 1);
+  if (layer instanceof olgm.layer.Google) {
+    this.unwatchGoogleLayer_(layer);
+  } else if (layer instanceof ol.layer.Vector) {
+    this.unwatchVectorLayer_(layer);
+  }
+};
 
-      var cacheItem = this.vectorCache_[index];
 
-      // herald
-      cacheItem.herald.deactivate();
-
-      // opacity
-      layer.setOpacity(cacheItem.opacity);
-
-      this.vectorCache_.splice(index, 1);
+/**
+ * Unwatch the google layer
+ * @param {olgm.layer.Google} layer
+ * @private
+ */
+olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
+  var index = this.googleLayers_.indexOf(layer);
+  if (index !== -1) {
+    this.googleLayers_.splice(index, 1);
+    if (this.googleLayers_.length === 0) {
+      this.deactivateGoogleMaps_();
+    } else {
+      this.setGoogleMapsMapType_();
     }
   }
+};
+
+
+/**
+ * Unwatch the vector layer
+ * @param {ol.layer.Vector} layer
+ * @private
+ */
+olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
+  var index = this.vectorLayers_.indexOf(layer);
+  if (index !== -1) {
+    this.vectorLayers_.splice(index, 1);
+
+    var cacheItem = this.vectorCache_[index];
+
+    // herald
+    cacheItem.herald.deactivate();
+
+    // opacity
+    layer.setOpacity(cacheItem.opacity);
+
+    this.vectorCache_.splice(index, 1);
+  }
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Layers.prototype.setGoogleMapsMapType_ = function() {
+  var layer;
+  if (this.googleLayers_.length === 1) {
+    layer = this.googleLayers_[0];
+  } else {
+    // find top-most Google layer
+    var layers = this.ol3map.getLayers();
+    // TODO
+    console.log(layers);
+  }
+
+  if (!layer) {
+    return;
+  }
+
+  var mapTypeId = layer.getMapTypeId();
+
+  this.gmap.setMapTypeId(mapTypeId);
+
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
+  this.targetEl_.appendChild(this.gmapEl_);
+  this.ol3mapEl_.remove();
+  this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].push(
+      this.ol3mapEl_);
+
+  this.viewHerald_.activate();
+
+  // the map div of GoogleMaps doesn't like being tossed aroud. The line
+  // below fixes the UI issue of wrong size of the tiles of GoogleMaps
+  google.maps.event.trigger(this.gmap, 'resize');
+
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
+  this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].removeAt(0);
+  this.targetEl_.appendChild(this.ol3mapEl_);
+  this.gmapEl_.remove();
+
+  this.viewHerald_.deactivate();
 };
 
 
