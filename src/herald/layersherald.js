@@ -226,10 +226,9 @@ olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
   if (index !== -1) {
     this.googleLayers_.splice(index, 1);
 
-    var cacheItem = this.googleCache_[index];
-
     // unlisten event - FIXME, currently not working
-    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+    //var cacheItem = this.googleCache_[index];
+    //olgm.unlistenAllByKey(cacheItem.listenerKeys);
 
     this.googleCache_.splice(index, 1);
 

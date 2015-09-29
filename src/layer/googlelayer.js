@@ -17,14 +17,14 @@ olgm.layer.Google = function(opt_options) {
 
   var options = opt_options !== undefined ? opt_options : {};
 
+  goog.base(this, /** @type {olx.layer.GroupOptions} */ (options));
+
   /**
    * @type {google.maps.MapTypeId.<(number|string)>|string}
    * @private
    */
   this.mapTypeId_ = options.mapTypeId !== undefined ? options.mapTypeId :
       google.maps.MapTypeId.ROADMAP;
-
-  goog.base(this, /** @type {olx.layer.GroupOptions} */ (options));
 
 };
 goog.inherits(olgm.layer.Google, ol.layer.Group);
