@@ -38,6 +38,12 @@ olgm.herald.Layers = function(ol3map, gmap) {
   this.googleLayers_ = [];
 
   /**
+   * @type {Array.<olgm.herald.Layers.GoogleLayerCache>}
+   * @private
+   */
+  this.googleCache_ = [];
+
+  /**
    * @type {Array.<olgm.herald.Layers.VectorLayerCache>}
    * @private
    */
@@ -80,6 +86,15 @@ olgm.herald.Layers = function(ol3map, gmap) {
   goog.base(this, ol3map, gmap);
 };
 goog.inherits(olgm.herald.Layers, olgm.herald.Herald);
+
+
+/**
+ * Flag that determines whether the GoogleMaps map is currently active, i.e.
+ * is currently shown and has the OpenLayers map added as one of its control.
+ * @type {boolean}
+ * @private
+ */
+olgm.herald.Layers.prototype.googleMapsIsActive_ = false;
 
 
 /**
@@ -146,11 +161,13 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
  */
 olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
   this.googleLayers_.push(layer);
-  this.setGoogleMapsMapType_();
-
-  if (this.googleLayers_.length === 1) {
-    this.activateGoogleMaps_();
-  }
+  this.googleCache_.push({
+    'layer': layer,
+    'listenerKeys': [
+      layer.on('change:visible', this.toggleGoogleMaps_, this)
+    ]
+  });
+  this.toggleGoogleMaps_();
 };
 
 
@@ -208,11 +225,15 @@ olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
   var index = this.googleLayers_.indexOf(layer);
   if (index !== -1) {
     this.googleLayers_.splice(index, 1);
-    if (this.googleLayers_.length === 0) {
-      this.deactivateGoogleMaps_();
-    } else {
-      this.setGoogleMapsMapType_();
-    }
+
+    var cacheItem = this.googleCache_[index];
+
+    // unlisten event - FIXME, currently not working
+    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+
+    this.googleCache_.splice(index, 1);
+
+    this.toggleGoogleMaps_();
   }
 };
 
@@ -241,41 +262,16 @@ olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
 
 
 /**
- * @private
- */
-olgm.herald.Layers.prototype.setGoogleMapsMapType_ = function() {
-  var found;
-  if (this.googleLayers_.length === 1) {
-    found = this.googleLayers_[0];
-  } else {
-    // find top-most Google layer
-    this.ol3map.getLayers().getArray().slice(0).reverse().every(
-        function(layer) {
-          if (layer instanceof olgm.layer.Google) {
-            found = layer;
-            return false;
-          } else {
-            return true;
-          }
-        },
-        this);
-  }
-
-  if (!found) {
-    return;
-  }
-
-  var mapTypeId = found.getMapTypeId();
-
-  this.gmap.setMapTypeId(mapTypeId);
-
-};
-
-
-/**
+ * Activates the GoogleMaps map, i.e. put it in the ol3 map target and put
+ * the ol3 map inside the gmap controls.
  * @private
  */
 olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
+
+  if (this.googleMapsIsActive_) {
+    return;
+  }
+
   this.targetEl_.appendChild(this.gmapEl_);
   this.ol3mapEl_.remove();
   this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].push(
@@ -291,13 +287,21 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   // below fixes the UI issue of wrong size of the tiles of GoogleMaps
   google.maps.event.trigger(this.gmap, 'resize');
 
+  this.googleMapsIsActive_ = true;
 };
 
 
 /**
+ * Deactivates the GoogleMaps map, i.e. put the ol3 map back in its target
+ * and remove the gmap map.
  * @private
  */
 olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
+
+  if (!this.googleMapsIsActive_) {
+    return;
+  }
+
   this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].removeAt(0);
   this.targetEl_.appendChild(this.ol3mapEl_);
   this.gmapEl_.remove();
@@ -309,7 +313,54 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
   }, this);
 
   this.ol3mapEl_.style.position = 'relative';
+
+  this.googleMapsIsActive_ = false;
 };
+
+
+/**
+ * This method takes care of activating or deactivating the GoogleMaps map.
+ * It is activated if at least one visible Google layer is currently in the
+ * ol3 map (and vice-versa for deactivation). The top-most layer is used
+ * to determine that. It is also used to change the GoogleMaps mapTypeId
+ * accordingly too to fit the top-most ol3 Google layer.
+ * @private
+ */
+olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
+
+  var found = null;
+
+  // find top-most Google layer
+  this.ol3map.getLayers().getArray().slice(0).reverse().every(
+      function(layer) {
+        if (layer instanceof olgm.layer.Google && layer.getVisible()) {
+          found = layer;
+          return false;
+        } else {
+          return true;
+        }
+      },
+      this);
+
+  if (found) {
+    // set mapTypeId
+    this.gmap.setMapTypeId(found.getMapTypeId());
+    // activate
+    this.activateGoogleMaps_();
+  } else {
+    // deactivate
+    this.deactivateGoogleMaps_();
+  }
+};
+
+
+/**
+ * @typedef {{
+ *   layer: (olgm.layer.Google),
+ *   listenerKeys: (Array.<goog.events.Key>)
+ * }}
+ */
+olgm.herald.Layers.GoogleLayerCache;
 
 
 /**

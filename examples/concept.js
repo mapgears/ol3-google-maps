@@ -117,10 +117,28 @@ document.getElementById('gm-add-sat').onclick = function() {
 };
 
 
-
 document.getElementById('gm-add-ter').onclick = function() {
   ol3map.getLayers().push(new olgm.layer.Google({
     mapTypeId: google.maps.MapTypeId.TERRAIN
   }));
   showOSMLayer();
+};
+
+
+document.getElementById('gm-toggle-last').onclick = function() {
+  var found = null;
+  var layers = ol3map.getLayers();
+
+  // remove last one
+  layers.getArray().slice(0).reverse().every(function(layer) {
+    if (layer instanceof olgm.layer.Google) {
+      found = layer;
+      return false;
+    }
+    return true;
+  }, this);
+
+  if (found) {
+    found.setVisible(!found.getVisible());
+  }
 };
