@@ -51,8 +51,9 @@ olgm.herald.Herald.prototype.activate = function() {};
  * @api
  */
 olgm.herald.Herald.prototype.deactivate = function() {
-  goog.array.forEach(this.listenerKeys, goog.events.unlistenByKey);
-  this.listenerKeys.length = 0;
+  // FIXME - unlistening doesn't work...
+  //goog.array.forEach(this.listenerKeys, goog.events.unlistenByKey);
+  //this.listenerKeys.length = 0;
 };
 
 

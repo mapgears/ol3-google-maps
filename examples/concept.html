@@ -11,7 +11,25 @@
     <div id="ol3map" style="width:600px;height:400px;float:left;"></div>
     <div style="clear:left;"></div>
     <br />
-    <input id="add-point" type="button" value="Add a point"></input>
+
+    <fieldset>
+      <legend>OpenLayers</legend>
+      <input id="add-point" type="button" value="Add a point"></input>
+      <input id="toggle-osm" type="button" value="Toogle OSM Layer"></input>
+    </fieldset>
+
+    <br />
+
+    <fieldset>
+      <legend>Google Maps</legend>
+      <label>Add Layer: </label>
+      <input id="gm-add-sat" type="button" value="Satellite"></input>
+      <input id="gm-add-ter" type="button" value="Terrain"></input>
+      <label>Remove Layer: </label>
+
+      <input id="gm-rm-last" type="button" value="Last one added"></input>
+    </fieldset>
+
     <script src="../ol3/build/ol.js"></script>
 
     <!-- local -->

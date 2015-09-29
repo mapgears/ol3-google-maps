@@ -244,21 +244,28 @@ olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
  * @private
  */
 olgm.herald.Layers.prototype.setGoogleMapsMapType_ = function() {
-  var layer;
+  var found;
   if (this.googleLayers_.length === 1) {
-    layer = this.googleLayers_[0];
+    found = this.googleLayers_[0];
   } else {
     // find top-most Google layer
-    var layers = this.ol3map.getLayers();
-    // TODO
-    console.log(layers);
+    this.ol3map.getLayers().getArray().slice(0).reverse().every(
+        function(layer) {
+          if (layer instanceof olgm.layer.Google) {
+            found = layer;
+            return false;
+          } else {
+            return true;
+          }
+        },
+        this);
   }
 
-  if (!layer) {
+  if (!found) {
     return;
   }
 
-  var mapTypeId = layer.getMapTypeId();
+  var mapTypeId = found.getMapTypeId();
 
   this.gmap.setMapTypeId(mapTypeId);
 
@@ -273,6 +280,10 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.ol3mapEl_.remove();
   this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].push(
       this.ol3mapEl_);
+
+  this.vectorCache_.forEach(function(item, index) {
+    item.layer.setOpacity(0);
+  }, this);
 
   this.viewHerald_.activate();
 
@@ -292,6 +303,12 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
   this.gmapEl_.remove();
 
   this.viewHerald_.deactivate();
+
+  this.vectorCache_.forEach(function(item, index) {
+    item.layer.setOpacity(item.opacity);
+  }, this);
+
+  this.ol3mapEl_.style.position = 'relative';
 };
 
 
