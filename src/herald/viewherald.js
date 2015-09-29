@@ -25,6 +25,15 @@ goog.inherits(olgm.herald.View, olgm.herald.Herald);
 
 
 /**
+ * On window resize, the GoogleMaps map gets recentered. To avoid doing this
+ * too often, a timeout is set.
+ * @type {?number}
+ * @private
+ */
+olgm.herald.View.prototype.windowResizeTimerId_ = null;
+
+
+/**
  * @inheritDoc
  */
 olgm.herald.View.prototype.activate = function() {
@@ -32,20 +41,29 @@ olgm.herald.View.prototype.activate = function() {
 
   var view = this.ol3map.getView();
   var keys = this.listenerKeys;
-  keys.push(view.on('change:center', this.setCenter_, this));
-  keys.push(view.on('change:resolution', this.setZoom_, this));
+  keys.push(view.on('change:center', this.setCenter, this));
+  keys.push(view.on('change:resolution', this.setZoom, this));
 
-  this.setCenter_();
-  this.setZoom_();
+  // listen to browser window resize
+  keys.push(goog.events.listen(
+      window,
+      goog.events.EventType.RESIZE,
+      this.handleWindowResize_,
+      false,
+      this));
+
+  this.setCenter();
+  this.setZoom();
 
   // FIXME - handle browser resize as well...
 };
 
 
 /**
- * @private
+ * Recenter the gmap map at the ol3 map center location.
+ * @api stable
  */
-olgm.herald.View.prototype.setCenter_ = function() {
+olgm.herald.View.prototype.setCenter = function() {
   var view = this.ol3map.getView();
   var projection = view.getProjection();
   var center = view.getCenter();
@@ -58,11 +76,38 @@ olgm.herald.View.prototype.setCenter_ = function() {
 
 
 /**
- * @private
+ * Set the gmap map zoom level at the ol3 map view zoom level.
+ * @api stable
  */
-olgm.herald.View.prototype.setZoom_ = function() {
+olgm.herald.View.prototype.setZoom = function() {
   var zoom = this.ol3map.getView().getZoom();
   if (goog.isNumber(zoom)) {
     this.gmap.setZoom(zoom);
   }
+};
+
+
+/**
+ * Called when the browser window is resized. Set the center of the GoogleMaps
+ * map after a slight delay.
+ * @private
+ */
+olgm.herald.View.prototype.handleWindowResize_ = function() {
+  if (!goog.isNull(this.windowResizeTimerId_)) {
+    goog.global.clearTimeout(this.windowResizeTimerId_);
+  }
+  this.windowResizeTimerId_ = window.setTimeout(
+      goog.bind(this.setCenterAfterResize_, this),
+      100);
+};
+
+
+/**
+ * Called after the browser window got resized, after a small delay.
+ * Set the center of the GoogleMaps map and reset the timeout.
+ * @private
+ */
+olgm.herald.View.prototype.setCenterAfterResize_ = function() {
+  this.setCenter();
+  this.windowResizeTimerId_ = null;
 };

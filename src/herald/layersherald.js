@@ -286,6 +286,11 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   // below fixes the UI issue of wrong size of the tiles of GoogleMaps
   google.maps.event.trigger(this.gmap, 'resize');
 
+  // it's also possible that the google maps map is not exactly at the
+  // correct location. Fix this manually here
+  this.viewHerald_.setCenter();
+  this.viewHerald_.setZoom();
+
   this.googleMapsIsActive_ = true;
 };
 
