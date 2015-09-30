@@ -18,11 +18,12 @@ goog.require('olgm.herald.Herald');
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
  * @param {!ol.source.Vector} source
+ * @param {!google.maps.Data} data
  * @constructor
  * @extends {olgm.herald.Herald}
  * @api
  */
-olgm.herald.VectorSource = function(ol3map, gmap, source) {
+olgm.herald.VectorSource = function(ol3map, gmap, source, data) {
 
   /**
    * @type {Array.<ol.Feature>}
@@ -35,6 +36,12 @@ olgm.herald.VectorSource = function(ol3map, gmap, source) {
    * @private
    */
   this.cache_ = [];
+
+  /**
+   * @type {!google.maps.Data}
+   * @private
+   */
+  this.data_ = data;
 
   /**
    * @type {ol.source.Vector}
@@ -102,11 +109,15 @@ olgm.herald.VectorSource.prototype.handleRemoveFeature_ = function(event) {
  */
 olgm.herald.VectorSource.prototype.watchFeature_ = function(feature) {
 
+  var ol3map = this.ol3map;
+  var gmap = this.gmap;
+  var data = this.data_;
+
   // push to features (internal)
   this.features_.push(feature);
 
   // create and activate feature herald
-  var herald = new olgm.herald.Feature(this.ol3map, this.gmap, feature);
+  var herald = new olgm.herald.Feature(ol3map, gmap, feature, data);
   herald.activate();
 
   // push to cache

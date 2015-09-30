@@ -190,6 +190,9 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
  */
 olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
 
+  var ol3map = this.ol3map;
+  var gmap = this.gmap;
+
   // a source is required to work with this layer
   var source = layer.getSource();
   if (!source) {
@@ -198,8 +201,13 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
 
   this.vectorLayers_.push(layer);
 
+  // Data
+  var data = new google.maps.Data({
+    'map': gmap
+  });
+
   // herald
-  var herald = new olgm.herald.VectorSource(this.ol3map, this.gmap, source);
+  var herald = new olgm.herald.VectorSource(ol3map, gmap, source, data);
   herald.activate();
 
   // opacity
@@ -207,6 +215,7 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
   layer.setOpacity(0);
 
   this.vectorCache_.push({
+    'data': data,
     'herald': herald,
     'layer': layer,
     'opacity': opacity
@@ -260,6 +269,9 @@ olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
     this.vectorLayers_.splice(index, 1);
 
     var cacheItem = this.vectorCache_[index];
+
+    // data - unset
+    cacheItem.data.setMap(null);
 
     // herald
     cacheItem.herald.deactivate();
@@ -381,6 +393,7 @@ olgm.herald.Layers.GoogleLayerCache;
 
 /**
  * @typedef {{
+ *   data: (google.maps.Data),
  *   herald: (olgm.herald.VectorSource),
  *   layer: (ol.layer.Vector),
  *   opacity: (number)

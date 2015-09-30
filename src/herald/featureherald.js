@@ -14,17 +14,24 @@ goog.require('olgm.herald.Herald');
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
  * @param {ol.Feature} feature
+ * @param {!google.maps.Data} data
  * @constructor
  * @extends {olgm.herald.Herald}
  * @api
  */
-olgm.herald.Feature = function(ol3map, gmap, feature) {
+olgm.herald.Feature = function(ol3map, gmap, feature, data) {
 
   /**
    * @type {ol.Feature}
    * @private
    */
   this.feature_ = feature;
+
+  /**
+   * @type {!google.maps.Data}
+   * @private
+   */
+  this.data_ = data;
 
   goog.base(this, ol3map, gmap);
 
@@ -47,7 +54,7 @@ olgm.herald.Feature.prototype.activate = function() {
 
   // create gmap feature
   this.gmapFeature_ = olgm.createGoogleMapsFeature(this.feature_);
-  this.gmap.data.add(this.gmapFeature_);
+  this.data_.add(this.gmapFeature_);
 
   var geometry = this.feature_.getGeometry();
 
@@ -63,7 +70,7 @@ olgm.herald.Feature.prototype.activate = function() {
 olgm.herald.Feature.prototype.deactivate = function() {
 
   // remove gmap feature
-  this.gmap.data.remove(this.gmapFeature_);
+  this.data_.remove(this.gmapFeature_);
   this.gmapFeature_ = null;
 
   goog.base(this, 'deactivate');
