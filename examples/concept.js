@@ -169,25 +169,73 @@ var vector = new ol.layer.Vector({
 });
 ol3map.addLayer(vector);
 
-var generateFeature = function() {
+var generateCoordinate = function() {
   var extent = [-9259955, 5467881, -6324773, 7424669];
   var deltaX = extent[2] - extent[0];
   var deltaY = extent[3] - extent[1];
-  var point = new ol.geom.Point([
+  return [
     extent[0] + (deltaX * Math.random()),
     extent[1] + (deltaY * Math.random())
-  ]);
-  var feature = new ol.Feature(point);
-  return feature;
+  ];
 };
 
-var addFeatures = function(len) {
+var generatePointFeature = function() {
+  return new ol.Feature(
+    new ol.geom.Point(generateCoordinate())
+  );
+};
+
+var generateLineFeature = function() {
+  var coordinates = [];
+  for (var i = 0, len = 3; i < len; i++) {
+    coordinates.push(generateCoordinate());
+  }
+  return new ol.Feature(
+    new ol.geom.LineString(coordinates)
+  );
+};
+
+var generatePolygonFeature = function() {
+  var coordinates = [];
+  for (var i = 0, len = 3; i < len; i++) {
+    coordinates.push(generateCoordinate());
+  }
+  coordinates.push(coordinates[0].splice(0));
+  return new ol.Feature(
+    new ol.geom.Polygon(coordinates)
+  );
+};
+
+var addPointFeatures = function(len) {
   for (var i = 0; i < len; i++) {
-    vector.getSource().addFeature(generateFeature());
+    vector.getSource().addFeature(generatePointFeature());
   }
 };
 
-addFeatures(10);
+var addLineFeatures = function(len) {
+  for (var i = 0; i < len; i++) {
+    vector.getSource().addFeature(generateLineFeature());
+  }
+};
+
+var addPolygonFeatures = function(len) {
+  for (var i = 0; i < len; i++) {
+    vector.getSource().addFeature(generatePolygonFeature());
+  }
+};
+
+var addPolygonFeature = function(len) {
+  var feature = new ol.Feature(
+    new ol.geom.Polygon.fromExtent([-8259955, 6067881, -7324773, 6524669])
+  );
+  vector.getSource().addFeature(feature);
+};
+
+
+addPointFeatures(5);
+addLineFeatures(2);
+addPolygonFeature();
+
 
 var olgmMain = new olgm.OLGoogleMaps({
   ol3map: ol3map
@@ -195,7 +243,7 @@ var olgmMain = new olgm.OLGoogleMaps({
 olgmMain.activate();
 
 document.getElementById('add-point').onclick = function() {
-  addFeatures(10);
+  addPointFeatures(5);
 };
 
 document.getElementById('clear-point').onclick = function() {

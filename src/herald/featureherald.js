@@ -76,5 +76,5 @@ olgm.herald.Feature.prototype.deactivate = function() {
 olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
   var geometry = this.feature_.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
-  this.gmapFeature_.setGeometry(olgm.createGoogleMapsGeometry(geometry));
+  this.gmapFeature_.setGeometry(olgm.createGoogleMapsFeatureGeometry(geometry));
 };
