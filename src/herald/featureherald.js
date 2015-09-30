@@ -81,12 +81,6 @@ olgm.herald.Feature.prototype.deactivate = function() {
  * @private
  */
 olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
-  // FIXME - remove this once events are properly unregistered
-  if (!this.gmapFeature_) {
-    console.log('fixme');
-    return;
-  }
-
   var geometry = this.feature_.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
   this.gmapFeature_.setGeometry(olgm.createGoogleMapsFeatureGeometry(geometry));

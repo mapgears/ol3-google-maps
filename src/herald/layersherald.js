@@ -173,12 +173,12 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
  */
 olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
   this.googleLayers_.push(layer);
-  this.googleCache_.push({
-    'layer': layer,
-    'listenerKeys': [
+  this.googleCache_.push(/** @type olgm.herald.Layers.GoogleLayerCache */ ({
+    layer: layer,
+    listenerKeys: [
       layer.on('change:visible', this.toggleGoogleMaps_, this)
     ]
-  });
+  }));
   this.toggleGoogleMaps_();
 };
 
@@ -214,12 +214,12 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
   var opacity = layer.getOpacity();
   layer.setOpacity(0);
 
-  this.vectorCache_.push({
-    'data': data,
-    'herald': herald,
-    'layer': layer,
-    'opacity': opacity
-  });
+  this.vectorCache_.push(/** @type olgm.herald.Layers.VectorLayerCache */ ({
+    data: data,
+    herald: herald,
+    layer: layer,
+    opacity: opacity
+  }));
 };
 
 
@@ -247,9 +247,8 @@ olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
   if (index !== -1) {
     this.googleLayers_.splice(index, 1);
 
-    // unlisten event - FIXME, currently not working
-    //var cacheItem = this.googleCache_[index];
-    //olgm.unlistenAllByKey(cacheItem.listenerKeys);
+    var cacheItem = this.googleCache_[index];
+    olgm.unlistenAllByKey(cacheItem.listenerKeys);
 
     this.googleCache_.splice(index, 1);
 

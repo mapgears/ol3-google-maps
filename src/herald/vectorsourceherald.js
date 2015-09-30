@@ -122,8 +122,8 @@ olgm.herald.VectorSource.prototype.watchFeature_ = function(feature) {
 
   // push to cache
   this.cache_.push({
-    'feature': feature,
-    'herald': herald
+    feature: feature,
+    herald: herald
   });
 };
 
