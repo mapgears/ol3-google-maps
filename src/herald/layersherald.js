@@ -173,7 +173,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
  */
 olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
   this.googleLayers_.push(layer);
-  this.googleCache_.push(/** @type olgm.herald.Layers.GoogleLayerCache */ ({
+  this.googleCache_.push(/** @type {olgm.herald.Layers.GoogleLayerCache} */ ({
     layer: layer,
     listenerKeys: [
       layer.on('change:visible', this.toggleGoogleMaps_, this)
@@ -214,7 +214,7 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
   var opacity = layer.getOpacity();
   layer.setOpacity(0);
 
-  this.vectorCache_.push(/** @type olgm.herald.Layers.VectorLayerCache */ ({
+  this.vectorCache_.push(/** {@type olgm.herald.Layers.VectorLayerCache} */ ({
     data: data,
     herald: herald,
     layer: layer,
