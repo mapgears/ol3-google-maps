@@ -5,6 +5,8 @@ goog.require('goog.asserts');
 //goog.require('ol.layer.Vector');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.VectorSource');
+goog.require('olgm.herald.View');
+goog.require('olgm.layer.Google');
 
 
 
@@ -103,11 +105,10 @@ olgm.herald.Layers.prototype.googleMapsIsActive_ = false;
 olgm.herald.Layers.prototype.activate = function() {
   goog.base(this, 'activate');
 
-  // watch existing layers
   var layers = this.ol3map.getLayers();
-  layers.forEach(function(layer) {
-    this.watchLayer_(layer);
-  }, this);
+
+  // watch existing layers
+  layers.forEach(this.watchLayer_, this);
 
   // event listeners
   var keys = this.listenerKeys;

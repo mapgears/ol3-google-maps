@@ -1,6 +1,8 @@
 goog.provide('olgm.herald.View');
 
 goog.require('goog.asserts');
+goog.require('goog.events');
+goog.require('goog.events.EventType');
 //goog.require('ol.proj');
 goog.require('olgm.herald.Herald');
 
@@ -41,7 +43,11 @@ olgm.herald.View.prototype.activate = function() {
 
   var view = this.ol3map.getView();
   var keys = this.listenerKeys;
+
+  // listen to center change
   keys.push(view.on('change:center', this.setCenter, this));
+
+  // listen to resolution change
   keys.push(view.on('change:resolution', this.setZoom, this));
 
   // listen to browser window resize
@@ -54,8 +60,6 @@ olgm.herald.View.prototype.activate = function() {
 
   this.setCenter();
   this.setZoom();
-
-  // FIXME - handle browser resize as well...
 };
 
 

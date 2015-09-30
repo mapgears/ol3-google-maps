@@ -1,5 +1,7 @@
 goog.provide('olgm');
 
+goog.require('goog.events');
+
 
 /**
  * @param {Array.<goog.events.Key>} listenerKeys

@@ -35,21 +35,10 @@ gmap.data.setStyle({
 */
 
 
-var olgmMain = new olgm.OLGoogleMaps({
-  ol3map: ol3map
-});
-
-
 var vector = new ol.layer.Vector({
   source: new ol.source.Vector()
 });
 ol3map.addLayer(vector);
-
-olgmMain.activate();
-
-document.getElementById('add-point').onclick = function() {
-  vector.getSource().addFeature(generateFeature());
-};
 
 var generateFeature = function() {
   var extent = [-9259955, 5467881, -6324773, 7424669];
@@ -61,6 +50,27 @@ var generateFeature = function() {
   ]);
   var feature = new ol.Feature(point);
   return feature;
+};
+
+var addFeatures = function(len) {
+  for (var i = 0; i < len; i++) {
+    vector.getSource().addFeature(generateFeature());
+  }
+};
+
+addFeatures(10);
+
+var olgmMain = new olgm.OLGoogleMaps({
+  ol3map: ol3map
+});
+olgmMain.activate();
+
+document.getElementById('add-point').onclick = function() {
+  addFeatures(10);
+};
+
+document.getElementById('clear-point').onclick = function() {
+  vector.getSource().clear();
 };
 
 
