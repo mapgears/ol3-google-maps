@@ -361,7 +361,9 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
   // find top-most Google layer
   this.ol3map.getLayers().getArray().slice(0).reverse().every(
       function(layer) {
-        if (layer instanceof olgm.layer.Google && layer.getVisible()) {
+        if (layer instanceof olgm.layer.Google &&
+            layer.getVisible() &&
+            this.googleLayers_.indexOf(layer) !== -1) {
           found = layer;
           return false;
         } else {
