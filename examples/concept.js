@@ -242,6 +242,10 @@ var olgmMain = new olgm.OLGoogleMaps({
 });
 olgmMain.activate();
 
+document.getElementById('toggle').onclick = function() {
+  olgmMain.toggle();
+};
+
 document.getElementById('add-point').onclick = function() {
   addPointFeatures(5);
 };

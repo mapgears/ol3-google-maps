@@ -91,3 +91,15 @@ olgm.OLGoogleMaps.prototype.deactivate = function() {
 
   this.active_ = false;
 };
+
+
+/**
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.toggle = function() {
+  if (this.active_) {
+    this.deactivate();
+  } else {
+    this.activate();
+  }
+};
