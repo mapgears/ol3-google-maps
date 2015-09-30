@@ -68,6 +68,9 @@ olgm.herald.VectorSource.prototype.activate = function() {
  * @inheritDoc
  */
 olgm.herald.VectorSource.prototype.deactivate = function() {
+  // unwatch existing features...
+  this.source_.getFeatures().forEach(this.unwatchFeature_, this);
+
   goog.base(this, 'deactivate');
 };
 

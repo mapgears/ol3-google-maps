@@ -118,6 +118,17 @@ olgm.herald.Layers.prototype.activate = function() {
 
 
 /**
+ * @inheritDoc
+ */
+olgm.herald.Layers.prototype.deactivate = function() {
+  // unwatch existing layers
+  layers.forEach(this.unwatchLayer_, this);
+
+  goog.base(this, 'deactivate');
+};
+
+
+/**
  * Callback method fired when a new layer is added to the map.
  * @param {ol.CollectionEvent} event Collection event.
  * @private

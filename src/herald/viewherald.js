@@ -64,6 +64,14 @@ olgm.herald.View.prototype.activate = function() {
 
 
 /**
+ * @inheritDoc
+ */
+olgm.herald.View.prototype.deactivate = function() {
+  goog.base(this, 'deactivate');
+};
+
+
+/**
  * Recenter the gmap map at the ol3 map center location.
  * @api stable
  */
