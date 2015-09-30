@@ -122,7 +122,7 @@ olgm.herald.Layers.prototype.activate = function() {
  */
 olgm.herald.Layers.prototype.deactivate = function() {
   // unwatch existing layers
-  layers.forEach(this.unwatchLayer_, this);
+  this.ol3map.getLayers().forEach(this.unwatchLayer_, this);
 
   goog.base(this, 'deactivate');
 };

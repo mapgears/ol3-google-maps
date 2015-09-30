@@ -1,6 +1,7 @@
 goog.provide('olgm.herald.Feature');
 
-goog.require('olgm.FeatureFactory');
+goog.require('goog.asserts');
+goog.require('olgm');
 goog.require('olgm.herald.Herald');
 
 
@@ -45,11 +46,14 @@ olgm.herald.Feature.prototype.activate = function() {
   goog.base(this, 'activate');
 
   // create gmap feature
-  this.gmapFeature_ = new olgm.FeatureFactory().createGoogleMapsFeature(
-      this.feature_);
+  this.gmapFeature_ = olgm.createGoogleMapsFeature(this.feature_);
   this.gmap.data.add(this.gmapFeature_);
 
+  var geometry = this.feature_.getGeometry();
+
   // event listeners (todo)
+  var keys = this.listenerKeys;
+  keys.push(geometry.on('change', this.handleGeometryChange_, this));
 };
 
 
@@ -60,7 +64,17 @@ olgm.herald.Feature.prototype.deactivate = function() {
 
   // remove gmap feature
   this.gmap.data.remove(this.gmapFeature_);
-  this.gmapFeature = null;
+  this.gmapFeature_ = null;
 
   goog.base(this, 'deactivate');
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
+  var geometry = this.feature_.getGeometry();
+  goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
+  this.gmapFeature_.setGeometry(olgm.createGoogleMapsGeometry(geometry));
 };

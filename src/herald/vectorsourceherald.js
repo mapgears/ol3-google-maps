@@ -2,7 +2,6 @@ goog.provide('olgm.herald.VectorSource');
 
 goog.require('goog.asserts');
 //goog.require('ol.Feature');
-goog.require('olgm.FeatureFactory');
 goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');
 
