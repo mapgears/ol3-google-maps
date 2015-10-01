@@ -206,7 +206,8 @@ olgm.createGMStyleFromOLStyle = function(style) {
 
       var imageAnchor = image.getAnchor();
       if (imageAnchor) {
-        gmSymbol['anchor'] = imageAnchor;
+        gmSymbol['anchor'] = new google.maps.Point(
+            imageAnchor[0], imageAnchor[1]);
       }
 
       // FIXME - origin is not working for an unknown reason
@@ -219,7 +220,7 @@ olgm.createGMStyleFromOLStyle = function(style) {
 
       var imageSize = image.getSize();
       if (imageSize) {
-        gmSymbol['size'] = imageSize;
+        gmSymbol['size'] = new google.maps.Size(imageSize[0], imageSize[1]);
       }
 
       // NOTE - google.maps.Icon does not support opacity
