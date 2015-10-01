@@ -218,6 +218,16 @@ var addMarkerFeatures = function(len) {
   }));
 };
 
+var addTextFeatures = function(len) {
+  addPointFeatures(len, new ol.style.Style({
+    image: new ol.style.Circle({
+      'fill': new ol.style.Fill({color: 'rgba(153,51,51,0.3)'}),
+      'stroke': new ol.style.Stroke({color: 'rgb(153,51,51)', width: 2}),
+      'radius': 20
+    })
+  }));
+};
+
 var addLineFeatures = function(len, opt_style) {
   var feature;
   for (var i = 0; i < len; i++) {
@@ -232,12 +242,13 @@ var addLineFeatures = function(len, opt_style) {
 
 addPointFeatures(3);
 addMarkerFeatures(3);
+addTextFeatures(3);
 addLineFeatures(1);
 // line with custom style
 addLineFeatures(1, new ol.style.Style({
   stroke: new ol.style.Stroke({
     width: 4,
-    color: 'red'
+    color: '#CC3333'
   })
 }));
 // add polygon feature
@@ -250,11 +261,11 @@ var poly2 = new ol.Feature(
 );
 poly2.setStyle(new ol.style.Style({
   fill: new ol.style.Stroke({
-    color: 'rgba(0,255,0,0.4)'
+    color: 'rgba(63,93,125,0.4)'
   }),
   stroke: new ol.style.Stroke({
     width: 4,
-    color: 'rgba(255,0,0,0.8)'
+    color: 'rgba(63,93,125,0.8)'
   })
 }));
 vector.getSource().addFeature(poly2);
