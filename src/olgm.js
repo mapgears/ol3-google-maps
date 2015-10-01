@@ -172,5 +172,37 @@ olgm.createGMStyleFromOLStyle = function(style) {
     gmStyle['fillColor'] = fill.getColor();
   }
 
+  var image = style.getImage();
+  if (image) {
+    var gmIcon = {};
+    var gmSymbol = {};
+
+    if (image instanceof ol.style.Circle) {
+      gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
+
+      var imageStroke = image.getStroke();
+      if (imageStroke) {
+        gmSymbol['strokeColor'] = imageStroke.getColor();
+        gmSymbol['strokeWeight'] = imageStroke.getWidth();
+      }
+
+      var imageFill = image.getFill();
+      if (imageFill) {
+        gmSymbol['fillColor'] = imageFill.getColor();
+      }
+
+      var imageRadius = image.getRadius();
+      if (imageRadius) {
+        gmSymbol['scale'] = imageRadius;
+      }
+    }
+
+    if (Object.keys(gmIcon).length) {
+      gmStyle['icon'] = /** @type {google.maps.Icon} */ (gmIcon);
+    } else if (Object.keys(gmSymbol).length) {
+      gmStyle['icon'] = /** @type {google.maps.Symbol} */ (gmSymbol);
+    }
+  }
+
   return gmStyle;
 };
