@@ -5,6 +5,35 @@ goog.require('goog.events');
 
 /**
  * @param {string|Array.<number>} color
+ * @return {string}
+ */
+olgm.getColor = function(color) {
+
+  var out = '';
+  var rgba = null;
+
+  if (typeof color === 'string') {
+    // is string
+    if (olgm.stringStartsWith(color, 'rgba')) {
+      rgba = olgm.parseRGBA(color);
+    } else {
+      out = color;
+    }
+  } else {
+    // is array
+    rgba = color;
+  }
+
+  if (rgba !== null) {
+    out = ['rgb(', rgba[0], ',', rgba[1], ',', rgba[2], ')'].join('');
+  }
+
+  return out;
+};
+
+
+/**
+ * @param {string|Array.<number>} color
  * @return {?number}
  */
 olgm.getColorOpacity = function(color) {

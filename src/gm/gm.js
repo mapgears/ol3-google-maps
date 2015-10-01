@@ -151,7 +151,7 @@ olgm.gm.createStyleInternal = function(style) {
   if (stroke) {
     var strokeColor = stroke.getColor();
     if (strokeColor) {
-      gmStyle['strokeColor'] = strokeColor;
+      gmStyle['strokeColor'] = olgm.getColor(strokeColor);
       var strokeOpacity = olgm.getColorOpacity(strokeColor);
       if (strokeOpacity !== null) {
         gmStyle['strokeOpacity'] = strokeOpacity;
@@ -170,7 +170,7 @@ olgm.gm.createStyleInternal = function(style) {
   if (fill) {
     var fillColor = fill.getColor();
     if (fillColor) {
-      gmStyle['fillColor'] = fillColor;
+      gmStyle['fillColor'] = olgm.getColor(fillColor);
       var fillOpacity = olgm.getColorOpacity(fillColor);
       if (fillOpacity !== null) {
         gmStyle['fillOpacity'] = fillOpacity;
@@ -189,13 +189,29 @@ olgm.gm.createStyleInternal = function(style) {
 
       var imageStroke = image.getStroke();
       if (imageStroke) {
-        gmSymbol['strokeColor'] = imageStroke.getColor();
+        var imageStrokeColor = imageStroke.getColor();
+        if (imageStrokeColor) {
+          gmSymbol['strokeColor'] = olgm.getColor(imageStrokeColor);
+        }
+
         gmSymbol['strokeWeight'] = imageStroke.getWidth();
       }
 
       var imageFill = image.getFill();
       if (imageFill) {
-        gmSymbol['fillColor'] = imageFill.getColor();
+        var imageFillColor = imageFill.getColor();
+        if (imageFillColor) {
+          gmSymbol['fillColor'] = olgm.getColor(imageFillColor);
+
+          var imageFillOpacity = olgm.getColorOpacity(imageFillColor);
+          if (imageFillOpacity !== null) {
+            gmSymbol['fillOpacity'] = imageFillOpacity;
+          } else {
+            // Google Maps default fill opacity of images is `0`. In ol3,
+            // it's `1`.
+            gmSymbol['fillOpacity'] = 1;
+          }
+        }
       }
 
       var imageRadius = image.getRadius();
@@ -235,6 +251,11 @@ olgm.gm.createStyleInternal = function(style) {
     } else if (Object.keys(gmSymbol).length) {
       gmStyle['icon'] = /** @type {google.maps.Symbol} */ (gmSymbol);
     }
+  }
+
+  var text = style.getText();
+  if (text) {
+    console.log(text);
   }
 
   return gmStyle;
