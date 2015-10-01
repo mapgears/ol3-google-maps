@@ -206,6 +206,12 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
     'map': gmap
   });
 
+  // Style
+  var gmStyle = olgm.createGMStyle(layer);
+  if (gmStyle) {
+    data.setStyle(gmStyle);
+  }
+
   // herald
   var herald = new olgm.herald.VectorSource(ol3map, gmap, source, data);
   herald.activate();

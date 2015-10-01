@@ -232,7 +232,7 @@ var addPolygonFeature = function(len) {
 };
 
 
-addPointFeatures(5);
+//addPointFeatures(5);
 addLineFeatures(2);
 addPolygonFeature();
 

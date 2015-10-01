@@ -13,6 +13,9 @@ olgm.unlistenAllByKey = function(listenerKeys) {
 };
 
 
+// === Feature and Geometry ===
+
+
 /**
  * Create a Google Maps feature using an OpenLayers one.
  * @param {ol.Feature} feature
@@ -109,4 +112,65 @@ olgm.createGoogleMapsGeometry = function(geometry, opt_ol3map) {
   }
 
   return gmapGeometry;
+};
+
+
+// === Style ===
+
+
+/**
+ * Create a Google Maps data style options from an OpenLayers style.
+ * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
+ * @return {?google.maps.Data.StyleOptions}
+ * @api
+ */
+olgm.createGMStyle = function(object) {
+
+  var style = null;
+  var gmStyle = null;
+
+  if (object instanceof ol.style.Style) {
+    style = object;
+  } else if (object instanceof ol.layer.Vector ||
+             object instanceof ol.Feature) {
+    style = object.getStyle();
+    if (style && style instanceof Function) {
+      style = style()[0]; // todo - support multiple styles ?
+    }
+  } else if (object instanceof Function) {
+    style = object()[0]; // todo - support multiple styles ?
+  }
+
+  if (style) {
+    gmStyle = olgm.createGMStyleFromOLStyle(style);
+  }
+
+  return gmStyle;
+};
+
+
+/**
+ * Create a Google Maps data style options from an OpenLayers style object.
+ * @param {ol.style.Style} style
+ * @return {google.maps.Data.StyleOptions}
+ */
+olgm.createGMStyleFromOLStyle = function(style) {
+
+  var gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
+
+  // strokeColor
+  // strokeWeight
+  var stroke = style.getStroke();
+  if (stroke) {
+    gmStyle['strokeColor'] = stroke.getColor();
+    gmStyle['strokeWeight'] = stroke.getWidth();
+  }
+
+  // fillColor
+  var fill = style.getFill();
+  if (fill) {
+    gmStyle['fillColor'] = fill.getColor();
+  }
+
+  return gmStyle;
 };
