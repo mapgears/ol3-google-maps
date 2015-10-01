@@ -195,9 +195,14 @@ var generateLineFeature = function() {
   );
 };
 
-var addPointFeatures = function(len) {
+var addPointFeatures = function(len, opt_style) {
+  var feature;
   for (var i = 0; i < len; i++) {
-    vector.getSource().addFeature(generatePointFeature());
+    feature = generatePointFeature();
+    vector.getSource().addFeature(feature);
+    if (opt_style) {
+      feature.setStyle(opt_style);
+    }
   }
 };
 
@@ -213,7 +218,18 @@ var addLineFeatures = function(len, opt_style) {
 };
 
 
-addPointFeatures(5);
+addPointFeatures(3);
+// point with custom style
+addPointFeatures(3, new ol.style.Style({
+  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+    anchor: [0.5, 46],
+    anchorXUnits: 'fraction',
+    anchorYUnits: 'pixels',
+    opacity: 0.75,
+    src: 'data/icon.png'
+  }))
+}));
+
 addLineFeatures(1);
 // line with custom style
 addLineFeatures(1, new ol.style.Style({

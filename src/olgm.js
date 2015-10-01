@@ -178,6 +178,7 @@ olgm.createGMStyleFromOLStyle = function(style) {
     var gmSymbol = {};
 
     if (image instanceof ol.style.Circle) {
+      // --- ol.style.Circle ---
       gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
 
       var imageStroke = image.getStroke();
@@ -195,6 +196,33 @@ olgm.createGMStyleFromOLStyle = function(style) {
       if (imageRadius) {
         gmSymbol['scale'] = imageRadius;
       }
+    } else if (image instanceof ol.style.Icon) {
+      // --- ol.style.Icon ---
+
+      var imageSrc = image.getSrc();
+      if (imageSrc) {
+        gmSymbol['url'] = imageSrc;
+      }
+
+      var imageAnchor = image.getAnchor();
+      if (imageAnchor) {
+        gmSymbol['anchor'] = imageAnchor;
+      }
+
+      // FIXME - origin is not working for an unknown reason
+      /*
+      var imageOrigin = image.getOrigin();
+      if (imageOrigin) {
+        gmSymbol['origin'] = imageOrigin;
+      }
+      */
+
+      var imageSize = image.getSize();
+      if (imageSize) {
+        gmSymbol['size'] = imageSize;
+      }
+
+      // NOTE - google.maps.Icon does not support opacity
     }
 
     if (Object.keys(gmIcon).length) {
