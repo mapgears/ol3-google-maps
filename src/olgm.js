@@ -210,13 +210,11 @@ olgm.createGMStyleFromOLStyle = function(style) {
             imageAnchor[0], imageAnchor[1]);
       }
 
-      // FIXME - origin is not working for an unknown reason
-      /*
       var imageOrigin = image.getOrigin();
       if (imageOrigin) {
-        gmSymbol['origin'] = imageOrigin;
+        gmSymbol['origin'] = new google.maps.Point(
+            imageOrigin[0], imageOrigin[1]);
       }
-      */
 
       var imageSize = image.getSize();
       if (imageSize) {
