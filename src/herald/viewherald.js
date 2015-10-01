@@ -3,7 +3,6 @@ goog.provide('olgm.herald.View');
 goog.require('goog.asserts');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
-//goog.require('ol.proj');
 goog.require('olgm.herald.Herald');
 
 

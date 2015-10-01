@@ -1,7 +1,7 @@
 goog.provide('olgm.herald.Feature');
 
 goog.require('goog.asserts');
-goog.require('olgm');
+goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 
 
@@ -52,11 +52,11 @@ olgm.herald.Feature.prototype.activate = function() {
   goog.base(this, 'activate');
 
   // create gmap feature
-  this.gmapFeature_ = olgm.createGoogleMapsFeature(this.feature_);
+  this.gmapFeature_ = olgm.gm.createFeature(this.feature_);
   this.data_.add(this.gmapFeature_);
 
   // override style if a style is defined at the feature level
-  var gmStyle = olgm.createGMStyle(this.feature_);
+  var gmStyle = olgm.gm.createStyle(this.feature_);
   if (gmStyle) {
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
   }
@@ -88,5 +88,5 @@ olgm.herald.Feature.prototype.deactivate = function() {
 olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
   var geometry = this.feature_.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
-  this.gmapFeature_.setGeometry(olgm.createGoogleMapsFeatureGeometry(geometry));
+  this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
 };

@@ -1,7 +1,5 @@
 goog.provide('olgm.layer.Google');
 
-//goog.require('ol.layer.Group');
-
 
 
 /**

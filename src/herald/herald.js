@@ -1,7 +1,7 @@
 goog.provide('olgm.herald.Herald');
 
-goog.require('goog.array');
 goog.require('goog.events');
+goog.require('olgm');
 goog.require('olgm.Abstract');
 
 

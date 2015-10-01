@@ -1,8 +1,8 @@
 goog.provide('olgm.herald.Layers');
 
 goog.require('goog.asserts');
-//goog.require('ol.layer.Base');
-//goog.require('ol.layer.Vector');
+goog.require('olgm');
+goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.VectorSource');
 goog.require('olgm.herald.View');
@@ -206,7 +206,7 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
   });
 
   // Style
-  var gmStyle = olgm.createGMStyle(layer);
+  var gmStyle = olgm.gm.createStyle(layer);
   if (gmStyle) {
     data.setStyle(gmStyle);
   }
