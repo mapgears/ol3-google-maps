@@ -195,46 +195,52 @@ var generateLineFeature = function() {
   );
 };
 
-var generatePolygonFeature = function() {
-  var coordinates = [];
-  for (var i = 0, len = 3; i < len; i++) {
-    coordinates.push(generateCoordinate());
-  }
-  coordinates.push(coordinates[0].splice(0));
-  return new ol.Feature(
-    new ol.geom.Polygon(coordinates)
-  );
-};
-
 var addPointFeatures = function(len) {
   for (var i = 0; i < len; i++) {
     vector.getSource().addFeature(generatePointFeature());
   }
 };
 
-var addLineFeatures = function(len) {
+var addLineFeatures = function(len, opt_style) {
+  var feature;
   for (var i = 0; i < len; i++) {
-    vector.getSource().addFeature(generateLineFeature());
+    feature = generateLineFeature();
+    vector.getSource().addFeature(feature);
+    if (opt_style) {
+      feature.setStyle(opt_style);
+    }
   }
 };
 
-var addPolygonFeatures = function(len) {
-  for (var i = 0; i < len; i++) {
-    vector.getSource().addFeature(generatePolygonFeature());
-  }
-};
 
-var addPolygonFeature = function(len) {
-  var feature = new ol.Feature(
-    new ol.geom.Polygon.fromExtent([-8259955, 6067881, -7324773, 6524669])
-  );
-  vector.getSource().addFeature(feature);
-};
+addPointFeatures(5);
+addLineFeatures(1);
+// line with custom style
+addLineFeatures(1, new ol.style.Style({
+  stroke: new ol.style.Stroke({
+    width: 4,
+    color: 'red'
+  })
+}));
+// add polygon feature
+vector.getSource().addFeature(new ol.Feature(
+  new ol.geom.Polygon.fromExtent([-8259955, 6067881, -7324773, 6524669])
+));
+// add polygon feature with custom style
+var poly2 = new ol.Feature(
+  new ol.geom.Polygon.fromExtent([-8159955, 6167881, -7124773, 6724669])
+);
+poly2.setStyle(new ol.style.Style({
+  fill: new ol.style.Stroke({
+    color: 'rgba(0,255,0,0.4)'
+  }),
+  stroke: new ol.style.Stroke({
+    width: 4,
+    color: 'green'
+  })
+}));
+vector.getSource().addFeature(poly2);
 
-
-//addPointFeatures(5);
-addLineFeatures(2);
-addPolygonFeature();
 
 
 var olgmMain = new olgm.OLGoogleMaps({

@@ -56,6 +56,12 @@ olgm.herald.Feature.prototype.activate = function() {
   this.gmapFeature_ = olgm.createGoogleMapsFeature(this.feature_);
   this.data_.add(this.gmapFeature_);
 
+  // override style if a style is defined at the feature level
+  var gmStyle = olgm.createGMStyle(this.feature_);
+  if (gmStyle) {
+    this.data_.overrideStyle(this.gmapFeature_, gmStyle);
+  }
+
   var geometry = this.feature_.getGeometry();
 
   // event listeners (todo)
