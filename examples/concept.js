@@ -254,7 +254,7 @@ poly2.setStyle(new ol.style.Style({
   }),
   stroke: new ol.style.Stroke({
     width: 4,
-    color: 'green'
+    color: 'rgba(255,0,0,0.8)'
   })
 }));
 vector.getSource().addFeature(poly2);
