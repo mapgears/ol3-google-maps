@@ -199,37 +199,39 @@ var addPointFeatures = function(len, opt_style) {
   var feature;
   for (var i = 0; i < len; i++) {
     feature = generatePointFeature();
-    vector.getSource().addFeature(feature);
     if (opt_style) {
       feature.setStyle(opt_style);
     }
+    vector.getSource().addFeature(feature);
   }
+};
+
+var addMarkerFeatures = function(len) {
+  addPointFeatures(len, new ol.style.Style({
+    image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+      anchor: [0.5, 46],
+      anchorXUnits: 'fraction',
+      anchorYUnits: 'pixels',
+      opacity: 0.75,
+      src: 'data/icon.png'
+    }))
+  }));
 };
 
 var addLineFeatures = function(len, opt_style) {
   var feature;
   for (var i = 0; i < len; i++) {
     feature = generateLineFeature();
-    vector.getSource().addFeature(feature);
     if (opt_style) {
       feature.setStyle(opt_style);
     }
+    vector.getSource().addFeature(feature);
   }
 };
 
 
 addPointFeatures(3);
-// point with custom style
-addPointFeatures(3, new ol.style.Style({
-  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
-    anchor: [0.5, 46],
-    anchorXUnits: 'fraction',
-    anchorYUnits: 'pixels',
-    opacity: 0.75,
-    src: 'data/icon.png'
-  }))
-}));
-
+addMarkerFeatures(3);
 addLineFeatures(1);
 // line with custom style
 addLineFeatures(1, new ol.style.Style({
@@ -258,7 +260,6 @@ poly2.setStyle(new ol.style.Style({
 vector.getSource().addFeature(poly2);
 
 
-
 var olgmMain = new olgm.OLGoogleMaps({
   ol3map: ol3map
 });
@@ -269,7 +270,7 @@ document.getElementById('toggle').onclick = function() {
 };
 
 document.getElementById('add-point').onclick = function() {
-  addPointFeatures(5);
+  addMarkerFeatures(3);
 };
 
 document.getElementById('clear-point').onclick = function() {
