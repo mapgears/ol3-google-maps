@@ -19,7 +19,6 @@ olgm.MapType = {
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
  * @constructor
- * @api
  */
 olgm.Abstract = function(ol3map, gmap) {
 

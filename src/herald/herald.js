@@ -23,7 +23,6 @@ goog.require('olgm.Abstract');
  * @param {!google.maps.Map} gmap
  * @constructor
  * @extends {olgm.Abstract}
- * @api
  */
 olgm.herald.Herald = function(ol3map, gmap) {
 
@@ -40,23 +39,13 @@ goog.inherits(olgm.herald.Herald, olgm.Abstract);
 
 /**
  * Register all event listeners.
- * @api
  */
 olgm.herald.Herald.prototype.activate = function() {};
 
 
 /**
  * Unregister all event listeners.
- * @api
  */
 olgm.herald.Herald.prototype.deactivate = function() {
   olgm.unlistenAllByKey(this.listenerKeys);
 };
-
-
-/**
- * Called when switching to a particular map.
- * @param {string} mapType
- * @api
- */
-olgm.herald.Herald.prototype.switchMap = function(mapType) {};

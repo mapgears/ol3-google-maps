@@ -17,7 +17,6 @@ goog.require('olgm.herald.Herald');
  * @param {!google.maps.Data} data
  * @constructor
  * @extends {olgm.herald.Herald}
- * @api
  */
 olgm.herald.Feature = function(ol3map, gmap, feature, data) {
 

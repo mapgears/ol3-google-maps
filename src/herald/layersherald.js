@@ -29,7 +29,6 @@ goog.require('olgm.layer.Google');
  * @param {!google.maps.Map} gmap
  * @constructor
  * @extends {olgm.herald.Herald}
- * @api
  */
 olgm.herald.Layers = function(ol3map, gmap) {
 

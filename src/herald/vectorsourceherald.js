@@ -21,7 +21,6 @@ goog.require('olgm.herald.Herald');
  * @param {!google.maps.Data} data
  * @constructor
  * @extends {olgm.herald.Herald}
- * @api
  */
 olgm.herald.VectorSource = function(ol3map, gmap, source, data) {
 

@@ -18,7 +18,6 @@ goog.require('olgm.herald.Herald');
  * @param {!google.maps.Map} gmap
  * @constructor
  * @extends {olgm.herald.Herald}
- * @api
  */
 olgm.herald.View = function(ol3map, gmap) {
   goog.base(this, ol3map, gmap);
@@ -73,7 +72,6 @@ olgm.herald.View.prototype.deactivate = function() {
 
 /**
  * Recenter the gmap map at the ol3 map center location.
- * @api stable
  */
 olgm.herald.View.prototype.setCenter = function() {
   var view = this.ol3map.getView();
@@ -89,7 +87,6 @@ olgm.herald.View.prototype.setCenter = function() {
 
 /**
  * Set the gmap map zoom level at the ol3 map view zoom level.
- * @api stable
  */
 olgm.herald.View.prototype.setZoom = function() {
   var zoom = this.ol3map.getView().getZoom();

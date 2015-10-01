@@ -81,7 +81,6 @@ olgm.unlistenAllByKey = function(listenerKeys) {
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.Feature}
- * @api
  */
 olgm.createGoogleMapsFeature = function(feature, opt_ol3map) {
   var geometry = feature.getGeometry();
@@ -99,7 +98,6 @@ olgm.createGoogleMapsFeature = function(feature, opt_ol3map) {
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.Geometry|google.maps.LatLng|google.maps.LatLng}
- * @api
  */
 olgm.createGoogleMapsFeatureGeometry = function(geometry, opt_ol3map) {
 
@@ -125,7 +123,6 @@ olgm.createGoogleMapsFeatureGeometry = function(geometry, opt_ol3map) {
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.LatLng}
- * @api
  */
 olgm.createGoogleMapsLatLng = function(point, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -142,7 +139,6 @@ olgm.createGoogleMapsLatLng = function(point, opt_ol3map) {
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.LineString|google.maps.Data.Polygon}
- * @api
  */
 olgm.createGoogleMapsGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -181,7 +177,6 @@ olgm.createGoogleMapsGeometry = function(geometry, opt_ol3map) {
  * Create a Google Maps data style options from an OpenLayers style.
  * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
  * @return {?google.maps.Data.StyleOptions}
- * @api
  */
 olgm.createGMStyle = function(object) {
 
