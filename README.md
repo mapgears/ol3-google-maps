@@ -1,2 +1,25 @@
-# ol3-google-maps
-OpenLayers - Google Maps integration
+OL3-Google-Maps
+===============
+
+OpenLayers - Google Maps integration library. Create a map using
+[OpenLayers 3](http://openlayers.org/) with the possibility to use Google Maps
+as base map and much more.
+
+
+Features
+--------
+
+Synchronizes:
+
+ - Layers (Google, Vector)
+ - Vector features (style, geometry)
+
+
+Live examples
+-------------
+
+See OL3-Google-Maps in action at:
+http://dev5.mapgears.com/ol3-google-maps/examples/
+
+
+Stay tuned for more!
