@@ -293,21 +293,6 @@ var toggleOsmLayer = function(opt_visible) {
   osmLayer.setVisible(visible);
 };
 
-var showOSMLayer = function() {
-  var found = null;
-  var layers = map.getLayers();
-
-  layers.getArray().every(function(layer) {
-    if (layer instanceof olgm.layer.Google) {
-      found = layer;
-      return false;
-    }
-    return true;
-  }, this);
-
-  toggleOsmLayer(!found);
-};
-
 document.getElementById('toggle-osm').onclick = function() {
   toggleOsmLayer();
 };
@@ -328,7 +313,6 @@ document.getElementById('gm-rm-last').onclick = function() {
     layers.remove(found);
   }
 
-  showOSMLayer();
 };
 
 
@@ -336,7 +320,6 @@ document.getElementById('gm-add-sat').onclick = function() {
   map.getLayers().push(new olgm.layer.Google({
     mapTypeId: google.maps.MapTypeId.SATELLITE
   }));
-  showOSMLayer();
 };
 
 
@@ -344,7 +327,6 @@ document.getElementById('gm-add-ter').onclick = function() {
   map.getLayers().push(new olgm.layer.Google({
     mapTypeId: google.maps.MapTypeId.TERRAIN
   }));
-  showOSMLayer();
 };
 
 
