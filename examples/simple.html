@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps simple example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../ol3/css/ol.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Simple example</h4>
+          <p>
+            A simple map containing a single Google layer. OpenLayers is
+            on top of Google Maps and controls all interactions on the map.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="../ol3/build/ol.js"></script>
+
+    <!-- GoogleMaps API Key for 127.0.0.1 -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3.21&key=AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ"></script>
+
+    <script src="/@loader"></script>
+    <script src="simple.js"></script>
+  </body>
+</html>
