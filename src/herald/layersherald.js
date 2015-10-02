@@ -11,19 +11,34 @@ goog.require('olgm.layer.Google');
 
 
 /**
- * The Layers Herald is responsible of listening to any vector layer added
- * to or removed from the ol3 map.
+ * The Layers Herald is responsible of synchronizing the layers from the
+ * OpenLayers map to the Google Maps one. It listens to layers added and
+ * removed, and also takes care of existing layers when activated.
  *
- * If a `olgm.GoogleLayer` layer is added, the process of enabling the
- * Google Maps  map is activated (if it is the first). If there are already
- * existing `olgm.GoogleLayer` in the map, then the top-most is used to define
- * the map type id to use.
+ * It is also responsible of the activation and deactivation of the
+ * Google Maps map. When activated, it is rendered in the OpenLayers map
+ * target element, and the OpenLayers map is put inside the Google Maps map
+ * as a control that takes 100% of the size. The original state is restored
+ * when deactivated.
  *
- * If a `ol.layer.Vector` layer is added, then it is bound to a
- * `olgm.herald.VectorSource` to synchronize the vector features in it with
- * their equivalent in the Google Maps map. Also, the vector layer gets
- * rendered completely opaque to let Google Maps be 'master' of vector
- * features.
+ * The supported layers are:
+ *
+ * `olgm.layer.Google`
+ * -------------------
+ *     When a google layer is added, the process of enabling the
+ *     Google Maps  map is activated (if it is the first and if it's visible).
+ *     If there is an existing and visible `olgm.layer.Google` in the map,
+ *     then the top-most is used to define the map type id Google Maps has to
+ *     switch to. **Limitation** The Google Maps map is always below the
+ *     OpenLayers map, which means that the other OpenLayers layers are always
+ *     on top of Google Maps.
+ *
+ * `ol.layer.Vector`
+ * -----------------
+ *     When a vector layers is added, a `olgm.herald.VectorSource` is created
+ *     to manage its `ol.source.Vector`. The layer is immediately rendered
+ *     fully transparent, making the interactions still possible over it
+ *     while being invisible.
  *
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap

@@ -253,10 +253,13 @@ olgm.gm.createStyleInternal = function(style) {
     }
   }
 
+  // TODO - support text style
+  /*
   var text = style.getText();
   if (text) {
     console.log(text);
   }
+  */
 
   return gmStyle;
 };

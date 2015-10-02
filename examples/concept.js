@@ -137,7 +137,7 @@ var osmLayer = new ol.layer.Tile({
   visible: false
 });
 
-var ol3map = new ol.Map({
+var map = new ol.Map({
   // kinetic dragPan is not recommended, thus disabled here
   interactions: ol.interaction.defaults({
     dragPan: false
@@ -149,7 +149,7 @@ var ol3map = new ol.Map({
     osmLayer,
     new olgm.layer.Google()
   ],
-  target: 'ol3map',
+  target: 'map',
   view: new ol.View({
     center: ol.proj.transform([lng, lat], 'EPSG:4326', 'EPSG:3857'),
     zoom: zoom
@@ -167,7 +167,7 @@ gmap.data.setStyle({
 var vector = new ol.layer.Vector({
   source: new ol.source.Vector()
 });
-ol3map.addLayer(vector);
+map.addLayer(vector);
 
 var generateCoordinate = function() {
   var extent = [-9259955, 5467881, -6324773, 7424669];
@@ -218,7 +218,7 @@ var addMarkerFeatures = function(len) {
   }));
 };
 
-var addTextFeatures = function(len) {
+var addCircleFeatures = function(len) {
   addPointFeatures(len, new ol.style.Style({
     image: new ol.style.Circle({
       'fill': new ol.style.Fill({color: 'rgba(153,51,51,0.3)'}),
@@ -242,7 +242,7 @@ var addLineFeatures = function(len, opt_style) {
 
 addPointFeatures(3);
 addMarkerFeatures(3);
-addTextFeatures(3);
+addCircleFeatures(3);
 addLineFeatures(1);
 // line with custom style
 addLineFeatures(1, new ol.style.Style({
@@ -271,13 +271,11 @@ poly2.setStyle(new ol.style.Style({
 vector.getSource().addFeature(poly2);
 
 
-var olgmMain = new olgm.OLGoogleMaps({
-  ol3map: ol3map
-});
-olgmMain.activate();
+var olGM = new olgm.OLGoogleMaps({map: map});
+olGM.activate();
 
 document.getElementById('toggle').onclick = function() {
-  olgmMain.toggle();
+  olGM.toggle();
 };
 
 document.getElementById('add-point').onclick = function() {
@@ -297,7 +295,7 @@ var toggleOsmLayer = function(opt_visible) {
 
 var showOSMLayer = function() {
   var found = null;
-  var layers = ol3map.getLayers();
+  var layers = map.getLayers();
 
   layers.getArray().every(function(layer) {
     if (layer instanceof olgm.layer.Google) {
@@ -316,7 +314,7 @@ document.getElementById('toggle-osm').onclick = function() {
 
 document.getElementById('gm-rm-last').onclick = function() {
   var found = null;
-  var layers = ol3map.getLayers();
+  var layers = map.getLayers();
 
   // remove last one
   layers.getArray().slice(0).reverse().every(function(layer) {
@@ -335,7 +333,7 @@ document.getElementById('gm-rm-last').onclick = function() {
 
 
 document.getElementById('gm-add-sat').onclick = function() {
-  ol3map.getLayers().push(new olgm.layer.Google({
+  map.getLayers().push(new olgm.layer.Google({
     mapTypeId: google.maps.MapTypeId.SATELLITE
   }));
   showOSMLayer();
@@ -343,7 +341,7 @@ document.getElementById('gm-add-sat').onclick = function() {
 
 
 document.getElementById('gm-add-ter').onclick = function() {
-  ol3map.getLayers().push(new olgm.layer.Google({
+  map.getLayers().push(new olgm.layer.Google({
     mapTypeId: google.maps.MapTypeId.TERRAIN
   }));
   showOSMLayer();
@@ -352,7 +350,7 @@ document.getElementById('gm-add-ter').onclick = function() {
 
 document.getElementById('gm-toggle-last').onclick = function() {
   var found = null;
-  var layers = ol3map.getLayers();
+  var layers = map.getLayers();
 
   // remove last one
   layers.getArray().slice(0).reverse().every(function(layer) {

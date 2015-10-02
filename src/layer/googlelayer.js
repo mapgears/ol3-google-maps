@@ -4,7 +4,8 @@ goog.provide('olgm.layer.Google');
 
 /**
  * An ol3 layer object serving the purpose of being added to the ol3 map
- * as dummy layer.
+ * as dummy layer. The `mapTypeId` defines which Google Maps map type the
+ * layer represents.
  *
  * @param {!olgmx.layer.GoogleOptions=} opt_options Options.
  * @constructor

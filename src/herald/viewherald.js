@@ -9,9 +9,10 @@ goog.require('olgm.herald.Herald');
 
 /**
  * The View Herald is responsible of synchronizing the view (center/zoom)
- * of boths maps.
+ * of boths maps together. The ol3 map view is the master here, i.e. changes
+ * from the ol3 map view are given to the gmap map, but not vice-versa.
  *
- * It is manually done in the `switchMap` method.
+ * When the browser window gets resized, the gmap map is also updated.
  *
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap

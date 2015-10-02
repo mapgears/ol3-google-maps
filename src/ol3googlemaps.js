@@ -8,9 +8,32 @@ goog.require('olgm.herald.View');
 
 
 /**
- * The main component of this library. It binds an OpenLayers map to a
- * GoogleMaps map and vice-versa.  It is responsible of creating the
- * sub-components that directly interact with both of the
+ * The main component of this library. It binds an existing OpenLayers map to
+ * a Google Maps map it creates through the use of `herald` objects. Each
+ * herald is responsible of synchronizing something from the OpenLayers map
+ * to the Google Maps one, which makes OpenLayers the master source of
+ * interactions. This allows the development of applications without having
+ * to worry about writing code that uses the Google Maps API.
+ *
+ * Here's an architecture overview of what the different heralds, where they
+ * are created and on what they act:
+ *
+ *
+ * olgm.OLGoogleMaps <-- ol.Map
+ *  |
+ *  |__ olgm.herald.Layers <-- ol.Collection.<ol.layer.Base>
+ *       |                      |
+ *       |                      |__olgm.layer.Google
+ *       |                      |
+ *       |                      |__ol.layer.Vector
+ *       |
+ *       |__olgm.herald.View <-- ol.View
+ *       |
+ *       |__olgm.herald.VectorSource <-- ol.source.Vector
+ *          |
+ *          |__olgm.herald.Feature <-- ol.Feature
+ *
+ *
  *
  * @param {!olgmx.OLGoogleMapsOptions} options Options.
  * @constructor
@@ -39,13 +62,11 @@ olgm.OLGoogleMaps = function(options) {
     streetViewControl: false
   });
 
-  goog.base(this, options.ol3map, gmap);
+  goog.base(this, options.map, gmap);
 
-  // create the heralds
+  // create the heralds required at the map level, i.e. for components inside
+  // the ol3 map.
   this.heralds_.push(new olgm.herald.Layers(this.ol3map, this.gmap));
-
-  //this.heralds_.push(new olgm.herald.View(this.ol3map, this.gmap));
-
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
 

@@ -7,17 +7,9 @@ goog.require('olgm.Abstract');
 
 
 /**
- * Abstract class for all heralds. An herald is responsible of synchronizing
- * something between the OpenLayers and Google Maps maps, whether by
- * using event listeners or manually.
- *
- * The `switchMap` is the method used when the herald has to manually
- * do something when one of the two maps become active.
- *
- * The `activate` and `deactivate` methods used to make the herald
- * register and unregister events.
- *
- * An herald can use a single or both of the above methods.
+ * Abstract class for all heralds. When activated, an herald synchronizes
+ * something from the OpenLayers map to the Google Maps one. When deactivated,
+ * it stops doing so.
  *
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap

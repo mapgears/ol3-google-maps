@@ -7,9 +7,11 @@ goog.require('olgm.herald.Herald');
 
 
 /**
- * The Feature Herald is responsible of listening to any changes made to
- * a single ol3 vector feature and apply those changes to a gmap vector
- * feature sibling, which gets created here as well.
+ * The Feature Herald is responsible of synchronizing a single ol3 vector
+ * feature to a gmap feature. Here's what synchronized within the feature:
+ *
+ * - its geometry
+ * - its style
  *
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap

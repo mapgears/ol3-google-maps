@@ -7,12 +7,10 @@ goog.require('olgm.herald.Herald');
 
 
 /**
- * The VectorSource Herald is responsible of listening to features added and
- * removed in a vector source and create the same feature in the Google Maps
- * map.
- *
- * The ol3 maps is the 'master' here, i.e. features added to a GoogleMaps map
- * are not added to the ol3 map.
+ * The VectorSource Herald is responsible of sychronizing the features from
+ * an ol3 vector source. The existing features in addition of those that are
+ * added and removed are all managed. Each existing or added feature is bound
+ * to a `olgm.herald.Feature` object. It gets unbound when removed.
  *
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
