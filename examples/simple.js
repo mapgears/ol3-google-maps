@@ -1,3 +1,5 @@
+var center = [-7908084, 6177492];
+
 // This dummy layer tells Google Maps to switch to its default map type
 var googleLayer = new olgm.layer.Google();
 
@@ -13,8 +15,8 @@ var map = new ol.Map({
   ],
   target: 'map',
   view: new ol.View({
-    center: ol.proj.transform([-70, 50], 'EPSG:4326', 'EPSG:3857'),
-    zoom: 5
+    center: center,
+    zoom: 12
   })
 });
 
