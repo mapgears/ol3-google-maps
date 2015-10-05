@@ -261,5 +261,12 @@ olgm.gm.createStyleInternal = function(style) {
   }
   */
 
+  // if, at this very last point, there aren't any style options that have
+  // been set, then tell Google Maps to render the feature invisible because
+  // we're dealing with an empty `ol.style.Style` object.
+  if (Object.keys(/** @type {!Object} */ (gmStyle)).length === 0) {
+    gmStyle['visible'] = false;
+  }
+
   return gmStyle;
 };
