@@ -64,9 +64,12 @@ olgm.OLGoogleMaps = function(options) {
 
   goog.base(this, options.map, gmap);
 
-  // create the heralds required at the map level, i.e. for components inside
-  // the ol3 map.
-  this.heralds_.push(new olgm.herald.Layers(this.ol3map, this.gmap));
+  /**
+   * @type {olgm.herald.Layers}
+   * @private
+   */
+  this.layersHerald_ = new olgm.herald.Layers(this.ol3map, this.gmap);
+  this.heralds_.push(this.layersHerald_);
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
 
@@ -111,6 +114,15 @@ olgm.OLGoogleMaps.prototype.deactivate = function() {
   }
 
   this.active_ = false;
+};
+
+
+/**
+ * @return {boolean}
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
+  return this.active_ && this.layersHerald_.getGoogleMapsActive();
 };
 
 

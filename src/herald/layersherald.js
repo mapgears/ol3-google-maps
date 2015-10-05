@@ -143,6 +143,14 @@ olgm.herald.Layers.prototype.deactivate = function() {
 
 
 /**
+ * @return {boolean}
+ */
+olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
+  return this.googleMapsIsActive_;
+};
+
+
+/**
  * Callback method fired when a new layer is added to the map.
  * @param {ol.CollectionEvent} event Collection event.
  * @private
