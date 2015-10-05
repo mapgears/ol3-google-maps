@@ -3,6 +3,7 @@ goog.provide('olgm.herald.View');
 goog.require('goog.asserts');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
+goog.require('olgm');
 goog.require('olgm.herald.Herald');
 
 
@@ -89,9 +90,12 @@ olgm.herald.View.prototype.setCenter = function() {
  * Set the gmap map zoom level at the ol3 map view zoom level.
  */
 olgm.herald.View.prototype.setZoom = function() {
-  var zoom = this.ol3map.getView().getZoom();
-  if (goog.isNumber(zoom)) {
-    this.gmap.setZoom(zoom);
+  var resolution = this.ol3map.getView().getResolution();
+  if (goog.isNumber(resolution)) {
+    var zoom = olgm.getZoomFromResolution(resolution);
+    if (zoom !== null) {
+      this.gmap.setZoom(zoom);
+    }
   }
 };
 
