@@ -5,7 +5,7 @@ The OL3-Google-Maps library comes with several limitations as both OpenLayers 3
 and Google Maps aim towards very different goals. The limitations that are
 known are listed here. If you come across something not listed here, you may
 open a
-(new issue on GitHub)[https://github.com/mapgears/ol3-google-maps/issues/new].
+[new issue on GitHub](https://github.com/mapgears/ol3-google-maps/issues/new).
 
 Before jumping into details about each one, note that the sole purpose of this
 library is to allow developers of web mapping applications to enjoy both
