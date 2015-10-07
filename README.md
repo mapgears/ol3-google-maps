@@ -28,4 +28,10 @@ See all other example at:
 http://dev5.mapgears.com/ol3-google-maps/examples/
 
 
+Known Limitations
+-----------------
+
+Please see the known [limitations](LIMITATIONS.md) of this library in details.
+
+
 Stay tuned for more!

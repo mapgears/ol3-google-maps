@@ -138,11 +138,8 @@ var osmLayer = new ol.layer.Tile({
 });
 
 var map = new ol.Map({
-  // kinetic dragPan is not recommended, thus disabled here
-  interactions: ol.interaction.defaults({
-    dragPan: false
-  }).extend([
-    new ol.interaction.DragPan(),
+  // use OL3-Google-Maps recommended default interactions
+  interactions: olgm.interaction.defaults().extend([
     new app.Drag()
   ]),
   layers: [
