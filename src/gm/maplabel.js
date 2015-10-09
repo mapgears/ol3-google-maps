@@ -1,6 +1,6 @@
 /**
  * The following file was borrowed from the MapLabel project, which original
- * source code is available at: 
+ * source code is available at:
  *
  *     http://google-maps-utility-library-v3.googlecode.com/svn/trunk/maplabel
  *
@@ -43,12 +43,12 @@ goog.provide('olgm.gm.MapLabel');
  * @api
  */
 olgm.gm.MapLabel = function(opt_options) {
-  this.set('fontFamily', 'sans-serif');
-  this.set('fontSize', 12);
+  this.set('font', 'normal 12px sans-serif');
   this.set('fontColor', '#000000');
-  this.set('strokeWeight', 4);
   this.set('strokeColor', '#ffffff');
-  this.set('align', 'center');
+  this.set('strokeWeight', 4);
+  this.set('textAlign', 'center');
+  this.set('textBaseline', 'middle');
 
   this.set('zIndex', 1e3);
 
@@ -60,13 +60,17 @@ goog.inherits(olgm.gm.MapLabel, google.maps.OverlayView);
 /** @inheritDoc */
 olgm.gm.MapLabel.prototype.changed = function(prop) {
   switch (prop) {
+    case 'fontColor':
     case 'fontFamily':
     case 'fontSize':
-    case 'fontColor':
-    case 'strokeWeight':
+    case 'fontWeight':
+    case 'offsetX':
+    case 'offsetY':
     case 'strokeColor':
-    case 'align':
+    case 'strokeWeight':
     case 'text':
+    case 'textAlign':
+    case 'textBaseline':
       return this.drawCanvas_();
     case 'maxZoom':
     case 'minZoom':
@@ -89,27 +93,24 @@ olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
 
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.textBaseline = this.get('textBaseline');
   ctx.strokeStyle = this.get('strokeColor');
   ctx.fillStyle = this.get('fontColor');
-  ctx.font = this.get('fontSize') + 'px ' + this.get('fontFamily');
-
-  var strokeWeight = Number(this.get('strokeWeight'));
+  ctx.font = this.get('font');
+  ctx.textAlign = this.get('textAlign');
 
   var text = this.get('text');
   if (text) {
+    var x = canvas.width / 2;
+    var y = canvas.height / 2;
+
+    var strokeWeight = Number(this.get('strokeWeight'));
     if (strokeWeight) {
       ctx.lineWidth = strokeWeight;
-      ctx.strokeText(text, strokeWeight, strokeWeight);
+      ctx.strokeText(text, x, y);
     }
 
-    ctx.fillText(text, strokeWeight, strokeWeight);
-
-    var textMeasure = ctx.measureText(text);
-    var textWidth = textMeasure.width + strokeWeight;
-    style.marginLeft = this.getMarginLeft_(textWidth) + 'px';
-    // Bring actual text top in line with desired latitude.
-    // Cheaper than calculating height of text.
-    style.marginTop = '-0.4em';
+    ctx.fillText(text, x, y);
   }
 };
 
@@ -124,31 +125,13 @@ olgm.gm.MapLabel.prototype.onAdd = function() {
 
   var ctx = canvas.getContext('2d');
   ctx.lineJoin = 'round';
-  ctx.textBaseline = 'top';
 
   this.drawCanvas_();
 
   var panes = this.getPanes();
   if (panes) {
-    panes.mapPane.appendChild(canvas);
+    panes.markerLayer.appendChild(canvas);
   }
-};
-
-
-/**
- * Gets the appropriate margin-left for the canvas.
- * @private
- * @param {number} textWidth  the width of the text, in pixels.
- * @return {number} the margin-left, in pixels.
- */
-olgm.gm.MapLabel.prototype.getMarginLeft_ = function(textWidth) {
-  switch (this.get('align')) {
-    case 'left':
-      return 0;
-    case 'right':
-      return -textWidth;
-  }
-  return textWidth / -2;
 };
 
 
@@ -156,14 +139,15 @@ olgm.gm.MapLabel.prototype.getMarginLeft_ = function(textWidth) {
  * @inheritDoc
  */
 olgm.gm.MapLabel.prototype.draw = function() {
-  var projection = this.getProjection();
 
+  var projection = this.getProjection();
   if (!projection) {
     // The map projection is not ready yet so do nothing
     return;
   }
 
-  if (!this.canvas_) {
+  var canvas = this.canvas_;
+  if (!canvas) {
     // onAdd has not been called yet.
     return;
   }
@@ -172,12 +156,17 @@ olgm.gm.MapLabel.prototype.draw = function() {
   if (!latLng) {
     return;
   }
+
   var pos = projection.fromLatLngToDivPixel(latLng);
+  var ctx = canvas.getContext('2d');
+  var height = ctx.canvas.height;
+  var width = ctx.canvas.width;
+  var offsetX = this.get('offsetX') || 0;
+  var offsetY = this.get('offsetY') || 0;
 
   var style = this.canvas_.style;
-
-  style['top'] = pos.y + 'px';
-  style['left'] = pos.x + 'px';
+  style['top'] = (pos.y - (height / 2) + offsetY) + 'px';
+  style['left'] = (pos.x - (width / 2) + offsetX) + 'px';
 
   style['visibility'] = this.getVisible_();
 };
