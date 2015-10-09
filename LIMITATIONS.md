@@ -72,10 +72,34 @@ map options, in which the interations that allow rotating the map are not
 included.
 
 
+Vector features
+---------------
+
+Google Maps API uses several layers to render its vector features. They are
+known a
+[MapPanes](https://developers.google.com/maps/documentation/javascript/reference#MapPanes),
+each having a fixed Z order.  Polygons and Linestrings are rendered in the
+`overlayLayer` (Pane 1). Points are rendered in the `markerLayer` (Pane 2).
+
+This means that the Z order defined in OpenLayers is not exactly the same
+in Google Maps.
+
+
+
 Vector labels (text)
 --------------------
 
-Vector labels are not yet supported by this library.  They should be in the
-next release.
+Vector labels, i.e. text styling definition, are supported but come with
+several limitations. Before jumping into those, note that OL3-Google-Maps
+focuses on having the labels on the Z order they are added, i.e. a polygon
+added after a label should be rendered on top of the text.
 
-Recommendation: stay tuned, they are coming soon!
+Limitations:
+
+ * the `rotation` option is currently not supported
+ * in the Google Maps map, the labels are rendered in the `markerLayer`
+   (Pane 2), which makes the Z order of labels not working as expected
+   for polygons and linestring
+ * in Google Maps, markers that use image as source are rendered in tiles,
+   which ignore the Z order defined per feature. This causes the labels
+   to always appear on top of all markers.
