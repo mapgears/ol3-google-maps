@@ -1,6 +1,7 @@
 goog.provide('olgm.herald.Feature');
 
 goog.require('goog.asserts');
+goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 
@@ -17,10 +18,11 @@ goog.require('olgm.herald.Herald');
  * @param {!google.maps.Map} gmap
  * @param {ol.Feature} feature
  * @param {!google.maps.Data} data
+ * @param {number} index
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Feature = function(ol3map, gmap, feature, data) {
+olgm.herald.Feature = function(ol3map, gmap, feature, data, index) {
 
   /**
    * @type {ol.Feature}
@@ -33,6 +35,12 @@ olgm.herald.Feature = function(ol3map, gmap, feature, data) {
    * @private
    */
   this.data_ = data;
+
+  /**
+   * @type {number}
+   * @private
+   */
+  this.index_ = index;
 
   goog.base(this, ol3map, gmap);
 
@@ -48,22 +56,41 @@ olgm.herald.Feature.prototype.gmapFeature_ = null;
 
 
 /**
+ * @type {olgm.gm.MapLabel}
+ * @private
+ */
+olgm.herald.Feature.prototype.label_ = null;
+
+
+/**
  * @inheritDoc
  */
 olgm.herald.Feature.prototype.activate = function() {
   goog.base(this, 'activate');
+
+  var geometry = this.feature_.getGeometry();
+  goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
 
   // create gmap feature
   this.gmapFeature_ = olgm.gm.createFeature(this.feature_);
   this.data_.add(this.gmapFeature_);
 
   // override style if a style is defined at the feature level
-  var gmStyle = olgm.gm.createStyle(this.feature_);
+  var gmStyle = olgm.gm.createStyle(this.feature_, this.index_);
   if (gmStyle) {
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
   }
 
-  var geometry = this.feature_.getGeometry();
+  // if the feature has text style, add a map label to gmap
+  var style = olgm.getStyleOf(this.feature_);
+  if (style) {
+    var text = style.getText();
+    if (text) {
+      var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+      this.label_ = olgm.gm.createLabel(text, latLng, this.index_);
+      this.label_.setMap(this.gmap);
+    }
+  }
 
   // event listeners (todo)
   var keys = this.listenerKeys;
@@ -79,6 +106,12 @@ olgm.herald.Feature.prototype.deactivate = function() {
   // remove gmap feature
   this.data_.remove(this.gmapFeature_);
   this.gmapFeature_ = null;
+
+  // remove label
+  if (this.label_) {
+    this.label_.setMap(null);
+    this.label_ = null;
+  }
 
   goog.base(this, 'deactivate');
 };

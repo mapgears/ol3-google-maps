@@ -34,6 +34,26 @@ olgm.RESOLUTIONS = [
 
 
 /**
+ * @param {ol.geom.Geometry} geometry
+ * @return {ol.Coordinate}
+ */
+olgm.getCenterOf = function(geometry) {
+
+  var center = null;
+
+  if (geometry instanceof ol.geom.Point) {
+    center = geometry.getCoordinates();
+  } else if (geometry instanceof ol.geom.Polygon) {
+    center = geometry.getInteriorPoint().getCoordinates();
+  } else {
+    center = ol.extent.getCenter(geometry.getExtent());
+  }
+
+  return center;
+};
+
+
+/**
  * @param {string|Array.<number>} color
  * @return {string}
  */
@@ -86,6 +106,32 @@ olgm.getColorOpacity = function(color) {
   }
 
   return opacity;
+};
+
+
+/**
+ * Get the style from the specified object.
+ * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
+
+ * @return {?ol.style.Style}
+ */
+olgm.getStyleOf = function(object) {
+
+  var style = null;
+
+  if (object instanceof ol.style.Style) {
+    style = object;
+  } else if (object instanceof ol.layer.Vector ||
+             object instanceof ol.Feature) {
+    style = object.getStyle();
+    if (style && style instanceof Function) {
+      style = style()[0]; // todo - support multiple styles ?
+    }
+  } else if (object instanceof Function) {
+    style = object()[0]; // todo - support multiple styles ?
+  }
+
+  return style;
 };
 
 
