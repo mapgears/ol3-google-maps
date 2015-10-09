@@ -47,10 +47,9 @@ feature3.setStyle(new ol.style.Style({
   text: new ol.style.Text({
     textAlign: 'left',
     textBaseline: 'bottom',
-    font: 'normal 10pt Arial',
+    font: 'normal 11pt Arial',
     text: 'Bottom-Left',
-    fill: new ol.style.Fill({color: 'black'}),
-    stroke: new ol.style.Stroke({color: 'white', width: 3})
+    fill: new ol.style.Fill({color: 'white'})
   })
 }));
 
