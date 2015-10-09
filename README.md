@@ -22,6 +22,7 @@ See OL3-Google-Maps in action:
 
  * [Simple](http://dev5.mapgears.com/ol3-google-maps/examples/simple.html)
  * [Vector](http://dev5.mapgears.com/ol3-google-maps/examples/vector.html)
+ * [Label](http://dev5.mapgears.com/ol3-google-maps/examples/label.html)
  * [Concept](http://dev5.mapgears.com/ol3-google-maps/examples/concept.html)
 
 See all other example at:
