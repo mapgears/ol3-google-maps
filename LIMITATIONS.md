@@ -103,3 +103,5 @@ Limitations:
  * in Google Maps, markers that use image as source are rendered in tiles,
    which ignore the Z order defined per feature. This causes the labels
    to always appear on top of all markers.
+ * updating a label geometry is slow, which affects the visual smoothness
+   of dragging a feature on the map

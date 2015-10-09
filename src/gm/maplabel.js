@@ -58,7 +58,29 @@ goog.inherits(olgm.gm.MapLabel, google.maps.OverlayView);
 
 
 /**
+ * @type {boolean}
+ * @private
+ */
+olgm.gm.MapLabel.prototype.drawn_ = false;
+
+
+/**
+ * @type {number}
+ * @private
+ */
+olgm.gm.MapLabel.prototype.height_ = 0;
+
+
+/**
+ * @type {number}
+ * @private
+ */
+olgm.gm.MapLabel.prototype.width_ = 0;
+
+
+/**
  * Note: mark as `@api` to make the minimized version include this method.
+ * @param {string} prop
  * @api
  */
 olgm.gm.MapLabel.prototype.changed = function(prop) {
@@ -67,18 +89,20 @@ olgm.gm.MapLabel.prototype.changed = function(prop) {
     case 'fontFamily':
     case 'fontSize':
     case 'fontWeight':
-    case 'offsetX':
-    case 'offsetY':
     case 'strokeColor':
     case 'strokeWeight':
     case 'text':
     case 'textAlign':
     case 'textBaseline':
-      return this.drawCanvas_();
+      this.drawCanvas_();
+      break;
     case 'maxZoom':
     case 'minZoom':
+    case 'offsetX':
+    case 'offsetY':
     case 'position':
-      return this.draw();
+      this.draw();
+      break;
   }
 };
 
@@ -145,9 +169,8 @@ olgm.gm.MapLabel.prototype.onAdd = function() {
  */
 olgm.gm.MapLabel.prototype.draw = function() {
 
-  var projection = this.getProjection();
-  if (!projection) {
-    // The map projection is not ready yet so do nothing
+  if (this.drawn_) {
+    this.redraw_();
     return;
   }
 
@@ -157,23 +180,50 @@ olgm.gm.MapLabel.prototype.draw = function() {
     return;
   }
 
-  var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
-  if (!latLng) {
-    return;
-  }
-
-  var pos = projection.fromLatLngToDivPixel(latLng);
   var ctx = canvas.getContext('2d');
   var height = ctx.canvas.height;
   var width = ctx.canvas.width;
+  this.width_ = width;
+  this.height_ = height;
+
+  if (!this.redraw_()) {
+    return;
+  }
+
+  this.drawn_ = true;
+};
+
+
+/**
+ * Note: mark as `@api` to make the minimized version include this method.
+ * @return {boolean}
+ * @private
+ */
+olgm.gm.MapLabel.prototype.redraw_ = function() {
+  var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
+  if (!latLng) {
+    return false;
+  }
+
+  var projection = this.getProjection();
+  if (!projection) {
+    // The map projection is not ready yet so do nothing
+    return false;
+  }
+
+  var pos = projection.fromLatLngToDivPixel(latLng);
+  var height = this.height_;
+  var width = this.width_;
+
   var offsetX = this.get('offsetX') || 0;
   var offsetY = this.get('offsetY') || 0;
-
   var style = this.canvas_.style;
   style['top'] = (pos.y - (height / 2) + offsetY) + 'px';
   style['left'] = (pos.x - (width / 2) + offsetX) + 'px';
 
   style['visibility'] = this.getVisible_();
+
+  return true;
 };
 
 

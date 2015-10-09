@@ -238,6 +238,19 @@ var addLineFeatures = function(len, opt_style) {
 
 
 addPointFeatures(3);
+addPointFeatures(3, new ol.style.Style({
+  image: new ol.style.Circle({
+    'fill': new ol.style.Fill({color: '#3F5D7D'}),
+    'stroke': new ol.style.Stroke({color: 'rgb(30,30,30)', width: 2}),
+    'radius': 20
+  }),
+  text: new ol.style.Text({
+    font: 'normal 16pt Arial',
+    text: '42',
+    fill: new ol.style.Fill({color: 'black'}),
+    stroke: new ol.style.Stroke({color: 'white', width: 3})
+  })
+}));
 addMarkerFeatures(3);
 addCircleFeatures(3);
 addLineFeatures(1);

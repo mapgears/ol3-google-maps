@@ -124,4 +124,9 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
   var geometry = this.feature_.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
   this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
+
+  if (this.label_) {
+    var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    this.label_.set('position', latLng);
+  }
 };
