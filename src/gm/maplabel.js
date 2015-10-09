@@ -43,10 +43,7 @@ goog.provide('olgm.gm.MapLabel');
  * @api
  */
 olgm.gm.MapLabel = function(opt_options) {
-  this.set('font', 'normal 12px sans-serif');
-  this.set('fontColor', '#000000');
-  this.set('strokeColor', '#ffffff');
-  this.set('strokeWeight', 4);
+  this.set('font', 'normal 10px sans-serif');
   this.set('textAlign', 'center');
   this.set('textBaseline', 'middle');
 
@@ -116,13 +113,19 @@ olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
   if (!canvas) return;
 
   var style = canvas.style;
+
+  var fillStyle = this.get('fontColor');
+  if (!fillStyle) {
+    return;
+  }
+
   style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.textBaseline = this.get('textBaseline');
   ctx.strokeStyle = this.get('strokeColor');
-  ctx.fillStyle = this.get('fontColor');
+  ctx.fillStyle = fillStyle;
   ctx.font = this.get('font');
   ctx.textAlign = this.get('textAlign');
 

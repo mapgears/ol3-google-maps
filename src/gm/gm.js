@@ -288,6 +288,14 @@ olgm.gm.createLabel = function(textStyle, latLng, index) {
     labelOptions['font'] = font;
   }
 
+  var fill = textStyle.getFill();
+  if (fill) {
+    var fillColor = fill.getColor();
+    if (fillColor) {
+      labelOptions['fontColor'] = fillColor;
+    }
+  }
+
   var stroke = textStyle.getStroke();
   if (stroke) {
     var strokeColor = stroke.getColor();
