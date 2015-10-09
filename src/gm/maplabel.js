@@ -57,7 +57,10 @@ olgm.gm.MapLabel = function(opt_options) {
 goog.inherits(olgm.gm.MapLabel, google.maps.OverlayView);
 
 
-/** @inheritDoc */
+/**
+ * Note: mark as `@api` to make the minimized version include this method.
+ * @api
+ */
 olgm.gm.MapLabel.prototype.changed = function(prop) {
   switch (prop) {
     case 'fontColor':
@@ -116,7 +119,8 @@ olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
 
 
 /**
- * @inheritDoc
+ * Note: mark as `@api` to make the minimized version include this method.
+ * @api
  */
 olgm.gm.MapLabel.prototype.onAdd = function() {
   var canvas = this.canvas_ = document.createElement('canvas');
@@ -136,7 +140,8 @@ olgm.gm.MapLabel.prototype.onAdd = function() {
 
 
 /**
- * @inheritDoc
+ * Note: mark as `@api` to make the minimized version include this method.
+ * @api
  */
 olgm.gm.MapLabel.prototype.draw = function() {
 
@@ -199,7 +204,8 @@ olgm.gm.MapLabel.prototype.getVisible_ = function() {
 
 
 /**
- * @inheritDoc
+ * Note: mark as `@api` to make the minimized version include this method.
+ * @api
  */
 olgm.gm.MapLabel.prototype.onRemove = function() {
   var canvas = this.canvas_;
