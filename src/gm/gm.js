@@ -2,6 +2,7 @@ goog.provide('olgm.gm');
 
 goog.require('goog.asserts');
 goog.require('olgm');
+goog.require('olgm.gm.MapLabel');
 
 
 // === Data ===
@@ -51,15 +52,20 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps LatLng object using an OpenLayers Point.
- * @param {ol.geom.Point} point
+ * @param {ol.geom.Point|ol.Coordinate} object
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.LatLng}
  */
-olgm.gm.createLatLng = function(point, opt_ol3map) {
+olgm.gm.createLatLng = function(object, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
       opt_ol3map.getView().getProjection() : 'EPSG:3857';
-  var coordinates = point.getCoordinates();
+  var coordinates;
+  if (object instanceof ol.geom.Point) {
+    coordinates = object.getCoordinates();
+  } else {
+    coordinates = object;
+  }
   var lonLatCoords = ol.proj.transform(coordinates, inProj, 'EPSG:4326');
   return new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]);
 };
@@ -108,29 +114,15 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
 /**
  * Create a Google Maps data style options from an OpenLayers object.
  * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
+ * @param {number=} opt_index
  * @return {?google.maps.Data.StyleOptions}
  */
-olgm.gm.createStyle = function(object) {
-
-  var style = null;
+olgm.gm.createStyle = function(object, opt_index) {
   var gmStyle = null;
-
-  if (object instanceof ol.style.Style) {
-    style = object;
-  } else if (object instanceof ol.layer.Vector ||
-             object instanceof ol.Feature) {
-    style = object.getStyle();
-    if (style && style instanceof Function) {
-      style = style()[0]; // todo - support multiple styles ?
-    }
-  } else if (object instanceof Function) {
-    style = object()[0]; // todo - support multiple styles ?
-  }
-
+  var style = olgm.getStyleOf(object);
   if (style) {
-    gmStyle = olgm.gm.createStyleInternal(style);
+    gmStyle = olgm.gm.createStyleInternal(style, opt_index);
   }
-
   return gmStyle;
 };
 
@@ -138,9 +130,10 @@ olgm.gm.createStyle = function(object) {
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
  * @param {ol.style.Style} style
+ * @param {number=} opt_index
  * @return {google.maps.Data.StyleOptions}
  */
-olgm.gm.createStyleInternal = function(style) {
+olgm.gm.createStyleInternal = function(style, opt_index) {
 
   var gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
 
@@ -253,20 +246,80 @@ olgm.gm.createStyleInternal = function(style) {
     }
   }
 
-  // TODO - support text style
-  /*
-  var text = style.getText();
-  if (text) {
-    console.log(text);
-  }
-  */
-
   // if, at this very last point, there aren't any style options that have
   // been set, then tell Google Maps to render the feature invisible because
   // we're dealing with an empty `ol.style.Style` object.
   if (Object.keys(/** @type {!Object} */ (gmStyle)).length === 0) {
     gmStyle['visible'] = false;
+  } else if (opt_index !== undefined) {
+    var zIndex = opt_index * 2;
+    gmStyle['zIndex'] = zIndex;
   }
 
   return gmStyle;
+};
+
+
+// === Label ===
+
+
+/**
+ * Create a MapLabel object from a text style and Lat/Lng location.
+ * @param {ol.style.Text} textStyle
+ * @param {google.maps.LatLng} latLng
+ * @param {number} index
+ * @return {olgm.gm.MapLabel}
+ */
+olgm.gm.createLabel = function(textStyle, latLng, index) {
+
+  var labelOptions = {
+    align: 'center',
+    position: latLng,
+    zIndex: index * 2 + 1
+  };
+
+  var text = textStyle.getText();
+  if (text) {
+    labelOptions['text'] = text;
+  }
+
+  var font = textStyle.getFont();
+  if (font) {
+    labelOptions['font'] = font;
+  }
+
+  var stroke = textStyle.getStroke();
+  if (stroke) {
+    var strokeColor = stroke.getColor();
+    if (strokeColor) {
+      labelOptions['strokeColor'] = strokeColor;
+    }
+
+    var strokeWidth = stroke.getWidth();
+    if (strokeWidth) {
+      labelOptions['strokeWeight'] = strokeWidth;
+    }
+  }
+
+  var offsetX = textStyle.getOffsetX();
+  if (offsetX) {
+    labelOptions['offsetX'] = offsetX;
+  }
+
+  var offsetY = textStyle.getOffsetY();
+  if (offsetY) {
+    labelOptions['offsetY'] = offsetY;
+  }
+
+  var textAlign = textStyle.getTextAlign();
+  if (textAlign) {
+    labelOptions['textAlign'] = textAlign;
+  }
+
+  var textBaseline = textStyle.getTextBaseline();
+  if (textBaseline) {
+    labelOptions['textBaseline'] = textBaseline;
+  }
+
+  return new olgm.gm.MapLabel(labelOptions);
 };

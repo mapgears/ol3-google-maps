@@ -112,8 +112,10 @@ olgm.herald.VectorSource.prototype.watchFeature_ = function(feature) {
   // push to features (internal)
   this.features_.push(feature);
 
+  var index = this.features_.indexOf(feature);
+
   // create and activate feature herald
-  var herald = new olgm.herald.Feature(ol3map, gmap, feature, data);
+  var herald = new olgm.herald.Feature(ol3map, gmap, feature, data, index);
   herald.activate();
 
   // push to cache
