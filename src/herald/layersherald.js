@@ -236,18 +236,23 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
 
   // herald
   var herald = new olgm.herald.VectorSource(ol3map, gmap, source, data);
-  herald.activate();
 
   // opacity
   var opacity = layer.getOpacity();
-  layer.setOpacity(0);
 
-  this.vectorCache_.push(/** {@type olgm.herald.Layers.VectorLayerCache} */ ({
+  var cacheItem = /** {@type olgm.herald.Layers.VectorLayerCache} */ ({
     data: data,
     herald: herald,
     layer: layer,
     opacity: opacity
-  }));
+  });
+
+  // activate herald and  only if Google Maps is active
+  if (this.googleMapsIsActive_) {
+    this.activateVectorLayerCacheItem_(cacheItem);
+  }
+
+  this.vectorCache_.push(cacheItem);
 };
 
 
@@ -327,10 +332,6 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].push(
       this.ol3mapEl_);
 
-  this.vectorCache_.forEach(function(item, index) {
-    item.layer.setOpacity(0);
-  }, this);
-
   this.viewHerald_.activate();
 
   // the map div of GoogleMaps doesn't like being tossed aroud. The line
@@ -341,6 +342,9 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   // correct location. Fix this manually here
   this.viewHerald_.setCenter();
   this.viewHerald_.setZoom();
+
+  // activate all cache items
+  this.vectorCache_.forEach(this.activateVectorLayerCacheItem_, this);
 
   this.googleMapsIsActive_ = true;
 };
@@ -363,11 +367,10 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
 
   this.viewHerald_.deactivate();
 
-  this.vectorCache_.forEach(function(item, index) {
-    item.layer.setOpacity(item.opacity);
-  }, this);
-
   this.ol3mapEl_.style.position = 'relative';
+
+  // deactivate all cache items
+  this.vectorCache_.forEach(this.deactivateVectorLayerCacheItem_, this);
 
   this.googleMapsIsActive_ = false;
 };
@@ -408,6 +411,32 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
     // deactivate
     this.deactivateGoogleMaps_();
   }
+};
+
+
+/**
+ * Activates a vector layer cache item, i.e. activate its herald and
+ * render the layer invisible.
+ * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
+ * @private
+ */
+olgm.herald.Layers.prototype.activateVectorLayerCacheItem_ = function(
+    cacheItem) {
+  cacheItem.herald.activate();
+  cacheItem.layer.setOpacity(0);
+};
+
+
+/**
+ * Deactivates a vector layer cache item, i.e. deactivate its herald and
+ * restore the layer opacity.
+ * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
+ * @private
+ */
+olgm.herald.Layers.prototype.deactivateVectorLayerCacheItem_ = function(
+    cacheItem) {
+  cacheItem.herald.deactivate();
+  cacheItem.layer.setOpacity(cacheItem.opacity);
 };
 
 
