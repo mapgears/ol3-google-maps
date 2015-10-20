@@ -14,6 +14,14 @@ is enough to fit the requirements of the application you want to develop, then
 it is strongly recommended to just pick one and build it on top of it.
 
 
+Clusters
+--------
+
+Clusters are not yet supported as no development towards it has been made yet.
+
+Recommendation: avoid using clusters.
+
+
 Google Maps is always at the bottom
 -----------------------------------
 
@@ -70,6 +78,14 @@ to allow your maps to be rotated at all when using this library.
 Recommendation: use `interactions: olgm.interactions.defaults()` in your OL3
 map options, in which the interations that allow rotating the map are not
 included.
+
+
+Style Functions
+---------------
+
+Style functions as style definition are not supported yet.
+
+Recommendation: use a plain `ol.style.Style` object for you style definition.
 
 
 Vector features
