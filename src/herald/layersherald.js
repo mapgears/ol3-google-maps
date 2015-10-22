@@ -244,8 +244,12 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
     data: data,
     herald: herald,
     layer: layer,
+    listenerKeys: [],
     opacity: opacity
   });
+
+  cacheItem.listenerKeys.push(layer.on('change:visible',
+      this.handleVectorLayerVisibleChange_.bind(this, cacheItem), this));
 
   // activate herald and  only if Google Maps is active
   if (this.googleMapsIsActive_) {
@@ -301,6 +305,7 @@ olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
     this.vectorLayers_.splice(index, 1);
 
     var cacheItem = this.vectorCache_[index];
+    olgm.unlistenAllByKey(cacheItem.listenerKeys);
 
     // data - unset
     cacheItem.data.setMap(null);
@@ -416,14 +421,18 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
 
 /**
  * Activates a vector layer cache item, i.e. activate its herald and
- * render the layer invisible.
+ * render the layer invisible. Will only do so if the layer is visible.
  * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
  * @private
  */
 olgm.herald.Layers.prototype.activateVectorLayerCacheItem_ = function(
     cacheItem) {
-  cacheItem.herald.activate();
-  cacheItem.layer.setOpacity(0);
+  var layer = cacheItem.layer;
+  var visible = layer.getVisible();
+  if (visible) {
+    cacheItem.herald.activate();
+    cacheItem.layer.setOpacity(0);
+  }
 };
 
 
@@ -441,6 +450,22 @@ olgm.herald.Layers.prototype.deactivateVectorLayerCacheItem_ = function(
 
 
 /**
+ * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
+ * @private
+ */
+olgm.herald.Layers.prototype.handleVectorLayerVisibleChange_ = function(
+    cacheItem) {
+  var layer = cacheItem.layer;
+  var visible = layer.getVisible();
+  if (visible) {
+    this.activateVectorLayerCacheItem_(cacheItem);
+  } else {
+    this.deactivateVectorLayerCacheItem_(cacheItem);
+  }
+};
+
+
+/**
  * @typedef {{
  *   layer: (olgm.layer.Google),
  *   listenerKeys: (Array.<goog.events.Key>)
@@ -454,6 +479,7 @@ olgm.herald.Layers.GoogleLayerCache;
  *   data: (google.maps.Data),
  *   herald: (olgm.herald.VectorSource),
  *   layer: (ol.layer.Vector),
+ *   listenerKeys: (Array.<goog.events.Key>),
  *   opacity: (number)
  * }}
  */
