@@ -219,10 +219,17 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
         gmSymbol['url'] = imageSrc;
       }
 
+      var imageScale = image.getScale();
+
       var imageAnchor = image.getAnchor();
       if (imageAnchor) {
-        gmSymbol['anchor'] = new google.maps.Point(
-            imageAnchor[0], imageAnchor[1]);
+        if (imageScale !== undefined) {
+          gmSymbol['anchor'] = new google.maps.Point(
+              imageAnchor[0] * imageScale, imageAnchor[1] * imageScale);
+        } else {
+          gmSymbol['anchor'] = new google.maps.Point(
+              imageAnchor[0], imageAnchor[1]);
+        }
       }
 
       var imageOrigin = image.getOrigin();
@@ -234,6 +241,11 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
       var imageSize = image.getSize();
       if (imageSize) {
         gmSymbol['size'] = new google.maps.Size(imageSize[0], imageSize[1]);
+
+        if (imageScale !== undefined) {
+          gmSymbol['scaledSize'] = new google.maps.Size(
+              imageSize[0] * imageScale, imageSize[1] * imageScale);
+        }
       }
 
       // NOTE - google.maps.Icon does not support opacity
