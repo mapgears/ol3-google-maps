@@ -25,6 +25,12 @@ olgm.layer.Google = function(opt_options) {
   this.mapTypeId_ = options.mapTypeId !== undefined ? options.mapTypeId :
       google.maps.MapTypeId.ROADMAP;
 
+  /**
+   * @type {?Array.<google.maps.MapTypeStyle>}
+   * @private
+   */
+  this.styles_ = options.styles ? options.styles : null;
+
 };
 goog.inherits(olgm.layer.Google, ol.layer.Group);
 
@@ -34,4 +40,12 @@ goog.inherits(olgm.layer.Google, ol.layer.Group);
  */
 olgm.layer.Google.prototype.getMapTypeId = function() {
   return this.mapTypeId_;
+};
+
+
+/**
+ * @return {?Array.<google.maps.MapTypeStyle>}
+ */
+olgm.layer.Google.prototype.getStyles = function() {
+  return this.styles_;
 };
