@@ -31,7 +31,8 @@ olgmx.layer = {};
 
 /**
  * @typedef {{
- *   mapTypeId: (google.maps.MapTypeId.<(number|string)>|string|undefined)
+ *   mapTypeId: (google.maps.MapTypeId.<(number|string)>|string|undefined),
+ *   styles: (Array.<google.maps.MapTypeStyle>|undefined)
  * }}
  * @api
  */
@@ -45,3 +46,11 @@ olgmx.layer.GoogleOptions;
  * @api
  */
 olgmx.layer.GoogleOptions.prototype.mapTypeId;
+
+
+/**
+ * The Google Maps styles to apply to the map
+ * @type {Array.<google.maps.MapTypeStyle>|undefined}
+ * @api
+ */
+olgmx.layer.GoogleOptions.prototype.styles;

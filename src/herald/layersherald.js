@@ -410,6 +410,14 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
   if (found) {
     // set mapTypeId
     this.gmap.setMapTypeId(found.getMapTypeId());
+    // set styles
+    var styles = found.getStyles();
+    if (styles) {
+      this.gmap.setOptions({'styles': styles});
+    } else {
+      this.gmap.setOptions({'styles': null});
+    }
+
     // activate
     this.activateGoogleMaps_();
   } else {
