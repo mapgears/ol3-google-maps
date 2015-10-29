@@ -100,6 +100,26 @@ olgm.herald.Layers = function(ol3map, gmap) {
 
 
   goog.base(this, ol3map, gmap);
+
+
+  // some controls, like the ol.control.ZoomSlider, require the map div
+  // to have a size. While activating Google Maps, the size of the ol3 map
+  // becomes moot. The code below fixes that.
+  var center = this.ol3map.getView().getCenter();
+  if (!center) {
+    this.ol3map.getView().once('change:center', function() {
+      this.ol3map.once('postrender', function() {
+        this.ol3mapIsRenderered_ = true;
+        this.toggleGoogleMaps_();
+      }, this);
+      this.toggleGoogleMaps_();
+    }, this);
+  } else {
+    this.ol3map.once('postrender', function() {
+      this.ol3mapIsRenderered_ = true;
+      this.toggleGoogleMaps_();
+    }, this);
+  }
 };
 goog.inherits(olgm.herald.Layers, olgm.herald.Herald);
 
@@ -111,6 +131,13 @@ goog.inherits(olgm.herald.Layers, olgm.herald.Herald);
  * @private
  */
 olgm.herald.Layers.prototype.googleMapsIsActive_ = false;
+
+
+/**
+ * @type {boolean}
+ * @private
+ */
+olgm.herald.Layers.prototype.ol3mapIsRenderered_ = false;
 
 
 /**
@@ -328,7 +355,8 @@ olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
  */
 olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
 
-  if (this.googleMapsIsActive_) {
+  var center = this.ol3map.getView().getCenter();
+  if (this.googleMapsIsActive_ || !this.ol3mapIsRenderered_ || !center) {
     return;
   }
 

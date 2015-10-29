@@ -24,6 +24,9 @@ var vector = new ol.layer.Vector({
 var map = new ol.Map({
   // use OL3-Google-Maps recommended default interactions
   interactions: olgm.interaction.defaults(),
+  controls: ol.control.defaults().extend([
+    new ol.control.ZoomSlider()
+  ]),
   layers: [
     googleLayer,
     osmLayer,
