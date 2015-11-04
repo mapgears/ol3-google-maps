@@ -1,5 +1,6 @@
 {
   "exports": ["*"],
+  "umd": true,
   "src": ["src/**/*.js"],
   "ignoreRequires": "^ol\\.",
   "compile": {
@@ -54,7 +55,6 @@
     ],
     "compilation_level": "ADVANCED_OPTIMIZATIONS",
     "warning_level": "VERBOSE",
-    "output_wrapper": "(function(){%output%})();",
     "use_types_for_optimization": true,
     "create_source_map": "dist/ol3gm.js.map",
     "source_map_format": "V3"

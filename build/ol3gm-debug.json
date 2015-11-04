@@ -1,4 +1,5 @@
 {
   "ignoreRequires": "^ol\\.",
-  "exports": ["*"]
+  "exports": ["*"],
+  "umd": true
 }
