@@ -278,10 +278,7 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
   cacheItem.listenerKeys.push(layer.on('change:visible',
       this.handleVectorLayerVisibleChange_.bind(this, cacheItem), this));
 
-  // activate herald and  only if Google Maps is active
-  if (this.googleMapsIsActive_) {
-    this.activateVectorLayerCacheItem_(cacheItem);
-  }
+  this.activateVectorLayerCacheItem_(cacheItem);
 
   this.vectorCache_.push(cacheItem);
 };
@@ -465,7 +462,7 @@ olgm.herald.Layers.prototype.activateVectorLayerCacheItem_ = function(
     cacheItem) {
   var layer = cacheItem.layer;
   var visible = layer.getVisible();
-  if (visible) {
+  if (visible && this.googleMapsIsActive_) {
     cacheItem.herald.activate();
     cacheItem.layer.setOpacity(0);
   }
