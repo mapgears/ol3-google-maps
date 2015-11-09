@@ -373,10 +373,10 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.viewHerald_.setCenter();
   this.viewHerald_.setZoom();
 
+  this.googleMapsIsActive_ = true;
+
   // activate all cache items
   this.vectorCache_.forEach(this.activateVectorLayerCacheItem_, this);
-
-  this.googleMapsIsActive_ = true;
 };
 
 
