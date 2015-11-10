@@ -19,7 +19,7 @@ var umdWrapper = '(function (root, factory) {\n' +
     '  if (typeof exports === "object") {\n' +
     '    module.exports = factory(root.ol);\n' +
     '  } else if (typeof define === "function" && define.amd) {\n' +
-    '    define([\'ol\'], factory);\n' +
+    '    define([\'ol\', \'googlemaps\'], factory);\n' +
     '  } else {\n' +
     '    root.olgm = factory(root.ol);\n' +
     '  }\n' +
