@@ -1,8 +1,6 @@
 goog.provide('olgm.herald.Feature');
 
-goog.require('goog.array');
 goog.require('goog.asserts');
-goog.require('goog.events');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
@@ -146,8 +144,9 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
  */
 olgm.herald.Feature.prototype.handleGeometryReplace_ = function() {
   var keys = this.listenerKeys;
-  goog.events.unlistenByKey(this.geometryChangeKey_);
-  goog.array.remove(keys, this.geometryChangeKey_);
+  ol.Observable.unByKey(this.geometryChangeKey_);
+  var index = keys.indexOf(this.geometryChangeKey_);
+  keys.splice(index, 1);
 
   this.geometryChangeKey_ = this.feature_.getGeometry().on('change',
       this.handleGeometryChange_,
