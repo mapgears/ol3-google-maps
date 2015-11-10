@@ -1,6 +1,8 @@
 goog.provide('olgm.herald.Feature');
 
+goog.require('goog.array');
 goog.require('goog.asserts');
+goog.require('goog.events');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
@@ -94,7 +96,14 @@ olgm.herald.Feature.prototype.activate = function() {
 
   // event listeners (todo)
   var keys = this.listenerKeys;
-  keys.push(geometry.on('change', this.handleGeometryChange_, this));
+  this.geometryChangeKey_ = geometry.on('change',
+                                        this.handleGeometryChange_,
+                                        this);
+  keys.push(this.geometryChangeKey_);
+  keys.push(this.feature_.on(
+      'change:' + this.feature_.getGeometryName(),
+      this.handleGeometryReplace_, this
+      ));
 };
 
 
@@ -129,4 +138,20 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
     var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
     this.label_.set('position', latLng);
   }
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Feature.prototype.handleGeometryReplace_ = function() {
+  var keys = this.listenerKeys;
+  goog.events.unlistenByKey(this.geometryChangeKey_);
+  goog.array.remove(keys, this.geometryChangeKey_);
+
+  this.geometryChangeKey_ = this.feature_.getGeometry().on('change',
+      this.handleGeometryChange_,
+      this);
+  keys.push(this.geometryChangeKey_);
+  this.handleGeometryChange_();
 };
