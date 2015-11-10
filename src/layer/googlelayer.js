@@ -37,6 +37,7 @@ goog.inherits(olgm.layer.Google, ol.layer.Group);
 
 /**
  * @return {google.maps.MapTypeId.<(number|string)>|string}
+ * @api
  */
 olgm.layer.Google.prototype.getMapTypeId = function() {
   return this.mapTypeId_;
