@@ -94,7 +94,14 @@ olgm.herald.Feature.prototype.activate = function() {
 
   // event listeners (todo)
   var keys = this.listenerKeys;
-  keys.push(geometry.on('change', this.handleGeometryChange_, this));
+  this.geometryChangeKey_ = geometry.on('change',
+                                        this.handleGeometryChange_,
+                                        this);
+  keys.push(this.geometryChangeKey_);
+  keys.push(this.feature_.on(
+      'change:' + this.feature_.getGeometryName(),
+      this.handleGeometryReplace_, this
+      ));
 };
 
 
@@ -129,4 +136,21 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
     var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
     this.label_.set('position', latLng);
   }
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Feature.prototype.handleGeometryReplace_ = function() {
+  var keys = this.listenerKeys;
+  ol.Observable.unByKey(this.geometryChangeKey_);
+  var index = keys.indexOf(this.geometryChangeKey_);
+  keys.splice(index, 1);
+
+  this.geometryChangeKey_ = this.feature_.getGeometry().on('change',
+      this.handleGeometryChange_,
+      this);
+  keys.push(this.geometryChangeKey_);
+  this.handleGeometryChange_();
 };
