@@ -42,10 +42,11 @@ goog.require('olgm.layer.Google');
  *
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
+ * @param {boolean} watchVector
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Layers = function(ol3map, gmap) {
+olgm.herald.Layers = function(ol3map, gmap, watchVector) {
 
   /**
    * @type {Array.<olgm.layer.Google>}
@@ -76,6 +77,12 @@ olgm.herald.Layers = function(ol3map, gmap) {
    * @private
    */
   this.viewHerald_ = new olgm.herald.View(ol3map, gmap);
+
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.watchVector_ = watchVector;
 
 
   // === Elements  === //
@@ -209,7 +216,7 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
 olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
   if (layer instanceof olgm.layer.Google) {
     this.watchGoogleLayer_(layer);
-  } else if (layer instanceof ol.layer.Vector) {
+  } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.watchVectorLayer_(layer);
   }
 };
@@ -292,7 +299,7 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
 olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   if (layer instanceof olgm.layer.Google) {
     this.unwatchGoogleLayer_(layer);
-  } else if (layer instanceof ol.layer.Vector) {
+  } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.unwatchVectorLayer_(layer);
   }
 };
