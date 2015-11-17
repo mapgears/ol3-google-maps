@@ -8,7 +8,8 @@ var olgmx;
 
 /**
  * @typedef {{
- *   map: (!ol.Map)
+ *   map: (!ol.Map),
+ *   watchVector: (boolean|undefined)
  * }}
  * @api
  */
@@ -21,6 +22,15 @@ olgmx.OLGoogleMapsOptions;
  * @api
  */
 olgmx.OLGoogleMapsOptions.prototype.map;
+
+
+/**
+ * Whether the library should watch vector layers and let them be rendered
+ * by Google Maps with the latter is activated or not.  Defaults to `true`.
+ * @type {boolean|undefined}
+ * @api
+ */
+olgmx.OLGoogleMapsOptions.prototype.watchVector;
 
 
 /**
