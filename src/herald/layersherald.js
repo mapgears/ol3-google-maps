@@ -364,8 +364,8 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
     return;
   }
 
+  this.targetEl_.removeChild(this.ol3mapEl_);
   this.targetEl_.appendChild(this.gmapEl_);
-  this.ol3mapEl_.remove();
   this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].push(
       this.ol3mapEl_);
 
@@ -399,8 +399,8 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
   }
 
   this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].removeAt(0);
+  this.targetEl_.removeChild(this.gmapEl_);
   this.targetEl_.appendChild(this.ol3mapEl_);
-  this.gmapEl_.remove();
 
   this.viewHerald_.deactivate();
 
