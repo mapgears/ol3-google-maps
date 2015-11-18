@@ -87,6 +87,14 @@ Style functions as style definition are not supported yet.
 
 Recommendation: use a plain `ol.style.Style` object for you style definition.
 
+Style Arrays
+---------------
+
+Style arrays as style definition are not supported yet.
+
+Recommendation: use a plain `ol.style.Style` object for you style definition.
+
+
 
 Vector features
 ---------------
