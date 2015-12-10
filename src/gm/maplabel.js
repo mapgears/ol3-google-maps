@@ -51,7 +51,9 @@ olgm.gm.MapLabel = function(opt_options) {
 
   this.setValues(opt_options);
 };
-goog.inherits(olgm.gm.MapLabel, google.maps.OverlayView);
+if (window.google && window.google.maps) {
+  goog.inherits(olgm.gm.MapLabel, google.maps.OverlayView);
+}
 
 
 /**
