@@ -28,6 +28,17 @@ See OL3-Google-Maps in action:
 See all other example at:
 http://dev5.mapgears.com/ol3-google-maps/examples/
 
+Installation
+------------
+
+The ol3 folder is a submodule pointing to a specific commit in the [openlayers/ol3](https://github.com/openlayers/ol3) repository. First you need to initialize this submodule, basically populate the ol3 folder:
+
+`git submodule update --init --recursive`
+
+Then use `make` to do things like compiling a distribution for the library and running a development web server for examples. A complete list can be found on the help page:
+
+`make help`
+
 
 Known Limitations
 -----------------
