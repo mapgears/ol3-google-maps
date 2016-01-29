@@ -7,6 +7,7 @@
     "externs": [
       "ol3/build/ol-externs.js",
       "ol3/externs/esrijson.js",
+      "ol3/externs/proj4js.js",
       "externs/olgmx.js",
       "externs/google_maps_api_v3_21.js"
     ],
