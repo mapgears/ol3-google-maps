@@ -34,7 +34,7 @@ help:
 npm-install: .build/node_modules.timestamp
 
 .PHONY: serve
-serve: npm-install ol3/build/olX
+serve: npm-install node_modules/openlayers/build/olX
 	node build/serve.js
 
 .PHONY: dist
@@ -61,10 +61,10 @@ check: lint dist .build/geojsonhint.timestamp
 .PHONY: clean
 clean:
 	rm -f dist/ol3gm.js
-	rm -f ol3/build/ol.js
-	rm -f ol3/build/ol-debug.js
-	rm -f ol3/build/ol.css
-	rm -f ol3/build/ol-externs.js
+	rm -f node_modules/openlayers/build/ol.js
+	rm -f node_modules/openlayers/build/ol-debug.js
+	rm -f node_modules/openlayers/build/ol.css
+	rm -f node_modules/openlayers/build/ol-externs.js
 	rm -rf dist/ol3
 	rm -rf dist/examples
 
@@ -81,17 +81,17 @@ cleanall: clean
 	.build/python-venv/bin/gjslint --jslint_error=all --strict --custom_jsdoc_tags=api $?
 	touch $@
 
-.build/dist-examples.timestamp: ol3/build/olX dist/ol3gm.js $(EXAMPLES_JS_FILES) $(EXAMPLES_HTML_FILES)
+.build/dist-examples.timestamp: node_modules/openlayers/build/olX dist/ol3gm.js $(EXAMPLES_JS_FILES) $(EXAMPLES_HTML_FILES)
 	node build/parse-examples.js
 	mkdir -p $(dir $@)
 	mkdir -p dist/ol3
-	cp ol3/build/ol-debug.js dist/ol3/
-	cp ol3/build/ol.js dist/ol3/
+	cp node_modules/openlayers/build/ol-debug.js dist/ol3/
+	cp node_modules/openlayers/build/ol.js dist/ol3/
 	mkdir -p dist/ol3/css
-	cp ol3/build/ol.css dist/ol3/css/
+	cp node_modules/openlayers/build/ol.css dist/ol3/css/
 	cp -R examples dist/
 	for f in dist/examples/*.html; do $(SEDI) 'sY/@loaderY../ol3gm.jsY' $$f; done
-	for f in dist/examples/*.html; do $(SEDI) 'sY../ol3/build/ol.jsY../ol3/ol-debug.jsY' $$f; done
+	for f in dist/examples/*.html; do $(SEDI) 'sY../node_modules/openlayers/build/ol.jsY../node_modules/openlayers/ol-debug.jsY' $$f; done
 	touch $@
 
 .build/python-venv:
@@ -102,12 +102,12 @@ cleanall: clean
 	.build/python-venv/bin/pip install "http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz"
 	touch $@
 
-dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) ol3/build/ol-externs.js build/build.js npm-install
+dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js npm-install
 	mkdir -p $(dir $@)
 	node build/build.js $< $@
 
 # A sourcemap is prepared, the source is exected to be deployed in 'source' directory
-dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) ol3/build/ol-externs.js build/build.js npm-install
+dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js npm-install
 	mkdir -p $(dir $@)
 	node build/build.js $< $@
 	$(SEDI) 's!$(shell pwd)/dist!source!g' dist/ol3gm.js.map
@@ -115,10 +115,10 @@ dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) ol3/build/ol-externs.js build/bu
 #	echo '//# sourceMappingURL=ol3gm.js.map' >> dist/ol3gm.js
 #	-ln -s .. dist/source
 
-.PHONY: ol3/build/ol-externs.js
-ol3/build/ol-externs.js:
-	(cd ol3 && npm install && node tasks/generate-externs.js build/ol-externs.js)
+.PHONY: node_modules/openlayers/build/ol-externs.js
+node_modules/openlayers/build/ol-externs.js:
+	(cd node_modules/openlayers && npm install && node tasks/generate-externs.js build/ol-externs.js)
 
-.PHONY: ol3/build/olX
-ol3/build/olX:
-	(cd ol3 && npm install && make build)
+.PHONY: node_modules/openlayers/build/olX
+node_modules/openlayers/build/olX:
+	(cd node_modules/openlayers && npm install && make build)
