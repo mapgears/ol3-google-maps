@@ -5,8 +5,9 @@
   "ignoreRequires": "^ol\\.",
   "compile": {
     "externs": [
-      "ol3/build/ol-externs.js",
-      "ol3/externs/esrijson.js",
+      "node_modules/openlayers/build/ol-externs.js",
+      "node_modules/openlayers/externs/esrijson.js",
+      "node_modules/openlayers/externs/proj4js.js",
       "externs/olgmx.js",
       "externs/google_maps_api_v3_21.js"
     ],
