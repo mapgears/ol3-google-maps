@@ -131,6 +131,15 @@ olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
 
 
 /**
+ * @return {google.maps.Map}
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.getMap = function() {
+  return this.gmap;
+};
+
+
+/**
  * @api
  */
 olgm.OLGoogleMaps.prototype.toggle = function() {
