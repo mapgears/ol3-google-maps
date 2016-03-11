@@ -51,7 +51,7 @@ olgm.herald.View.prototype.activate = function() {
   keys.push(view.on('change:resolution', this.setZoom, this));
 
   // listen to browser window resize
-  keys.push(goog.events.listen(
+  this.googListenerKeys.push(goog.events.listen(
       window,
       goog.events.EventType.RESIZE,
       this.handleWindowResize_,

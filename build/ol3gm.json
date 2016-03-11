@@ -8,6 +8,7 @@
       "node_modules/openlayers/build/ol-externs.js",
       "node_modules/openlayers/externs/esrijson.js",
       "node_modules/openlayers/externs/proj4js.js",
+      "node_modules/openlayers/externs/tilejson.js",
       "externs/olgmx.js",
       "externs/google_maps_api_v3_21.js"
     ],

@@ -1,7 +1,5 @@
 goog.provide('olgm');
 
-goog.require('goog.events');
-
 
 /**
  * @type {!Array.<number>}
@@ -54,7 +52,7 @@ olgm.getCenterOf = function(geometry) {
 
 
 /**
- * @param {string|Array.<number>} color
+ * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color
  * @return {string}
  */
 olgm.getColor = function(color) {
@@ -69,10 +67,11 @@ olgm.getColor = function(color) {
     } else {
       out = color;
     }
-  } else {
-    // is array
+  } else if (Array.isArray(color)) {
     rgba = color;
   }
+
+  // Todo - support CanvasGradient and CanvasPattern
 
   if (rgba !== null) {
     out = ['rgb(', rgba[0], ',', rgba[1], ',', rgba[2], ')'].join('');
@@ -83,7 +82,7 @@ olgm.getColor = function(color) {
 
 
 /**
- * @param {string|Array.<number>} color
+ * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color
  * @return {?number}
  */
 olgm.getColorOpacity = function(color) {
@@ -96,10 +95,11 @@ olgm.getColorOpacity = function(color) {
     if (olgm.stringStartsWith(color, 'rgba')) {
       rgba = olgm.parseRGBA(color);
     }
-  } else {
-    // is array
+  } else if (Array.isArray(color)) {
     rgba = color;
   }
+
+  // Todo - support CanvasGradient and CanvasPattern
 
   if (rgba && rgba[3] !== undefined) {
     opacity = +rgba[3];
@@ -189,9 +189,14 @@ olgm.stringStartsWith = function(string, needle) {
 
 
 /**
- * @param {Array.<goog.events.Key>} listenerKeys
+ * @param {Array.<ol.events.Key|Array.<ol.events.Key>>} listenerKeys
+ * @param {Array.<goog.events.Key>=} opt_googListenerKeys
  */
-olgm.unlistenAllByKey = function(listenerKeys) {
+olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
   listenerKeys.forEach(ol.Observable.unByKey);
   listenerKeys.length = 0;
+  if (opt_googListenerKeys) {
+    opt_googListenerKeys.forEach(goog.events.unlistenByKey);
+    opt_googListenerKeys.length = 0;
+  }
 };
