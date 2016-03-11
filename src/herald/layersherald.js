@@ -508,7 +508,7 @@ olgm.herald.Layers.prototype.handleVectorLayerVisibleChange_ = function(
 /**
  * @typedef {{
  *   layer: (olgm.layer.Google),
- *   listenerKeys: (Array.<goog.events.Key>)
+ *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>)
  * }}
  */
 olgm.herald.Layers.GoogleLayerCache;
@@ -519,7 +519,7 @@ olgm.herald.Layers.GoogleLayerCache;
  *   data: (google.maps.Data),
  *   herald: (olgm.herald.VectorSource),
  *   layer: (ol.layer.Vector),
- *   listenerKeys: (Array.<goog.events.Key>),
+ *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
  * }}
  */
