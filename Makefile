@@ -34,7 +34,7 @@ help:
 npm-install: .build/node_modules.timestamp
 
 .PHONY: serve
-serve: npm-install node_modules/openlayers/build/olX
+serve: node_modules/openlayers/build/olX
 	node build/serve.js
 
 .PHONY: dist
@@ -102,12 +102,12 @@ cleanall: clean
 	.build/python-venv/bin/pip install "http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz"
 	touch $@
 
-dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js npm-install
+dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js
 	mkdir -p $(dir $@)
 	node build/build.js $< $@
 
 # A sourcemap is prepared, the source is exected to be deployed in 'source' directory
-dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js npm-install
+dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js
 	mkdir -p $(dir $@)
 	node build/build.js $< $@
 	$(SEDI) 's!$(shell pwd)/dist!source!g' dist/ol3gm.js.map
@@ -116,9 +116,9 @@ dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) node_modules/openlayers/build/ol
 #	-ln -s .. dist/source
 
 .PHONY: node_modules/openlayers/build/ol-externs.js
-node_modules/openlayers/build/ol-externs.js:
+node_modules/openlayers/build/ol-externs.js: npm-install
 	(cd node_modules/openlayers && npm install && node tasks/generate-externs.js build/ol-externs.js)
 
 .PHONY: node_modules/openlayers/build/olX
-node_modules/openlayers/build/olX:
+node_modules/openlayers/build/olX: npm-install
 	(cd node_modules/openlayers && npm install && make build)
