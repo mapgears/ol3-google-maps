@@ -2,11 +2,16 @@ var center = [-10997148, 4569099];
 
 var googleLayer = new olgm.layer.Google();
 
-var wmsLayer =  new ol.layer.Image({
+var osmLayer = new ol.layer.Tile({
+  source: new ol.source.OSM(),
+  visible: false
+});
+
+var tileWMSLayer  =  new ol.layer.Tile({
     extent: [-13884991, 2870341, -7455066, 6338219],
-    source: new ol.source.ImageWMS({
+    source: new ol.source.TileWMS({
       url: 'http://demo.boundlessgeo.com/geoserver/wms',
-      params: {'LAYERS': 'topp:states'},
+      params: {'LAYERS': 'topp:states', 'TILED': true},
       serverType: 'geoserver'
     })
 });
@@ -16,7 +21,8 @@ var map = new ol.Map({
   interactions: olgm.interaction.defaults(),
   layers: [
     googleLayer,
-    wmsLayer,
+    osmLayer,
+    tileWMSLayer
   ],
   target: 'map',
   view: new ol.View({
@@ -27,3 +33,8 @@ var map = new ol.Map({
 
 var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
 olGM.activate();
+
+function toggle() {
+  googleLayer.setVisible(!googleLayer.getVisible());
+  osmLayer.setVisible(!osmLayer.getVisible());
+};

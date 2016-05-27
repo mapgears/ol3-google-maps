@@ -73,6 +73,18 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
   this.vectorLayers_ = [];
 
   /**
+   * @type {Array.<olgm.herald.Layers.TileWMSLayerCache>}
+   * @private
+   */
+  this.tileWMSCache_ = [];
+
+  /**
+   * @type {Array.<ol.layer.Tile>}
+   * @private
+   */
+  this.tileWMSLayers_ = [];
+
+  /**
    * @type {olgm.herald.View}
    * @private
    */
@@ -218,6 +230,11 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
     this.watchGoogleLayer_(layer);
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.watchVectorLayer_(layer);
+  } else if (layer instanceof ol.layer.Tile) {
+    var source = layer.getSource();
+    if (source instanceof ol.source.TileWMS) {
+      this.watchTileWMSLayer_(layer);
+    }
   }
 };
 
@@ -236,6 +253,54 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
     ]
   }));
   this.toggleGoogleMaps_();
+};
+
+
+/**
+ * Watch a tiled WMS layer, and create a layer on the google maps layer
+ * @param {ol.layer.Tile} layer
+ * @private
+ */
+olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
+  // Source required
+  var source = layer.getSource();
+  if (!source) {
+    return;
+  }
+
+  this.tileWMSLayers_.push(layer);
+
+  // opacity
+  var opacity = layer.getOpacity();
+
+  var cacheItem = /** {@type olgm.herald.Layers.TileWMSLayerCache} */ ({
+    layer: layer,
+    listenerKeys: [],
+    opacity: opacity
+  });
+
+  var getTileUrlFunction = source.getTileUrlFunction();
+  var proj = ol.proj.get('EPSG:3857');
+
+  var googleGetTileUrlFunction = function(coords, zoom) {
+    return getTileUrlFunction([zoom, coords.x, (-coords.y) - 1], 1, proj);
+  };
+
+  var tileSize = new google.maps.Size(256, 256);
+
+  var options = {
+    'getTileUrl': googleGetTileUrlFunction,
+    'tileSize': tileSize,
+    'isPng': true
+  };
+
+  // Create the WMS layer on the google layer
+  var googleWMSLayer = new google.maps.ImageMapType(options);
+  this.gmap.overlayMapTypes.push(googleWMSLayer);
+
+  // Activate the cache item
+  this.activateTileWMSLayerCacheItem_(cacheItem);
+  this.tileWMSCache_.push(cacheItem);
 };
 
 
@@ -301,6 +366,11 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
     this.unwatchGoogleLayer_(layer);
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.unwatchVectorLayer_(layer);
+  } else if (layer instanceof ol.layer.Tile) {
+    var source = layer.getSource();
+    if (source instanceof ol.source.TileWMS) {
+      this.unwatchTileWMSLayer_(layer);
+    }
   }
 };
 
@@ -321,6 +391,27 @@ olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
     this.googleCache_.splice(index, 1);
 
     this.toggleGoogleMaps_();
+  }
+};
+
+
+/**
+ * Unwatch the WMS Tile layer
+ * @param {ol.layer.Tile} layer
+ * @private
+ */
+olgm.herald.Layers.prototype.unwatchTileWMSLayer_ = function(layer) {
+  var index = this.tileWMSLayers_.indexOf(layer);
+  if (index !== -1) {
+    this.tileWMSLayers_.splice(index, 1);
+
+    var cacheItem = this.tileWMSCache_[index];
+    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+
+    // opacity
+    layer.setOpacity(cacheItem.opacity);
+
+    this.tileWMSCache_.splice(index, 1);
   }
 };
 
@@ -384,6 +475,7 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
 
   // activate all cache items
   this.vectorCache_.forEach(this.activateVectorLayerCacheItem_, this);
+  this.tileWMSCache_.forEach(this.activateTileWMSLayerCacheItem_, this);
 };
 
 
@@ -408,6 +500,7 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
 
   // deactivate all cache items
   this.vectorCache_.forEach(this.deactivateVectorLayerCacheItem_, this);
+  this.tileWMSCache_.forEach(this.deactivateTileWMSLayerCacheItem_, this);
 
   this.googleMapsIsActive_ = false;
 };
@@ -456,6 +549,32 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
     // deactivate
     this.deactivateGoogleMaps_();
   }
+};
+
+
+/**
+ * Activates a tiled WMS layer cache item.
+ * @param {olgm.herald.Layers.TileWMSLayerCache} cacheItem
+ * @private
+ */
+olgm.herald.Layers.prototype.activateTileWMSLayerCacheItem_ = function(
+    cacheItem) {
+  var layer = cacheItem.layer;
+  var visible = layer.getVisible();
+  if (visible && this.googleMapsIsActive_) {
+    cacheItem.layer.setOpacity(0);
+  }
+};
+
+
+/**
+ * Deactivates a tiled WMS layer cache item.
+ * @param {olgm.herald.Layers.TileWMSLayerCache} cacheItem
+ * @private
+ */
+olgm.herald.Layers.prototype.deactivateTileWMSLayerCacheItem_ = function(
+    cacheItem) {
+  cacheItem.layer.setOpacity(cacheItem.opacity);
 };
 
 
@@ -524,3 +643,13 @@ olgm.herald.Layers.GoogleLayerCache;
  * }}
  */
 olgm.herald.Layers.VectorLayerCache;
+
+
+/**
+ * @typedef {{
+ *   layer: (ol.layer.Tile),
+ *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
+ *   opacity: (number)
+ * }}
+ */
+olgm.herald.Layers.TileWMSLayerCache;
