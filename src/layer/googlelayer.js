@@ -61,7 +61,6 @@ olgm.layer.Google.prototype.getStyles = function() {
  * OL3 are compiled and used at the same time, the layer's observable
  * properties don't fire change events anymore for the Google layer.
  * @param {boolean} visible The visibility of the layer.
- * @observable
  * @api stable
  */
 olgm.layer.Google.prototype.setVisible = function(visible) {
