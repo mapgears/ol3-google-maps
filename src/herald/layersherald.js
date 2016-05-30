@@ -274,6 +274,7 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
   var opacity = layer.getOpacity();
 
   var cacheItem = /** {@type olgm.herald.Layers.TileWMSLayerCache} */ ({
+    googleWMSLayer: null,
     layer: layer,
     listenerKeys: [],
     opacity: opacity
@@ -297,6 +298,11 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
   // Create the WMS layer on the google layer
   var googleWMSLayer = new google.maps.ImageMapType(options);
   this.gmap.overlayMapTypes.push(googleWMSLayer);
+  cacheItem.googleWMSLayer = googleWMSLayer;
+
+  // Hide the google layer when the ol3 layer is invisible
+  cacheItem.listenerKeys.push(layer.on('change:visible',
+      this.handleTileWMSLayerVisibleChange_.bind(this, cacheItem), this));
 
   // Activate the cache item
   this.activateTileWMSLayerCacheItem_(cacheItem);
@@ -609,6 +615,36 @@ olgm.herald.Layers.prototype.deactivateVectorLayerCacheItem_ = function(
 
 
 /**
+ * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
+ * @param {olgm.herald.Layers.TileWMSLayerCache} cacheItem
+ * @private
+ */
+olgm.herald.Layers.prototype.handleTileWMSLayerVisibleChange_ = function(
+    cacheItem) {
+  var layer = cacheItem.layer;
+  var visible = layer.getVisible();
+
+  var googleWMSLayer = cacheItem.googleWMSLayer;
+  var googleMapsLayers = this.gmap.overlayMapTypes;
+
+  // Get the position of the google layer so we can remove it
+  var layerIndex = googleMapsLayers.getArray().indexOf(googleWMSLayer);
+
+  if (visible) {
+    // Add the google WMS layer only if it's not there already
+    if (layerIndex == -1) {
+      googleMapsLayers.push(googleWMSLayer);
+    }
+  } else {
+    // Remove the google WMS layer from the map if it hasn't been done already
+    if (layerIndex != -1) {
+      googleMapsLayers.removeAt(layerIndex);
+    }
+  }
+};
+
+
+/**
  * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
  * @private
  */
@@ -647,6 +683,7 @@ olgm.herald.Layers.VectorLayerCache;
 
 /**
  * @typedef {{
+ *   googleWMSLayer: (google.maps.ImageMapType),
  *   layer: (ol.layer.Tile),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
