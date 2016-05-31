@@ -8,12 +8,13 @@ var osmLayer = new ol.layer.Tile({
 });
 
 var tileWMSLayer  =  new ol.layer.Tile({
-    extent: [-13884991, 2870341, -7455066, 6338219],
-    source: new ol.source.TileWMS({
-      url: 'http://demo.boundlessgeo.com/geoserver/wms',
-      params: {'LAYERS': 'topp:states', 'TILED': true},
-      serverType: 'geoserver'
-    })
+  extent: [-13884991, 2870341, -7455066, 6338219],
+  source: new ol.source.TileWMS({
+    url: 'http://demo.boundlessgeo.com/geoserver/wms',
+    params: {'LAYERS': 'topp:states', 'TILED': true},
+    serverType: 'geoserver'
+  }),
+  visible: true
 });
 
 var map = new ol.Map({

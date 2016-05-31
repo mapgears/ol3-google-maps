@@ -267,6 +267,7 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
   if (!source) {
     return;
   }
+  var params = source.getParams();
 
   this.tileWMSLayers_.push(layer);
 
@@ -284,7 +285,8 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
   var proj = ol.proj.get('EPSG:3857');
 
   var googleGetTileUrlFunction = function(coords, zoom) {
-    return getTileUrlFunction([zoom, coords.x, (-coords.y) - 1], 1, proj);
+    var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
+    return getTileUrlFunction(ol3Coords, 1, proj, params);
   };
 
   var tileSize = new google.maps.Size(256, 256);
@@ -297,7 +299,9 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
 
   // Create the WMS layer on the google layer
   var googleWMSLayer = new google.maps.ImageMapType(options);
-  this.gmap.overlayMapTypes.push(googleWMSLayer);
+  if (layer.getVisible()) {
+    this.gmap.overlayMapTypes.push(googleWMSLayer);
+  }
   cacheItem.googleWMSLayer = googleWMSLayer;
 
   // Hide the google layer when the ol3 layer is invisible
@@ -635,11 +639,13 @@ olgm.herald.Layers.prototype.handleTileWMSLayerVisibleChange_ = function(
     if (layerIndex == -1) {
       googleMapsLayers.push(googleWMSLayer);
     }
+    this.activateTileWMSLayerCacheItem_(cacheItem);
   } else {
     // Remove the google WMS layer from the map if it hasn't been done already
     if (layerIndex != -1) {
       googleMapsLayers.removeAt(layerIndex);
     }
+    this.deactivateTileWMSLayerCacheItem_(cacheItem);
   }
 };
 
