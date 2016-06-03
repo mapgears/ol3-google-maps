@@ -54,4 +54,6 @@ function toggleOSM() {
 function toggleWMS() {
   tileWMSLayer.setVisible(!tileWMSLayer.getVisible());
   imageWMSLayer.setVisible(!imageWMSLayer.getVisible());
+  var spanText = tileWMSLayer.getVisible() ? 'tiled' : 'image';
+  document.getElementById('currentMode').innerHTML = spanText;
 }

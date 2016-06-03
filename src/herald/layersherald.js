@@ -706,6 +706,7 @@ olgm.herald.Layers.prototype.activateImageWMSLayerCacheItem_ = function(
   var layer = cacheItem.layer;
   var visible = layer.getVisible();
   if (visible && this.googleMapsIsActive_) {
+    cacheItem.lastUrl = null;
     cacheItem.layer.setOpacity(0);
     this.updateImageOverlay_(cacheItem);
   }
