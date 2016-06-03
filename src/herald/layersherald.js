@@ -330,9 +330,7 @@ olgm.herald.Layers.prototype.generateImageWMSFunction_ = function(layer) {
   var url = source.getUrl();
   var size = ol3map.getSize();
 
-  if (!size) {
-    return '';
-  }
+  goog.asserts.assert(size !== undefined);
 
   var view = ol3map.getView();
   var bbox = view.calculateExtent(size);
@@ -859,9 +857,7 @@ olgm.herald.Layers.prototype.updateImageOverlay_ = function(cacheItem) {
   var view = this.ol3map.getView();
   var size = this.ol3map.getSize();
 
-  if (!size) {
-    return;
-  }
+  goog.asserts.assert(size !== undefined);
 
   var extent = view.calculateExtent(size);
 
