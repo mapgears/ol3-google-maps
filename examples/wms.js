@@ -17,13 +17,24 @@ var tileWMSLayer  =  new ol.layer.Tile({
   visible: true
 });
 
+var imageWMSLayer = new ol.layer.Image({
+  extent: [-13884991, 2870341, -7455066, 6338219],
+  source: new ol.source.ImageWMS({
+    url: 'http://demo.boundlessgeo.com/geoserver/wms',
+    params: {'LAYERS': 'topp:states', 'TILED': true},
+    serverType: 'geoserver'
+  }),
+  visible: false
+})
+
 var map = new ol.Map({
   // use OL3-Google-Maps recommended default interactions
   interactions: olgm.interaction.defaults(),
   layers: [
     googleLayer,
     osmLayer,
-    tileWMSLayer
+    tileWMSLayer,
+    imageWMSLayer
   ],
   target: 'map',
   view: new ol.View({
@@ -35,7 +46,12 @@ var map = new ol.Map({
 var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
 olGM.activate();
 
-function toggle() {
+function toggleOSM() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
 };
+
+function toggleWMS() {
+  tileWMSLayer.setVisible(!tileWMSLayer.getVisible());
+  imageWMSLayer.setVisible(!imageWMSLayer.getVisible());
+}
