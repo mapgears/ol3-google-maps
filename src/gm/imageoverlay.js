@@ -73,14 +73,33 @@ olgm.gm.ImageOverlay.prototype.onAdd = function() {
  */
 olgm.gm.ImageOverlay.prototype.draw = function() {
   var div = this.div_;
-  div.style.width = this.size_[0] + 'px';
-  div.style.height = this.size_[1] + 'px';
+
+  var sizeX = this.size_[0];
+  var sizeY = this.size_[1];
+
+  div.style.width = sizeX + 'px';
+  div.style.height = sizeY + 'px';
 
   var overlayProjection = this.getProjection();
   var topLeftPx = overlayProjection.fromLatLngToDivPixel(this.topLeft_);
 
-  div.style.top = topLeftPx.y + 'px';
-  div.style.left = topLeftPx.x + 'px';
+  var offsetX = topLeftPx.x;
+  var offsetY = topLeftPx.y;
+
+  // Adjust bad calculations when the view is larger than the world
+  var worldWidth = overlayProjection.getWorldWidth();
+  if (worldWidth < sizeX) {
+    // Overlap of the map on each size
+    var mapOverlap = Math.floor(sizeX / worldWidth) / 2;
+
+    // For when only one map is overlapping
+    var factor = Math.max(mapOverlap, 1);
+
+    offsetX -= worldWidth * factor;
+  }
+
+  div.style.top = offsetY + 'px';
+  div.style.left = offsetX + 'px';
 };
 
 

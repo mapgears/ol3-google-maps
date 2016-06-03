@@ -293,6 +293,7 @@ olgm.herald.Layers.prototype.watchImageWMSLayer_ = function(layer) {
 
   var cacheItem = /** {@type olgm.herald.Layers.ImageWMSLayerCache} */ ({
     imageOverlay: null,
+    lastUrl: null,
     layer: layer,
     listenerKeys: [],
     opacity: opacity
@@ -303,6 +304,9 @@ olgm.herald.Layers.prototype.watchImageWMSLayer_ = function(layer) {
       this.handleImageWMSLayerVisibleChange_.bind(this, cacheItem), this));
 
   cacheItem.listenerKeys.push(this.ol3map.on('moveend',
+      this.handleImageWMSMoveEnd_.bind(this, cacheItem), this));
+
+  cacheItem.listenerKeys.push(this.ol3map.getView().on('change:resolution',
       this.handleImageWMSMoveEnd_.bind(this, cacheItem), this));
 
   // Activate the cache item
@@ -835,6 +839,21 @@ olgm.herald.Layers.prototype.handleImageWMSLayerVisibleChange_ = function(
  * @private
  */
 olgm.herald.Layers.prototype.updateImageOverlay_ = function(cacheItem) {
+  var layer = cacheItem.layer;
+  var url = this.generateImageWMSFunction_(layer);
+
+  /* We listen to both change:resolution and moveend events. However, changing
+   * resolution eventually sends a moveend event as well. Using only the
+   * moveend event makes zooming in/out look bad. To prevent rendering the
+   * overlay twice when it happens, we save the request url, and if it's the
+   * same as the last time, we don't render it.
+   */
+  if (url == cacheItem.lastUrl) {
+    return;
+  }
+
+  cacheItem.lastUrl = url;
+
   // Create a new overlay
   var view = this.ol3map.getView();
   var size = this.ol3map.getSize();
@@ -851,9 +870,6 @@ olgm.herald.Layers.prototype.updateImageOverlay_ = function(cacheItem) {
   // Then, convert it to LatLng coordinates for google
   var lngLat = ol.proj.transform(topLeft, 'EPSG:3857', 'EPSG:4326');
   var topLeftLatLng = new google.maps.LatLng(lngLat[1], lngLat[0]);
-
-  var layer = cacheItem.layer;
-  var url = this.generateImageWMSFunction_(layer);
 
   var overlay = new olgm.gm.ImageOverlay(
       url,
@@ -941,6 +957,7 @@ olgm.herald.Layers.TileWMSLayerCache;
 /**
  * @typedef {{
  *   imageOverlay: (olgm.gm.ImageOverlay),
+ *   lastUrl: (string|null),
  *   layer: (ol.layer.Image),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
