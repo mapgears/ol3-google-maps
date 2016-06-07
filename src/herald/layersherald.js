@@ -597,7 +597,8 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
 
   this.targetEl_.removeChild(this.ol3mapEl_);
   this.targetEl_.appendChild(this.gmapEl_);
-  this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].push(
+  var index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
+  this.gmap.controls[index].push(
       this.ol3mapEl_);
 
   this.viewHerald_.activate();
@@ -631,7 +632,8 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
     return;
   }
 
-  this.gmap.controls[google.maps.ControlPosition.TOP_LEFT].removeAt(0);
+  var index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
+  this.gmap.controls[index].removeAt(0);
   this.targetEl_.removeChild(this.gmapEl_);
   this.targetEl_.appendChild(this.ol3mapEl_);
 
