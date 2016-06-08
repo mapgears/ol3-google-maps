@@ -138,7 +138,6 @@ function getDependencies(config, exports, callback) {
         cwd: root
       };
     }
-    options.ignoreRequires = config.ignoreRequires;
     closure.getDependencies(options, function(err, paths) {
       if (err) {
         callback(err);
@@ -163,14 +162,8 @@ function concatenate(paths, callback) {
       var msg = 'Trouble concatenating sources.  ' + err.message;
       callback(new Error(msg));
     } else {
-      var parts = umdWrapper.split('%output%');
-      var src = parts[0] +
-          'var goog = this.goog = {};\n' +
-          'this.CLOSURE_NO_DEPS = true;\n' +
-          results.join('\n') +
-          'OL3GOOGLEMAPS.olgm = olgm;\n' +
-          parts[1];
-      callback(null, src);
+      var preamble = 'var CLOSURE_NO_DEPS = true;\n';
+      callback(null, preamble + results.join('\n'));
     }
   });
 }

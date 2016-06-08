@@ -6,7 +6,9 @@ var async = require('async');
 var fse = require('fs-extra');
 var walk = require('walk').walk;
 
-var sourceDir = path.join(__dirname, '..', 'src');
+var sourceDirOL = path.join(__dirname, '..', 'node_modules', 'openlayers', 'src');
+var sourceDirSelf = path.join(__dirname, '..', 'src');
+var sourceDirs = [sourceDirOL, sourceDirSelf];
 var infoPath = path.join(__dirname, '..', '.build', 'info.json');
 var jsdoc = path.join(__dirname, '..', 'node_modules', '.bin', 'jsdoc');
 var jsdocConfig = path.join(__dirname, 'jsdoc', 'info', 'conf.json');
@@ -43,22 +45,30 @@ function getNewer(date, callback) {
   var paths = [];
   var newer = false;
 
-  var walker = walk(sourceDir);
-  walker.on('file', function(root, stats, next) {
-    var sourcePath = path.join(root, stats.name);
-    if (/\.js$/.test(sourcePath)) {
-      paths.push(sourcePath);
-      if (stats.mtime > date) {
-        newer = true;
-      }
-    }
-    next();
+  var tasks = sourceDirs.map(function(sourceDir) {
+    return function(callback) {
+      var walker = walk(sourceDir, {followLinks: true});
+      walker.on('file', function(root, stats, next) {
+        var sourcePath = path.join(root, stats.name);
+        if (/\.js$/.test(sourcePath)) {
+          paths.push(sourcePath);
+          if (stats.mtime > date) {
+            newer = true;
+          }
+        }
+        next();
+      });
+      walker.on('errors', function() {
+        callback(new Error('Trouble walking ' + sourceDir));
+      });
+      walker.on('end', function() {
+        callback(null);
+      });
+    };
   });
-  walker.on('errors', function() {
-    callback(new Error('Trouble walking ' + sourceDir));
-  });
-  walker.on('end', function() {
-    callback(null, newer ? paths : []);
+
+  async.series(tasks, function(err, results) {
+    callback(err, newer ? paths : []);
   });
 }
 

@@ -323,6 +323,8 @@ olgm.herald.Layers.prototype.watchImageWMSLayer_ = function(layer) {
  */
 olgm.herald.Layers.prototype.generateImageWMSFunction_ = function(layer) {
   var source = layer.getSource();
+  goog.asserts.assertInstanceof(source, ol.source.ImageWMS);
+
   var params = source.getParams();
   var ol3map = this.ol3map;
 
@@ -371,7 +373,7 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
   if (!source) {
     return;
   }
-  var params = source.getParams();
+  goog.asserts.assertInstanceof(source, ol.source.TileWMS);
 
   this.tileWMSLayers_.push(layer);
 
@@ -390,7 +392,7 @@ olgm.herald.Layers.prototype.watchTileWMSLayer_ = function(layer) {
 
   var googleGetTileUrlFunction = function(coords, zoom) {
     var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
-    return getTileUrlFunction(ol3Coords, 1, proj, params);
+    return getTileUrlFunction(ol3Coords, 1, proj);
   };
 
   var tileSize = new google.maps.Size(256, 256);

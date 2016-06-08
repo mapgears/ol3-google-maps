@@ -1,5 +1,7 @@
 goog.provide('olgm.interaction');
 
+goog.require('ol.interaction.DragPan');
+
 
 /**
  * Set of interactions that are recommended to include in ol3 maps used

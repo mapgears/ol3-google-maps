@@ -20,7 +20,7 @@
     "geojsonhint": "^1.0.0",
     "fs-extra": "~0.8.1",
     "graceful-fs": "~3.0.2",
-    "jsdoc": "~3.3.0-alpha7",
+    "jsdoc": "~3.4.0",
     "jshint": "~2.5.1",
     "openlayers": "mapgears/ol3#v3.15.0-olgm",
     "nomnom": "~1.6.2",

@@ -1,5 +1,7 @@
 goog.provide('olgm.layer.Google');
 
+goog.require('ol.layer.Group');
+
 
 
 /**
@@ -49,24 +51,4 @@ olgm.layer.Google.prototype.getMapTypeId = function() {
  */
 olgm.layer.Google.prototype.getStyles = function() {
   return this.styles_;
-};
-
-
-/**
- * Set the visibility of the google layer (`true` or `false`). This is a
- * temporary fix for issue #60. The only thing different about this function,
- * which overrides the layerbase's setVisible function, is that it sends an
- * event manually right after.
- * We're doing this fix because for an unknown reason, when both OLGM and
- * OL3 are compiled and used at the same time, the layer's observable
- * properties don't fire change events anymore for the Google layer.
- * @param {boolean} visible The visibility of the layer.
- * @api stable
- */
-olgm.layer.Google.prototype.setVisible = function(visible) {
-  // Call the original setVisible function
-  goog.base(this, 'setVisible', visible);
-
-  // Dispatch a change event right after
-  this.dispatchEvent('change:visible');
 };
