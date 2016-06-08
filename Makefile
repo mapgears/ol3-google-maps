@@ -64,7 +64,6 @@ clean:
 	rm -f node_modules/openlayers/build/ol.js
 	rm -f node_modules/openlayers/build/ol-debug.js
 	rm -f node_modules/openlayers/build/ol.css
-	rm -f node_modules/openlayers/build/ol-externs.js
 	rm -rf dist/ol3
 	rm -rf dist/examples
 
@@ -84,14 +83,8 @@ cleanall: clean
 .build/dist-examples.timestamp: node_modules/openlayers/build/olX dist/ol3gm.js $(EXAMPLES_JS_FILES) $(EXAMPLES_HTML_FILES)
 	node build/parse-examples.js
 	mkdir -p $(dir $@)
-	mkdir -p dist/ol3
-	cp node_modules/openlayers/build/ol-debug.js dist/ol3/
-	cp node_modules/openlayers/build/ol.js dist/ol3/
-	mkdir -p dist/ol3/css
-	cp node_modules/openlayers/build/ol.css dist/ol3/css/
 	cp -R examples dist/
 	for f in dist/examples/*.html; do $(SEDI) 'sY/@loaderY../ol3gm.jsY' $$f; done
-	for f in dist/examples/*.html; do $(SEDI) 'sY../node_modules/openlayers/build/ol.jsY../node_modules/openlayers/ol-debug.jsY' $$f; done
 	touch $@
 
 .build/python-venv:
@@ -102,22 +95,25 @@ cleanall: clean
 	.build/python-venv/bin/pip install "http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz"
 	touch $@
 
-dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js
+dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) build/build.js npm-install
 	mkdir -p $(dir $@)
 	node build/build.js $< $@
 
+
+node_modules/openlayers/node_modules/rbush/package.json: node_modules/openlayers/package.json
+	(cd ol3 && npm install --production)
+
+node_modules/openlayers/build/ol.ext/rbush.js: node_modules/openlayers/node_modules/rbush/package.json
+	(cd ol3 && node tasks/build-ext.js)
+
 # A sourcemap is prepared, the source is exected to be deployed in 'source' directory
-dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) node_modules/openlayers/build/ol-externs.js build/build.js
+dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) build/build.js npm-install node_modules/openlayers/build/ol.ext/rbush.js
 	mkdir -p $(dir $@)
 	node build/build.js $< $@
 	$(SEDI) 's!$(shell pwd)/dist!source!g' dist/ol3gm.js.map
 	$(SEDI) 's!$(shell pwd)!source!g' dist/ol3gm.js.map
 #	echo '//# sourceMappingURL=ol3gm.js.map' >> dist/ol3gm.js
 #	-ln -s .. dist/source
-
-.PHONY: node_modules/openlayers/build/ol-externs.js
-node_modules/openlayers/build/ol-externs.js: npm-install
-	(cd node_modules/openlayers && npm install && node tasks/generate-externs.js build/ol-externs.js)
 
 .PHONY: node_modules/openlayers/build/olX
 node_modules/openlayers/build/olX: npm-install

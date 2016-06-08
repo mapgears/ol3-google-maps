@@ -1,62 +1,46 @@
 {
   "exports": ["*"],
-  "umd": true,
-  "src": ["src/**/*.js"],
-  "ignoreRequires": "^ol\\.",
+  "umd": false,
+  "src": [
+    "src/**/*.js",
+    "node_modules/openlayers/src/**/*.js",
+    "node_modules/openlayers/build/ol.ext/*.js"
+  ],
   "compile": {
     "externs": [
-      "node_modules/openlayers/build/ol-externs.js",
-      "node_modules/openlayers/externs/esrijson.js",
+      "externs/olgmx.js",
+      "node_modules/openlayers/externs/oli.js",
+      "node_modules/openlayers/externs/olx.js",
+      "node_modules/openlayers/externs/cartodb.js",
       "node_modules/openlayers/externs/proj4js.js",
       "node_modules/openlayers/externs/tilejson.js",
-      "externs/olgmx.js",
+      "node_modules/openlayers/externs/topojson.js",
+      "node_modules/openlayers/externs/esrijson.js",
+      "node_modules/openlayers/externs/geojson.js",
+      "node_modules/openlayers/externs/bingmaps.js",
+      "node_modules/openlayers/externs/closure-compiler.js",
       "externs/google_maps_api_v3_21.js"
     ],
     "define": [
-      "goog.DEBUG=true"
+      "goog.DEBUG=false"
     ],
     "js": [
     ],
     "jscomp_error": [
-      "accessControls",
-      "ambiguousFunctionDecl",
-      "checkDebuggerStatement",
-      "checkEventfulObjectDisposal",
-      "checkProvides",
-      "checkRegExp",
-      "checkStructDictInheritance",
-      "checkVars",
-      "checkTypes",
-      "const",
-      "constantProperty",
-      "deprecated",
-      "duplicate",
-      "duplicateMessage",
-      "es3",
-      "externsValidation",
-      "fileoverviewTags",
-      "globalThis",
-      "internetExplorerChecks",
-      "invalidCasts",
-      "misplacedTypeAnnotation",
-      "missingProperties",
-      "nonStandardJsDocs",
-      "strictModuleDepCheck",
-      "suspiciousCode",
-      "typeInvalidation",
-      "tweakValidation",
-      "undefinedNames",
-      "undefinedVars",
-      "unknownDefines",
-      "uselessCode",
-      "violatedModuleDep",
-      "visibility"
+      "*"
+    ],
+    "jscomp_off": [
+      "useOfGoogBase",
+      "lintChecks",
+      "analyzerChecks"
     ],
     "extra_annotation_name": [
       "api", "observable"
     ],
-    "compilation_level": "ADVANCED_OPTIMIZATIONS",
+    "compilation_level": "ADVANCED",
     "warning_level": "VERBOSE",
+    "generate_exports": true,
+    "output_wrapper": "(function(){%output%}).call(window);",
     "use_types_for_optimization": true,
     "create_source_map": "dist/ol3gm.js.map",
     "source_map_format": "V3"
