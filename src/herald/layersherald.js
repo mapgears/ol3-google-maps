@@ -2,11 +2,10 @@ goog.provide('olgm.herald.Layers');
 
 goog.require('goog.asserts');
 goog.require('olgm');
-goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.ImageWMSSource');
 goog.require('olgm.herald.TileWMSSource');
-goog.require('olgm.herald.VectorFeature');
+goog.require('olgm.herald.VectorSource');
 goog.require('olgm.herald.View');
 goog.require('olgm.layer.Google');
 
@@ -63,18 +62,6 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
   this.googleCache_ = [];
 
   /**
-   * @type {Array.<olgm.herald.Layers.VectorLayerCache>}
-   * @private
-   */
-  this.vectorCache_ = [];
-
-  /**
-   * @type {Array.<ol.layer.Vector>}
-   * @private
-   */
-  this.vectorLayers_ = [];
-
-  /**
    * @type {olgm.herald.ImageWMSSource}
    * @private
    */
@@ -85,6 +72,12 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
    * @private
    */
   this.tileWMSSourceHerald_ = new olgm.herald.TileWMSSource(ol3map, gmap);
+
+  /**
+   * @type {olgm.herald.VectorSource}
+   * @private
+   */
+  this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap);
 
   /**
    * @type {olgm.herald.View}
@@ -207,6 +200,7 @@ olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
   this.googleMapsIsActive_ = active;
   this.imageWMSSourceHerald_.setGoogleMapsActive(active);
   this.tileWMSSourceHerald_.setGoogleMapsActive(active);
+  this.vectorSourceHerald_.setGoogleMapsActive(active);
 };
 
 
@@ -243,7 +237,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
   if (layer instanceof olgm.layer.Google) {
     this.watchGoogleLayer_(layer);
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
-    this.watchVectorLayer_(layer);
+    this.vectorSourceHerald_.watchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
     var source = layer.getSource();
     if (source instanceof ol.source.TileWMS) {
@@ -276,58 +270,6 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
 
 
 /**
- * Watch the vector layer
- * @param {ol.layer.Vector} layer
- * @private
- */
-olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
-
-  var ol3map = this.ol3map;
-  var gmap = this.gmap;
-
-  // a source is required to work with this layer
-  var source = layer.getSource();
-  if (!source) {
-    return;
-  }
-
-  this.vectorLayers_.push(layer);
-
-  // Data
-  var data = new google.maps.Data({
-    'map': gmap
-  });
-
-  // Style
-  var gmStyle = olgm.gm.createStyle(layer);
-  if (gmStyle) {
-    data.setStyle(gmStyle);
-  }
-
-  // herald
-  var herald = new olgm.herald.VectorFeature(ol3map, gmap, source, data);
-
-  // opacity
-  var opacity = layer.getOpacity();
-
-  var cacheItem = /** {@type olgm.herald.Layers.VectorLayerCache} */ ({
-    data: data,
-    herald: herald,
-    layer: layer,
-    listenerKeys: [],
-    opacity: opacity
-  });
-
-  cacheItem.listenerKeys.push(layer.on('change:visible',
-      this.handleVectorLayerVisibleChange_.bind(this, cacheItem), this));
-
-  this.activateVectorLayerCacheItem_(cacheItem);
-
-  this.vectorCache_.push(cacheItem);
-};
-
-
-/**
  * Unwatch the layer
  * @param {ol.layer.Base} layer
  * @private
@@ -336,7 +278,7 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   if (layer instanceof olgm.layer.Google) {
     this.unwatchGoogleLayer_(layer);
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
-    this.unwatchVectorLayer_(layer);
+    this.vectorSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
     var source = layer.getSource();
     if (source instanceof ol.source.TileWMS) {
@@ -367,33 +309,6 @@ olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
     this.googleCache_.splice(index, 1);
 
     this.toggleGoogleMaps_();
-  }
-};
-
-
-/**
- * Unwatch the vector layer
- * @param {ol.layer.Vector} layer
- * @private
- */
-olgm.herald.Layers.prototype.unwatchVectorLayer_ = function(layer) {
-  var index = this.vectorLayers_.indexOf(layer);
-  if (index !== -1) {
-    this.vectorLayers_.splice(index, 1);
-
-    var cacheItem = this.vectorCache_[index];
-    olgm.unlistenAllByKey(cacheItem.listenerKeys);
-
-    // data - unset
-    cacheItem.data.setMap(null);
-
-    // herald
-    cacheItem.herald.deactivate();
-
-    // opacity
-    layer.setOpacity(cacheItem.opacity);
-
-    this.vectorCache_.splice(index, 1);
   }
 };
 
@@ -430,9 +345,9 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.setGoogleMapsActive_(true);
 
   // activate all cache items
-  this.vectorCache_.forEach(this.activateVectorLayerCacheItem_, this);
   this.tileWMSSourceHerald_.activate();
   this.imageWMSSourceHerald_.activate();
+  this.vectorSourceHerald_.activate();
 };
 
 
@@ -457,9 +372,9 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
   this.ol3mapEl_.style.position = 'relative';
 
   // deactivate all cache items
-  this.vectorCache_.forEach(this.deactivateVectorLayerCacheItem_, this);
   this.tileWMSSourceHerald_.deactivate();
   this.imageWMSSourceHerald_.deactivate();
+  this.vectorSourceHerald_.deactivate();
 
   this.setGoogleMapsActive_(false);
 };
@@ -512,67 +427,9 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
 
 
 /**
- * Activates a vector layer cache item, i.e. activate its herald and
- * render the layer invisible. Will only do so if the layer is visible.
- * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
- * @private
- */
-olgm.herald.Layers.prototype.activateVectorLayerCacheItem_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
-  if (visible && this.googleMapsIsActive_) {
-    cacheItem.herald.activate();
-    cacheItem.layer.setOpacity(0);
-  }
-};
-
-
-/**
- * Deactivates a vector layer cache item, i.e. deactivate its herald and
- * restore the layer opacity.
- * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
- * @private
- */
-olgm.herald.Layers.prototype.deactivateVectorLayerCacheItem_ = function(
-    cacheItem) {
-  cacheItem.herald.deactivate();
-  cacheItem.layer.setOpacity(cacheItem.opacity);
-};
-
-
-/**
- * @param {olgm.herald.Layers.VectorLayerCache} cacheItem
- * @private
- */
-olgm.herald.Layers.prototype.handleVectorLayerVisibleChange_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
-  if (visible) {
-    this.activateVectorLayerCacheItem_(cacheItem);
-  } else {
-    this.deactivateVectorLayerCacheItem_(cacheItem);
-  }
-};
-
-
-/**
  * @typedef {{
  *   layer: (olgm.layer.Google),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>)
  * }}
  */
 olgm.herald.Layers.GoogleLayerCache;
-
-
-/**
- * @typedef {{
- *   data: (google.maps.Data),
- *   herald: (olgm.herald.VectorFeature),
- *   layer: (ol.layer.Vector),
- *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
- *   opacity: (number)
- * }}
- */
-olgm.herald.Layers.VectorLayerCache;
