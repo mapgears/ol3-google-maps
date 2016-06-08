@@ -1,4 +1,4 @@
-goog.provide('olgm.herald.VectorSource');
+goog.provide('olgm.herald.VectorFeature');
 
 goog.require('goog.asserts');
 goog.require('olgm.herald.Feature');
@@ -7,7 +7,7 @@ goog.require('olgm.herald.Herald');
 
 
 /**
- * The VectorSource Herald is responsible of sychronizing the features from
+ * The VectorFeature Herald is responsible of sychronizing the features from
  * an ol3 vector source. The existing features in addition of those that are
  * added and removed are all managed. Each existing or added feature is bound
  * to a `olgm.herald.Feature` object. It gets unbound when removed.
@@ -19,7 +19,7 @@ goog.require('olgm.herald.Herald');
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.VectorSource = function(ol3map, gmap, source, data) {
+olgm.herald.VectorFeature = function(ol3map, gmap, source, data) {
 
   /**
    * @type {Array.<ol.Feature>}
@@ -28,7 +28,7 @@ olgm.herald.VectorSource = function(ol3map, gmap, source, data) {
   this.features_ = [];
 
   /**
-   * @type {Array.<olgm.herald.VectorSource.Cache>}
+   * @type {Array.<olgm.herald.VectorFeature.Cache>}
    * @private
    */
   this.cache_ = [];
@@ -47,13 +47,13 @@ olgm.herald.VectorSource = function(ol3map, gmap, source, data) {
 
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorSource, olgm.herald.Herald);
+goog.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
 
 
 /**
  * @inheritDoc
  */
-olgm.herald.VectorSource.prototype.activate = function() {
+olgm.herald.VectorFeature.prototype.activate = function() {
   goog.base(this, 'activate');
 
   // watch existing features...
@@ -69,7 +69,7 @@ olgm.herald.VectorSource.prototype.activate = function() {
 /**
  * @inheritDoc
  */
-olgm.herald.VectorSource.prototype.deactivate = function() {
+olgm.herald.VectorFeature.prototype.deactivate = function() {
   // unwatch existing features...
   this.source_.getFeatures().forEach(this.unwatchFeature_, this);
 
@@ -81,7 +81,7 @@ olgm.herald.VectorSource.prototype.deactivate = function() {
  * @param {ol.source.VectorEvent} event
  * @private
  */
-olgm.herald.VectorSource.prototype.handleAddFeature_ = function(event) {
+olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
   var feature = event.feature;
   goog.asserts.assertInstanceof(feature, ol.Feature);
   this.watchFeature_(feature);
@@ -92,7 +92,7 @@ olgm.herald.VectorSource.prototype.handleAddFeature_ = function(event) {
  * @param {ol.source.VectorEvent} event
  * @private
  */
-olgm.herald.VectorSource.prototype.handleRemoveFeature_ = function(event) {
+olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
   var feature = event.feature;
   goog.asserts.assertInstanceof(feature, ol.Feature);
   this.unwatchFeature_(feature);
@@ -103,7 +103,7 @@ olgm.herald.VectorSource.prototype.handleRemoveFeature_ = function(event) {
  * @param {ol.Feature} feature
  * @private
  */
-olgm.herald.VectorSource.prototype.watchFeature_ = function(feature) {
+olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
 
   var ol3map = this.ol3map;
   var gmap = this.gmap;
@@ -130,7 +130,7 @@ olgm.herald.VectorSource.prototype.watchFeature_ = function(feature) {
  * @param {ol.Feature} feature
  * @private
  */
-olgm.herald.VectorSource.prototype.unwatchFeature_ = function(feature) {
+olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {
   var index = this.features_.indexOf(feature);
   if (index !== -1) {
     // remove from features (internal)
@@ -149,4 +149,4 @@ olgm.herald.VectorSource.prototype.unwatchFeature_ = function(feature) {
  *   herald: (olgm.herald.Feature)
  * }}
  */
-olgm.herald.VectorSource.Cache;
+olgm.herald.VectorFeature.Cache;

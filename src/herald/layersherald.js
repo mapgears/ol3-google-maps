@@ -6,7 +6,7 @@ goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.ImageWMSSource');
 goog.require('olgm.herald.TileWMSSource');
-goog.require('olgm.herald.VectorSource');
+goog.require('olgm.herald.VectorFeature');
 goog.require('olgm.herald.View');
 goog.require('olgm.layer.Google');
 
@@ -37,7 +37,7 @@ goog.require('olgm.layer.Google');
  *
  * `ol.layer.Vector`
  * -----------------
- *     When a vector layers is added, a `olgm.herald.VectorSource` is created
+ *     When a vector layers is added, a `olgm.herald.VectorFeature` is created
  *     to manage its `ol.source.Vector`. The layer is immediately rendered
  *     fully transparent, making the interactions still possible over it
  *     while being invisible.
@@ -305,7 +305,7 @@ olgm.herald.Layers.prototype.watchVectorLayer_ = function(layer) {
   }
 
   // herald
-  var herald = new olgm.herald.VectorSource(ol3map, gmap, source, data);
+  var herald = new olgm.herald.VectorFeature(ol3map, gmap, source, data);
 
   // opacity
   var opacity = layer.getOpacity();
@@ -569,7 +569,7 @@ olgm.herald.Layers.GoogleLayerCache;
 /**
  * @typedef {{
  *   data: (google.maps.Data),
- *   herald: (olgm.herald.VectorSource),
+ *   herald: (olgm.herald.VectorFeature),
  *   layer: (ol.layer.Vector),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
