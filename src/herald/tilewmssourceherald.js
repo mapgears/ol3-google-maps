@@ -1,6 +1,6 @@
-goog.require('olgm.herald.Source');
-
 goog.provide('olgm.herald.TileWMSSource');
+
+goog.require('olgm.herald.Source');
 
 
 
@@ -49,7 +49,7 @@ olgm.herald.TileWMSSource.prototype.watchLayer = function(layer) {
   // opacity
   var opacity = tileLayer.getOpacity();
 
-  var cacheItem = /** {@type olgm.herald.Layers.TileWMSLayerCache} */ ({
+  var cacheItem = /** {@type olgm.herald.TileWMSSource.LayerCache} */ ({
     googleWMSLayer: null,
     layer: tileLayer,
     listenerKeys: [],

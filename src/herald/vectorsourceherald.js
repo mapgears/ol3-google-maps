@@ -64,7 +64,7 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
   // opacity
   var opacity = vectorLayer.getOpacity();
 
-  var cacheItem = /** {@type olgm.herald.Layers.VectorLayerCache} */ ({
+  var cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
     data: data,
     herald: herald,
     layer: vectorLayer,

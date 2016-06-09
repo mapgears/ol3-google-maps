@@ -22,7 +22,7 @@ olgm.herald.Source = function(ol3map, gmap) {
    * @type {boolean}
    * @protected
    */
-  olgm.herald.Layers.prototype.googleMapsIsActive_ = false;
+  olgm.herald.Source.prototype.googleMapsIsActive_ = false;
 };
 goog.inherits(olgm.herald.Source, olgm.herald.Herald);
 
