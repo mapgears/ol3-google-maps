@@ -1,152 +1,189 @@
 goog.provide('olgm.herald.VectorSource');
 
-goog.require('goog.asserts');
-goog.require('olgm.herald.Feature');
-goog.require('olgm.herald.Herald');
+goog.require('olgm.herald.Source');
+goog.require('olgm.herald.VectorFeature');
 
 
 
 /**
- * The VectorSource Herald is responsible of sychronizing the features from
- * an ol3 vector source. The existing features in addition of those that are
- * added and removed are all managed. Each existing or added feature is bound
- * to a `olgm.herald.Feature` object. It gets unbound when removed.
- *
+ * Listen to a Vector layer
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
- * @param {!ol.source.Vector} source
- * @param {!google.maps.Data} data
  * @constructor
- * @extends {olgm.herald.Herald}
+ * @extends {olgm.herald.Source}
  */
-olgm.herald.VectorSource = function(ol3map, gmap, source, data) {
-
+olgm.herald.VectorSource = function(ol3map, gmap) {
   /**
-   * @type {Array.<ol.Feature>}
-   * @private
-   */
-  this.features_ = [];
-
-  /**
-   * @type {Array.<olgm.herald.VectorSource.Cache>}
-   * @private
-   */
+  * @type {Array.<olgm.herald.VectorSource.LayerCache>}
+  * @private
+  */
   this.cache_ = [];
 
   /**
-   * @type {!google.maps.Data}
-   * @private
-   */
-  this.data_ = data;
-
-  /**
-   * @type {ol.source.Vector}
-   * @private
-   */
-  this.source_ = source;
+  * @type {Array.<ol.layer.Vector>}
+  * @private
+  */
+  this.layers_ = [];
 
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorSource, olgm.herald.Herald);
+goog.inherits(olgm.herald.VectorSource, olgm.herald.Source);
 
 
 /**
- * @inheritDoc
+ * @param {ol.layer.Base} layer
+ * @override
+ */
+olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
+  var vectorLayer = /** {@type ol.layer.Vector} */ (layer);
+  goog.asserts.assertInstanceof(vectorLayer, ol.layer.Vector);
+
+  // Source required
+  var source = vectorLayer.getSource();
+  if (!source) {
+    return;
+  }
+
+  this.layers_.push(vectorLayer);
+
+  // Data
+  var data = new google.maps.Data({
+    'map': this.gmap
+  });
+
+  // Style
+  var gmStyle = olgm.gm.createStyle(vectorLayer);
+  if (gmStyle) {
+    data.setStyle(gmStyle);
+  }
+
+  // herald
+  var herald = new olgm.herald.VectorFeature(
+      this.ol3map, this.gmap, source, data);
+
+  // opacity
+  var opacity = vectorLayer.getOpacity();
+
+  var cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
+    data: data,
+    herald: herald,
+    layer: vectorLayer,
+    listenerKeys: [],
+    opacity: opacity
+  });
+
+  cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
+      this.handleVisibleChange_.bind(this, cacheItem), this));
+
+  this.activateCacheItem_(cacheItem);
+
+  this.cache_.push(cacheItem);
+};
+
+
+/**
+ * Unwatch the WMS tile layer
+ * @param {ol.layer.Base} layer
+ * @override
+ */
+olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
+  var vectorLayer = /** {@type ol.layer.Vector} */ (layer);
+  goog.asserts.assertInstanceof(vectorLayer, ol.layer.Vector);
+
+  var index = this.layers_.indexOf(vectorLayer);
+  if (index !== -1) {
+    this.layers_.splice(index, 1);
+
+    var cacheItem = this.cache_[index];
+    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+
+    // data - unset
+    cacheItem.data.setMap(null);
+
+    // herald
+    cacheItem.herald.deactivate();
+
+    // opacity
+    vectorLayer.setOpacity(cacheItem.opacity);
+
+    this.cache_.splice(index, 1);
+  }
+
+};
+
+
+/**
+ * Activate all cache items
+ * @api
  */
 olgm.herald.VectorSource.prototype.activate = function() {
-  goog.base(this, 'activate');
-
-  // watch existing features...
-  this.source_.getFeatures().forEach(this.watchFeature_, this);
-
-  // event listeners
-  var keys = this.listenerKeys;
-  keys.push(this.source_.on('addfeature', this.handleAddFeature_, this));
-  keys.push(this.source_.on('removefeature', this.handleRemoveFeature_, this));
+  olgm.herald.VectorSource.base(this, 'activate'); // Call parent function
+  this.cache_.forEach(this.activateCacheItem_, this);
 };
 
 
 /**
- * @inheritDoc
+ * Activates an image WMS layer cache item.
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @private
+ */
+olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
+    cacheItem) {
+  var layer = cacheItem.layer;
+  var visible = layer.getVisible();
+  if (visible && this.googleMapsIsActive) {
+    cacheItem.herald.activate();
+    cacheItem.layer.setOpacity(0);
+  }
+};
+
+
+/**
+ * Deactivate all cache items
+ * @api
  */
 olgm.herald.VectorSource.prototype.deactivate = function() {
-  // unwatch existing features...
-  this.source_.getFeatures().forEach(this.unwatchFeature_, this);
-
-  goog.base(this, 'deactivate');
+  olgm.herald.VectorSource.base(this, 'deactivate'); //Call parent function
+  this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
 
 /**
- * @param {ol.source.VectorEvent} event
+ * Deactivates a Tile WMS layer cache item.
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem
  * @private
  */
-olgm.herald.VectorSource.prototype.handleAddFeature_ = function(event) {
-  var feature = event.feature;
-  goog.asserts.assertInstanceof(feature, ol.Feature);
-  this.watchFeature_(feature);
+olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
+    cacheItem) {
+  cacheItem.herald.deactivate();
+  cacheItem.layer.setOpacity(cacheItem.opacity);
 };
 
 
 /**
- * @param {ol.source.VectorEvent} event
+ * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem
  * @private
  */
-olgm.herald.VectorSource.prototype.handleRemoveFeature_ = function(event) {
-  var feature = event.feature;
-  goog.asserts.assertInstanceof(feature, ol.Feature);
-  this.unwatchFeature_(feature);
-};
-
-
-/**
- * @param {ol.Feature} feature
- * @private
- */
-olgm.herald.VectorSource.prototype.watchFeature_ = function(feature) {
-
-  var ol3map = this.ol3map;
-  var gmap = this.gmap;
-  var data = this.data_;
-
-  // push to features (internal)
-  this.features_.push(feature);
-
-  var index = this.features_.indexOf(feature);
-
-  // create and activate feature herald
-  var herald = new olgm.herald.Feature(ol3map, gmap, feature, data, index);
-  herald.activate();
-
-  // push to cache
-  this.cache_.push({
-    feature: feature,
-    herald: herald
-  });
-};
-
-
-/**
- * @param {ol.Feature} feature
- * @private
- */
-olgm.herald.VectorSource.prototype.unwatchFeature_ = function(feature) {
-  var index = this.features_.indexOf(feature);
-  if (index !== -1) {
-    // remove from features (internal)
-    this.features_.splice(index, 1);
-    // deactivate feature herald
-    this.cache_[index].herald.deactivate();
-    // remove from cache
-    this.cache_.splice(index, 1);
+olgm.herald.VectorSource.prototype.handleVisibleChange_ = function(
+    cacheItem) {
+  var layer = cacheItem.layer;
+  var visible = layer.getVisible();
+  if (visible) {
+    this.activateCacheItem_(cacheItem);
+  } else {
+    this.deactivateCacheItem_(cacheItem);
   }
 };
 
 
 /**
  * @typedef {{
- *   feature: (ol.Feature),
- *   herald: (olgm.herald.Feature)
+ *   data: (google.maps.Data),
+ *   herald: (olgm.herald.VectorFeature),
+ *   layer: (ol.layer.Vector),
+ *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
+ *   opacity: (number)
  * }}
  */
-olgm.herald.VectorSource.Cache;
+olgm.herald.VectorSource.LayerCache;
