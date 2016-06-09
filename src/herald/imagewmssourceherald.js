@@ -127,9 +127,7 @@ olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
  */
 olgm.herald.ImageWMSSource.prototype.deactivate = function() {
   olgm.herald.ImageWMSSource.base(this, 'deactivate'); //Call parent function
-  //console.log("TEST");
   this.cache_.forEach(this.deactivateCacheItem_, this);
-  //console.log("TEST END");
 };
 
 
@@ -140,14 +138,11 @@ olgm.herald.ImageWMSSource.prototype.deactivate = function() {
  */
 olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
     cacheItem) {
-  //console.log("deactivate");
   if (cacheItem.imageOverlay) {
     cacheItem.imageOverlay.setMap(null);
     cacheItem.imageOverlay = null;
   }
-  //console.log("opacity start");
   cacheItem.layer.setOpacity(cacheItem.opacity);
-  //console.log("opacity end");
 };
 
 
