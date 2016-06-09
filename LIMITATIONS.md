@@ -22,6 +22,17 @@ Clusters are not yet supported as no development towards it has been made yet.
 Recommendation: avoid using clusters.
 
 
+Custom TileGrid with `ol.layer.Tile`
+------------------------------------
+
+It's possible to assign a custom tile grid to a tile layer. However, the
+extent for the tile grid should cover the whole map for it to work with the
+Google Maps API, otherwise it will appear in the top left corner.
+
+Recommendation: set the TileGrid's extent to the default extent for that
+projection: `ol.proj.get('EPSG:3857').getExtent()`
+
+
 Google Maps is always at the bottom
 -----------------------------------
 
@@ -57,14 +68,12 @@ rendered directly in Google Maps for a smooth effect while interacting the map:
 
  * `ol.layer.Vector`
  * `olgm.layer.Google`
-
-All the other layers currently stay in OpenLayers, on top of Google Maps. The
-following layers have plans to be supported soon:
-
- * `ol.layer.Image` with `ol.source.WMS`
+ * `ol.layer.Image` with `ol.source.ImageWMS`
  * `ol.layer.Tile` with `ol.source.TileWMS`
 
-Recommentation: use only supported layers in you map.
+All the other layers currently stay in OpenLayers, on top of Google Maps.
+
+Recommendation: use only supported layers in your map.
 
 
 Rotation
