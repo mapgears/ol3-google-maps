@@ -7,6 +7,7 @@ goog.require('olgm.herald.ImageWMSSource');
 goog.require('olgm.herald.TileWMSSource');
 goog.require('olgm.herald.VectorSource');
 goog.require('olgm.herald.View');
+goog.require('olgm.herald.WMTSSource');
 goog.require('olgm.layer.Google');
 
 
@@ -78,6 +79,12 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
    * @private
    */
   this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap);
+
+  /**
+   * @type {olgm.herald.WMTSSource}
+   * @private
+   */
+  this.wmtsSourceHerald_ = new olgm.herald.WMTSSource(ol3map, gmap);
 
   /**
    * @type {olgm.herald.View}
@@ -201,6 +208,7 @@ olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
   this.imageWMSSourceHerald_.setGoogleMapsActive(active);
   this.tileWMSSourceHerald_.setGoogleMapsActive(active);
   this.vectorSourceHerald_.setGoogleMapsActive(active);
+  this.wmtsSourceHerald_.setGoogleMapsActive(active);
 };
 
 
@@ -242,6 +250,8 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
     var source = layer.getSource();
     if (source instanceof ol.source.TileWMS) {
       this.tileWMSSourceHerald_.watchLayer(layer);
+    } else if (source instanceof ol.source.WMTS) {
+      this.wmtsSourceHerald_.watchLayer(layer);
     }
   } else if (layer instanceof ol.layer.Image) {
     var source = layer.getSource();
@@ -283,6 +293,8 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
     var source = layer.getSource();
     if (source instanceof ol.source.TileWMS) {
       this.tileWMSSourceHerald_.unwatchLayer(layer);
+    } else if (source instanceof ol.source.WMTS) {
+      this.wmtsSourceHerald_.unwatchLayer(layer);
     }
   } else if (layer instanceof ol.layer.Image) {
     var source = layer.getSource();
@@ -348,6 +360,7 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.tileWMSSourceHerald_.activate();
   this.imageWMSSourceHerald_.activate();
   this.vectorSourceHerald_.activate();
+  this.wmtsSourceHerald_.activate();
 };
 
 
@@ -375,6 +388,7 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
   this.tileWMSSourceHerald_.deactivate();
   this.imageWMSSourceHerald_.deactivate();
   this.vectorSourceHerald_.deactivate();
+  this.wmtsSourceHerald_.deactivate();
 
   this.setGoogleMapsActive_(false);
 };
