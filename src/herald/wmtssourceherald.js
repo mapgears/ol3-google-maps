@@ -72,11 +72,11 @@ olgm.herald.WMTSSource.prototype.watchLayer = function(layer) {
   };
 
   // Create the WMTS layer on the google layer
-  var googleWMSLayer = new google.maps.ImageMapType(options);
+  var googleWMTSLayer = new google.maps.ImageMapType(options);
   if (tileLayer.getVisible()) {
-    this.gmap.overlayMapTypes.push(googleWMSLayer);
+    this.gmap.overlayMapTypes.push(googleWMTSLayer);
   }
-  cacheItem.googleWMTSLayer = googleWMSLayer;
+  cacheItem.googleWMTSLayer = googleWMTSLayer;
 
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(tileLayer.on('change:visible',
@@ -89,7 +89,7 @@ olgm.herald.WMTSSource.prototype.watchLayer = function(layer) {
 
 
 /**
- * Unwatch the WMS tile layer
+ * Unwatch the WMTS tile layer
  * @param {ol.layer.Base} layer
  * @override
  */
@@ -123,7 +123,7 @@ olgm.herald.WMTSSource.prototype.activate = function() {
 
 
 /**
- * Activates an image WMS layer cache item.
+ * Activates an image WMTS layer cache item.
  * @param {olgm.herald.WMTSSource.LayerCache} cacheItem
  * @private
  */
@@ -148,7 +148,7 @@ olgm.herald.WMTSSource.prototype.deactivate = function() {
 
 
 /**
- * Deactivates a Tile WMS layer cache item.
+ * Deactivates a Tile WMTS layer cache item.
  * @param {olgm.herald.WMTSSource.LayerCache} cacheItem
  * @private
  */
@@ -159,7 +159,7 @@ olgm.herald.WMTSSource.prototype.deactivateCacheItem_ = function(
 
 
 /**
- * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
+ * Deal with the google WMTS layer when we enable or disable the OL3 WMTS layer
  * @param {olgm.herald.WMTSSource.LayerCache} cacheItem
  * @private
  */
