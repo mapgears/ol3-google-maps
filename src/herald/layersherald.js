@@ -4,10 +4,9 @@ goog.require('goog.asserts');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.ImageWMSSource');
-goog.require('olgm.herald.TileWMSSource');
+goog.require('olgm.herald.TileSource');
 goog.require('olgm.herald.VectorSource');
 goog.require('olgm.herald.View');
-goog.require('olgm.herald.WMTSSource');
 goog.require('olgm.layer.Google');
 
 
@@ -69,22 +68,16 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
   this.imageWMSSourceHerald_ = new olgm.herald.ImageWMSSource(ol3map, gmap);
 
   /**
-   * @type {olgm.herald.TileWMSSource}
+   * @type {olgm.herald.TileSource}
    * @private
    */
-  this.tileWMSSourceHerald_ = new olgm.herald.TileWMSSource(ol3map, gmap);
+  this.tileSourceHerald_ = new olgm.herald.TileSource(ol3map, gmap);
 
   /**
    * @type {olgm.herald.VectorSource}
    * @private
    */
   this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap);
-
-  /**
-   * @type {olgm.herald.WMTSSource}
-   * @private
-   */
-  this.wmtsSourceHerald_ = new olgm.herald.WMTSSource(ol3map, gmap);
 
   /**
    * @type {olgm.herald.View}
@@ -206,9 +199,8 @@ olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
 olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
   this.googleMapsIsActive_ = active;
   this.imageWMSSourceHerald_.setGoogleMapsActive(active);
-  this.tileWMSSourceHerald_.setGoogleMapsActive(active);
+  this.tileSourceHerald_.setGoogleMapsActive(active);
   this.vectorSourceHerald_.setGoogleMapsActive(active);
-  this.wmtsSourceHerald_.setGoogleMapsActive(active);
 };
 
 
@@ -247,12 +239,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.vectorSourceHerald_.watchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
-    var source = layer.getSource();
-    if (source instanceof ol.source.TileWMS) {
-      this.tileWMSSourceHerald_.watchLayer(layer);
-    } else if (source instanceof ol.source.WMTS) {
-      this.wmtsSourceHerald_.watchLayer(layer);
-    }
+    this.tileSourceHerald_.watchLayer(layer);
   } else if (layer instanceof ol.layer.Image) {
     var source = layer.getSource();
     if (source instanceof ol.source.ImageWMS) {
@@ -291,11 +278,7 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
     this.vectorSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
     var source = layer.getSource();
-    if (source instanceof ol.source.TileWMS) {
-      this.tileWMSSourceHerald_.unwatchLayer(layer);
-    } else if (source instanceof ol.source.WMTS) {
-      this.wmtsSourceHerald_.unwatchLayer(layer);
-    }
+    this.tileSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Image) {
     var source = layer.getSource();
     if (source instanceof ol.source.ImageWMS) {
@@ -357,10 +340,9 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.setGoogleMapsActive_(true);
 
   // activate all cache items
-  this.tileWMSSourceHerald_.activate();
   this.imageWMSSourceHerald_.activate();
+  this.tileSourceHerald_.activate();
   this.vectorSourceHerald_.activate();
-  this.wmtsSourceHerald_.activate();
 };
 
 
@@ -385,10 +367,9 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
   this.ol3mapEl_.style.position = 'relative';
 
   // deactivate all cache items
-  this.tileWMSSourceHerald_.deactivate();
   this.imageWMSSourceHerald_.deactivate();
+  this.tileSourceHerald_.deactivate();
   this.vectorSourceHerald_.deactivate();
-  this.wmtsSourceHerald_.deactivate();
 
   this.setGoogleMapsActive_(false);
 };
