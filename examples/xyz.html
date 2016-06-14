@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps XYZ example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>XYZ example</h4>
+          <p>
+            Shows that XYZ layers added to OL3 are ported to Google Maps
+            when the latter gets activated.
+          </p>
+
+          <input id="toggleOSM" type="button" onclick="toggleOSM();"
+                 value="Toggle between OL3 and GMAPS" />
+        </div>
+      </div>
+    </div>
+
+    <script src="../node_modules/openlayers/build/ol.js"></script>
+
+    <!-- GoogleMaps API Key for 127.0.0.1 -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3.21&key=AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ"></script>
+
+    <script src="/@loader"></script>
+    <script src="xyz.js"></script>
+  </body>
+</html>

@@ -1,19 +1,19 @@
-goog.provide('olgm.herald.WMTSSource');
+goog.provide('olgm.herald.TileSource');
 
 goog.require('olgm.herald.Source');
 
 
 
 /**
- * Listen to a WMTS layer
+ * Listen to a tiled layer
  * @param {!ol.Map} ol3map
  * @param {!google.maps.Map} gmap
  * @constructor
  * @extends {olgm.herald.Source}
  */
-olgm.herald.WMTSSource = function(ol3map, gmap) {
+olgm.herald.TileSource = function(ol3map, gmap) {
   /**
-  * @type {Array.<olgm.herald.WMTSSource.LayerCache>}
+  * @type {Array.<olgm.herald.TileSource.LayerCache>}
   * @private
   */
   this.cache_ = [];
@@ -26,14 +26,14 @@ olgm.herald.WMTSSource = function(ol3map, gmap) {
 
   goog.base(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.WMTSSource, olgm.herald.Source);
+goog.inherits(olgm.herald.TileSource, olgm.herald.Source);
 
 
 /**
  * @param {ol.layer.Base} layer
  * @override
  */
-olgm.herald.WMTSSource.prototype.watchLayer = function(layer) {
+olgm.herald.TileSource.prototype.watchLayer = function(layer) {
   var tileLayer = /** {@type ol.layer.Tile} */ (layer);
   goog.asserts.assertInstanceof(tileLayer, ol.layer.Tile);
 
@@ -42,13 +42,15 @@ olgm.herald.WMTSSource.prototype.watchLayer = function(layer) {
   if (!source) {
     return;
   }
-  goog.asserts.assertInstanceof(source, ol.source.WMTS);
+
+  goog.asserts.assertInstanceof(source, ol.source.TileImage);
+
   this.layers_.push(tileLayer);
 
   // opacity
   var opacity = tileLayer.getOpacity();
 
-  var cacheItem = /** {@type olgm.herald.WMTSSource.LayerCache} */ ({
+  var cacheItem = /** {@type olgm.herald.TileSource.LayerCache} */ ({
     layer: tileLayer,
     listenerKeys: [],
     opacity: opacity
@@ -71,12 +73,12 @@ olgm.herald.WMTSSource.prototype.watchLayer = function(layer) {
     'opacity': opacity
   };
 
-  // Create the WMTS layer on the google layer
-  var googleWMTSLayer = new google.maps.ImageMapType(options);
+  // Create the tiled layer on the google layer
+  var googleTileLayer = new google.maps.ImageMapType(options);
   if (tileLayer.getVisible()) {
-    this.gmap.overlayMapTypes.push(googleWMTSLayer);
+    this.gmap.overlayMapTypes.push(googleTileLayer);
   }
-  cacheItem.googleWMTSLayer = googleWMTSLayer;
+  cacheItem.googleTileLayer = googleTileLayer;
 
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(tileLayer.on('change:visible',
@@ -89,11 +91,11 @@ olgm.herald.WMTSSource.prototype.watchLayer = function(layer) {
 
 
 /**
- * Unwatch the WMTS tile layer
+ * Unwatch the tile layer
  * @param {ol.layer.Base} layer
  * @override
  */
-olgm.herald.WMTSSource.prototype.unwatchLayer = function(layer) {
+olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
   var tileLayer = /** {@type ol.layer.Tile} */ (layer);
   goog.asserts.assertInstanceof(tileLayer, ol.layer.Tile);
 
@@ -116,18 +118,18 @@ olgm.herald.WMTSSource.prototype.unwatchLayer = function(layer) {
  * Activate all cache items
  * @api
  */
-olgm.herald.WMTSSource.prototype.activate = function() {
-  olgm.herald.WMTSSource.base(this, 'activate'); // Call parent function
+olgm.herald.TileSource.prototype.activate = function() {
+  olgm.herald.TileSource.base(this, 'activate'); // Call parent function
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
 
 /**
- * Activates an image WMTS layer cache item.
- * @param {olgm.herald.WMTSSource.LayerCache} cacheItem
+ * Activates an tile layer cache item.
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem
  * @private
  */
-olgm.herald.WMTSSource.prototype.activateCacheItem_ = function(
+olgm.herald.TileSource.prototype.activateCacheItem_ = function(
     cacheItem) {
   var layer = cacheItem.layer;
   var visible = layer.getVisible();
@@ -141,47 +143,47 @@ olgm.herald.WMTSSource.prototype.activateCacheItem_ = function(
  * Deactivate all cache items
  * @api
  */
-olgm.herald.WMTSSource.prototype.deactivate = function() {
-  olgm.herald.WMTSSource.base(this, 'deactivate'); //Call parent function
+olgm.herald.TileSource.prototype.deactivate = function() {
+  olgm.herald.TileSource.base(this, 'deactivate'); //Call parent function
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
 
 /**
- * Deactivates a Tile WMTS layer cache item.
- * @param {olgm.herald.WMTSSource.LayerCache} cacheItem
+ * Deactivates a Tile layer cache item.
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem
  * @private
  */
-olgm.herald.WMTSSource.prototype.deactivateCacheItem_ = function(
+olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
     cacheItem) {
   cacheItem.layer.setOpacity(cacheItem.opacity);
 };
 
 
 /**
- * Deal with the google WMTS layer when we enable or disable the OL3 WMTS layer
- * @param {olgm.herald.WMTSSource.LayerCache} cacheItem
+ * Deal with the google tile layer when we enable or disable the OL3 tile layer
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem
  * @private
  */
-olgm.herald.WMTSSource.prototype.handleVisibleChange_ = function(
+olgm.herald.TileSource.prototype.handleVisibleChange_ = function(
     cacheItem) {
   var layer = cacheItem.layer;
   var visible = layer.getVisible();
 
-  var googleWMTSLayer = cacheItem.googleWMTSLayer;
+  var googleTileLayer = cacheItem.googleTileLayer;
   var googleMapsLayers = this.gmap.overlayMapTypes;
 
   // Get the position of the google layer so we can remove it
-  var layerIndex = googleMapsLayers.getArray().indexOf(googleWMTSLayer);
+  var layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
 
   if (visible) {
-    // Add the google WMTS layer only if it's not there already
+    // Add the google tile layer only if it's not there already
     if (layerIndex == -1) {
-      googleMapsLayers.push(googleWMTSLayer);
+      googleMapsLayers.push(googleTileLayer);
     }
     this.activateCacheItem_(cacheItem);
   } else {
-    // Remove the google WMTS layer from the map if it hasn't been done already
+    // Remove the google tile layer from the map if it hasn't been done already
     if (layerIndex != -1) {
       googleMapsLayers.removeAt(layerIndex);
     }
@@ -192,10 +194,10 @@ olgm.herald.WMTSSource.prototype.handleVisibleChange_ = function(
 
 /**
  * @typedef {{
- *   googleWMTSLayer: (google.maps.ImageMapType),
+ *   googleTileLayer: (google.maps.ImageMapType),
  *   layer: (ol.layer.Tile),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
  * }}
  */
-olgm.herald.WMTSSource.LayerCache;
+olgm.herald.TileSource.LayerCache;

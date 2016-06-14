@@ -69,7 +69,8 @@ rendered directly in Google Maps for a smooth effect while interacting the map:
  * `ol.layer.Vector`
  * `olgm.layer.Google`
  * `ol.layer.Image` with `ol.source.ImageWMS`
- * `ol.layer.Tile` with `ol.source.TileWMS` and `ol.source.WMTS`
+ * `ol.layer.Tile` with `ol.source.TileWMS`, `ol.source.WMTS` and 
+ `ol.source.XYZ`
 
 All the other layers currently stay in OpenLayers, on top of Google Maps.
 
