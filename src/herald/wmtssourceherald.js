@@ -192,6 +192,7 @@ olgm.herald.WMTSSource.prototype.handleVisibleChange_ = function(
 
 /**
  * @typedef {{
+ *   googleWMTSLayer: (google.maps.ImageMapType),
  *   layer: (ol.layer.Tile),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
