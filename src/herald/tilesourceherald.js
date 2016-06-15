@@ -61,7 +61,16 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
 
   var googleGetTileUrlFunction = function(coords, zoom) {
     var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
-    return getTileUrlFunction(ol3Coords, 1, proj);
+    var result = getTileUrlFunction(ol3Coords, 1, proj);
+
+    // TileJSON sources don't have their url function right away, try again
+    if (result === undefined) {
+      goog.asserts.assertInstanceof(source, ol.source.TileImage);
+      getTileUrlFunction = source.getTileUrlFunction();
+      result = getTileUrlFunction(ol3Coords, 1, proj);
+    }
+
+    return result;
   };
 
   var tileSize = new google.maps.Size(256, 256);
