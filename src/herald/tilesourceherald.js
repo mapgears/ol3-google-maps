@@ -106,6 +106,16 @@ olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
     var cacheItem = this.cache_[index];
     olgm.unlistenAllByKey(cacheItem.listenerKeys);
 
+    // Remove the layer from google maps
+    var googleTileLayer = cacheItem.googleTileLayer;
+    var googleMapsLayers = this.gmap.overlayMapTypes;
+
+    // Get the position of the google layer so we can remove it
+    var layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
+    if (layerIndex != -1) {
+      googleMapsLayers.removeAt(layerIndex);
+    }
+
     // opacity
     tileLayer.setOpacity(cacheItem.opacity);
 
