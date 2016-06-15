@@ -9,7 +9,8 @@ var osmLayer = new ol.layer.Tile({
 
 var tmsLayer = new ol.layer.Tile({
   source: new ol.source.XYZ({
-    url: 'http://v3.cartalib.mapgears.com/mapcache/tms/1.0.0/mapgears_basemap@g/{z}/{x}/{-y}.'
+    url: 'http://v3.cartalib.mapgears.com/mapcache/tms/1.0.0/' +
+        'mapgears_basemap@g/{z}/{x}/{-y}.'
   }),
   opacity: 1
 });
