@@ -28,3 +28,7 @@ input {
 legend {
   margin: 0;
 }
+
+td {
+  padding: 5px;
+}
