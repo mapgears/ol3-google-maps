@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps WMTS example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Tiles example</h4>
+          <p>
+            Shows different tile layers displayed on google maps. Note: the
+            layers are displayed in the order that you enable them.
+          </p>
+
+          <input id="toggleOSM" type="button" onclick="toggleOSM();"
+                       value="Toggle between OL3 and GMAPS" />
+          <table>
+            <tr>
+              <td>
+                <input type="checkbox" onclick="toggleLayer(0, this.checked);">
+                  TileJSON
+                </input>
+              </td>
+              <td>
+                <input type="checkbox" onclick="toggleLayer(1, this.checked);">
+                  TMS
+                </input>
+              </td>
+              <td>
+                <input type="checkbox" onclick="toggleLayer(2, this.checked);">
+                  WMS
+                </input>
+              </td>
+              <td>
+                <input type="checkbox" onclick="toggleLayer(3, this.checked);">
+                  WMTS
+                </input>
+              </td>
+              <td>
+                <input type="checkbox" onclick="toggleLayer(4, this.checked);">
+                  XYZ
+                </input>
+              </td>
+            <tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="../node_modules/openlayers/build/ol.js"></script>
+
+    <!-- GoogleMaps API Key for 127.0.0.1 -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3.21&key=AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ"></script>
+
+    <script src="/@loader"></script>
+    <script src="tiles.js"></script>
+  </body>
+</html>
