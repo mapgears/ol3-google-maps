@@ -1,0 +1,1 @@
+exclude: ["dist", "examples", "node_modules"]
