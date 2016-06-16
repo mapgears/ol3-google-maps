@@ -34,8 +34,8 @@ The usage of `make` is as follows:
 
     $ make <target>
 
-The main build targets are `serve`, `lint`, `dist` and `check`. The
-latter is a meta-target that basically runs `lint` and `dist`.
+The main build targets are `serve`, `lint`, `dist`, 'dist-examples' and
+`check`. The latter is a meta-target that basically runs `lint` and `dist`.
 
 The examples can be built for deployment with the `dist-examples` build target.
 An optional `API_KEY` parameter can be provided:
