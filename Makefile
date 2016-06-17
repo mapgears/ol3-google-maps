@@ -3,6 +3,7 @@ ifeq ($(shell uname),Darwin)
 else
 	SEDI := $(shell which sed) -i
 endif
+API_KEY ?= AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ
 UNAME := $(shell uname)
 SRC_JS_FILES := $(shell find src -type f -name '*.js')
 EXAMPLES_JS_FILES := $(shell find examples -type f -name '*.js')
@@ -84,7 +85,15 @@ cleanall: clean
 	node build/parse-examples.js
 	mkdir -p $(dir $@)
 	cp -R examples dist/
-	for f in dist/examples/*.html; do $(SEDI) 'sY/@loaderY../ol3gm.jsY' $$f; done
+	cp node_modules/openlayers/css/ol.css dist/examples/resources/ol.css
+	cp css/ol3gm.css dist/examples/resources/ol3gm.css
+	for f in dist/examples/*.html; do \
+		$(SEDI) 's|/@loader|../ol3gm.js|' $$f ; \
+		$(SEDI) 's|<script.*build/ol\.js.*script>||' $$f; \
+		$(SEDI) 's|AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ|$(API_KEY)|' $$f; \
+		$(SEDI) 's|../node_modules/openlayers/css/ol.css|resources/ol.css|' $$f ; \
+		$(SEDI) 's|../css/ol3gm.css|resources/ol3gm.css|' $$f ; \
+	done
 	touch $@
 
 .build/python-venv:

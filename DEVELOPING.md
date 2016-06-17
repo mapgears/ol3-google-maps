@@ -34,8 +34,15 @@ The usage of `make` is as follows:
 
     $ make <target>
 
-The main build targets are `serve`, `lint`, `dist` and `check`. The
-latter is a meta-target that basically runs `lint` and `dist`.
+The main build targets are `serve`, `lint`, `dist`, `dist-examples` and
+`check`. The latter is a meta-target that basically runs `lint` and `dist`.
+
+The examples can be built for deployment with the `dist-examples` build target.
+An optional `API_KEY` parameter can be provided:
+
+    $ make [API_KEY=<key>] dist-examples
+
+This will replace the Google Maps API key in the examples for the one provided.
 
 
 ## Running the `check` target
@@ -55,3 +62,5 @@ To run the examples you first need to start the dev server:
     $ make serve
 
 Then, just point your browser <http://localhost:3000/examples> in your browser.
+
+To build the examples for deployment, use the `dist-examples` build target.
