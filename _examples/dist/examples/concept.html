@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>ol3gm proof of concept example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="resources/ol.css" type="text/css" />
+    <link rel="stylesheet" href="resources/ol3gm.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Concept example</h4>
+
+          <div class="row">
+            <div class="col-md-4 col-sm-4">
+              <fieldset>
+                <legend>OL3-Google-Maps</legend>
+                <input id="toggle" type="button" value="Toggle"
+                       title="activate/deactivate OL3-Google-Maps" />
+              </fieldset>
+            </div>
+
+            <div class="col-md-4 col-sm-4">
+              <fieldset>
+                <legend>OpenLayers</legend>
+                <h5>Feature: </h5>
+                <input id="add-point" type="button" value="+ Markers (3)"
+                       title="Add 3 marker layers on the ol3 map, which are immediately added in gmap thereafter" />
+                <input id="clear-point" type="button" value="- All"
+                       title="Clear all vector features from the ol3 map, which clears the features from gmap too" />
+
+                <h5>Other: </h5>
+                <input id="toggle-osm" type="button" value="Toggle OSM Layer"
+                       title="Shows that any other layer added to ol3 are rendered on top of Google Maps. If you can see the vector features and the OSM layer, then the features you see are those rendered by ol3." />
+              </fieldset>
+            </div>
+
+            <div class="col-md-4 col-sm-4">
+              <fieldset>
+                <legend>Google Maps</legend>
+                <h5>Add Layer:</h5>
+                <input id="gm-add-sat" type="button" value="+ Satellite"
+                       title="Adds a new olgm.layer.Google with map type id equal to 'satellite', which is immediately added to the gmap map."/>
+                <input id="gm-add-ter" type="button" value="+ Terrain" 
+                       title="Adds a new olgm.layer.Google with map type id equal to 'terrain', which is immediately added to the gmap map."/>
+
+                <h5>Remove Layer:</h5>
+                <input id="gm-rm-last" type="button" value="- Last"
+                       title="Removes the last olgm.layer.Google from the ol3 map. Gmap will be updated accordingly with the top-most Google layer remaining. If there are no longer any visible Google layer, then Google Maps gets deactivated, revealing the OpenLayers map it its original state."/>
+
+                <h5>Toggle Layer: </h5>
+                <input id="gm-toggle-last" type="button" value="O_o Last"
+                       title="Toggle the visibility of the last Google layer, which affects which map type gmap has to display. If there are no longer any visible Google layer, then Google Maps gets deactivated, revealing the OpenLayers map it its original state." />
+              </fieldset>
+            </div>
+          </div>
+
+          <div class="docs">
+            <p>
+              This example is the playground of the developers of this library.
+              It features pretty much everything OL3-Google-Maps supports.
+              Random features are added to the OpenLayers map.
+            </p>
+            <p>
+              Vector features in this example are draggable. This demonstrate
+              the binding of geometries. The vector features you see are
+              rendered by by Google Maps, but the ones in OpenLayers are
+              on top of them, rendered invisible. When dragging a feature,
+              the ol3 feature is dragged and the geometry of the Google Maps
+              feature follows its counterpart.
+            </p>
+            <p>
+              Mouse hovering a button shows more details about what it does.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+
+    <!-- local -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3.21&key=AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ"></script>
+    <!-- dev5 -->
+    <!--script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3.21&key=AIzaSyCXIGZ41A54812NVcfTIuFS2mQUK-9JYeg"></script-->
+
+    <script src="../ol3gm.js"></script>
+    <script src="concept.js"></script>
+  </body>
+</html>

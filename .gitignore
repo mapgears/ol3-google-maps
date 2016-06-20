@@ -1,5 +1,5 @@
 .build
-dist
+dist/*
 node_modules
 examples/example-list.js
 _site

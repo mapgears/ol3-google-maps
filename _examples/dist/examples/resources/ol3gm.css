@@ -1,0 +1,12 @@
+.gm-style {
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.gm-style .ol-attribution {
+  bottom: 1em;
+}
+
+.gm-style .ol-attribution.ol-logo-only {
+  bottom: 1em;
+}
