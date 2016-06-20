@@ -1,4 +1,4 @@
-exclude: ["dist", "examples", "node_modules"]
+exclude: ["dist", "node_modules"]
 
 collections:
     examples:
