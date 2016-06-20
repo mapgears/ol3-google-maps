@@ -295,10 +295,6 @@ Full-Width Styles
   background: linear-gradient(top, #373737, #212121);
 }
 
-#header_wrap .inner {
-  padding: 50px 10px 30px 10px;
-}
-
 #project_title {
   margin: 0;
   color: #fff;
@@ -422,4 +418,41 @@ Small Device Styles
     font-size: 11px;
   }
 
+}
+
+
+
+/*******************************************************************************
+Custom styles
+*******************************************************************************/
+
+.example_box {
+  background-color: #eeeeee;
+  display: inline-block;
+
+  -webkit-box-shadow: 0px 0px 5px 0px rgba(5,0,5,0.25);
+  -moz-box-shadow: 0px 0px 5px 0px rgba(5,0,5,0.25);
+  box-shadow: 0px 0px 5px 0px rgba(5,0,5,0.25);
+
+  margin: 10px;
+  padding: 10px;
+  width: calc(100% - 40px);
+}
+
+.examples_container {
+  -webkit-column-count: 3; /* Chrome, Safari, Opera */
+  -moz-column-count: 3; /* Firefox */
+  column-count: 3;
+
+  -webkit-column-gap: 0px; /* Chrome, Safari, Opera */
+  -moz-column-gap: 0px; /* Firefox */
+  column-gap: 0px;
+}
+
+.white_text {
+  color: #fff;
+}
+
+.white_text a {
+  color: #fff;
 }

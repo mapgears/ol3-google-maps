@@ -1,0 +1,17 @@
+---
+layout: example-list
+title: Examples
+---
+
+<div class = "examples_container">
+    {% for example in site.examples %}
+        <div class="example_box">
+            <a href="{{ example.custom_path }}">
+                {{ example.title }}
+            </a>
+            <p>
+                {{ example.description }}
+            </p>
+        </div>
+    {% endfor %}
+</div>

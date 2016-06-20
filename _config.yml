@@ -1,1 +1,5 @@
 exclude: ["dist", "examples", "node_modules"]
+
+collections:
+    examples:
+        output: true

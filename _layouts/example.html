@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="ol3-google-maps : OpenLayers - Google Maps integration">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/stylesheet.css">
+    <script src="loader.js"></script>
+
+    <title>{{ page.title }}</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+            <a id="forkme_banner" href="https://github.com/mapgears/ol3-google-maps/tree/master/examples">
+                View on GitHub
+            </a>
+            <h3 class="white_text">
+                <a href="../">ol3-google-maps</a> examples
+            </h3>
+            <h4 class="white_text">
+                <a href="../examples.html">Back to the list</a>
+            </h4>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <iframe id="frame" src="{{ page.custom_path }}" onload="handleFrameLoaded();"></iframe>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">ol3-google-maps maintained by <a href="https://github.com/mapgears">Mapgears</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+  </body>
+</html>
