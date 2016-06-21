@@ -439,20 +439,17 @@ nav a {
 
   padding-top: 5px;
   padding-bottom: 5px;
+
+  text-shadow: #111 0px 0px 10px;
 }
 
 nav a:hover {
-  background-color: #888;
-  color: #fff;
-  display: inline-block;
-
-  padding-left: 10px;
-  padding-right: 10px;
-
-  padding-top: 5px;
-  padding-bottom: 5px;
-
-  text-decoration: none;
+  background-color: #777;
+  background: -moz-linear-gradient(top, #777, #666);
+  background: -webkit-linear-gradient(top, #777, #666);
+  background: -ms-linear-gradient(top, #777, #666);
+  background: -o-linear-gradient(top, #777, #666);
+  background: linear-gradient(top, #777, #666);
 }
 
 nav li {
@@ -467,6 +464,11 @@ nav ul {
 
 nav .current_page {
   background-color: #777;
+  background: -moz-linear-gradient(top, #777, #666);
+  background: -webkit-linear-gradient(top, #777, #666);
+  background: -ms-linear-gradient(top, #777, #666);
+  background: -o-linear-gradient(top, #777, #666);
+  background: linear-gradient(top, #777, #666);
 }
 
 nav.inner {
@@ -475,6 +477,11 @@ nav.inner {
 
 #nav_wrap {
   background-color: #555;
+  background: -moz-linear-gradient(top, #555, #444);
+  background: -webkit-linear-gradient(top, #555, #444);
+  background: -ms-linear-gradient(top, #555, #444);
+  background: -o-linear-gradient(top, #555, #444);
+  background: linear-gradient(top, #555, #444);
 }
 
 .example_box {
