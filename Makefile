@@ -90,7 +90,9 @@ cleanall: clean
 	for f in dist/examples/*.html; do \
 		$(SEDI) 's|/@loader|../ol3gm.js|' $$f ; \
 		$(SEDI) 's|<script.*build/ol\.js.*script>||' $$f; \
-		$(SEDI) 's|AIzaSyD71KlyTCXJouZsGbgPCJ-oCtK76fZJUTQ|$(API_KEY)|' $$f; \
+		$(SEDI) 's|src="https://maps.googleapis.com/maps/api/js?v=3.21|src="https://maps.googleapis.com/maps/api/js?v=3.21\&key=$(API_KEY)|' $$f; \
+		$(SEDI) 's|src="https://maps.googleapis.com/maps/api/js"|src="https://maps.googleapis.com/maps/api/js?key=$(API_KEY)"|' $$f; \
+		$(SEDI) 's|outside of localhost|on your own server|' $$f; \
 		$(SEDI) 's|../node_modules/openlayers/css/ol.css|resources/ol.css|' $$f ; \
 		$(SEDI) 's|../css/ol3gm.css|resources/ol3gm.css|' $$f ; \
 	done
