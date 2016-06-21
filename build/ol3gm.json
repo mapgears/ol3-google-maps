@@ -19,7 +19,7 @@
       "node_modules/openlayers/externs/geojson.js",
       "node_modules/openlayers/externs/bingmaps.js",
       "node_modules/openlayers/externs/closure-compiler.js",
-      "externs/google_maps_api_v3_21.js"
+      "externs/google_maps_api_v3_24.js"
     ],
     "define": [
       "goog.DEBUG=false"
