@@ -313,12 +313,12 @@ Full-Width Styles
 
 #downloads {
   position: absolute;
-  width: 210px;
+  width: 120px;
   z-index: 10;
-  bottom: -40px;
+  bottom: -45px;
   right: 0;
   height: 70px;
-  background: url('../images/icon_download.png') no-repeat 0% 90%;
+  background: url('../images/icon_download.png') no-repeat 0% 70%;
 }
 
 .zip_download_link {
@@ -352,7 +352,6 @@ Full-Width Styles
 
 #main_content_wrap {
   background: #f2f2f2;
-  border-top: 1px solid #111;
   border-bottom: 1px solid #111;
 }
 
@@ -425,6 +424,58 @@ Small Device Styles
 /*******************************************************************************
 Custom styles
 *******************************************************************************/
+
+nav {
+  color: #fff;
+  max-width: 640px;
+}
+
+nav a {
+  color: #fff;
+  display: inline-block;
+
+  padding-left: 10px;
+  padding-right: 10px;
+
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+nav a:hover {
+  background-color: #888;
+  color: #fff;
+  display: inline-block;
+
+  padding-left: 10px;
+  padding-right: 10px;
+
+  padding-top: 5px;
+  padding-bottom: 5px;
+
+  text-decoration: none;
+}
+
+nav li {
+  cursor: pointer;
+  display: inline;
+}
+
+nav ul {
+  margin: 0px;
+  padding-left: 0px;
+}
+
+nav .current_page {
+  background-color: #777;
+}
+
+nav.inner {
+  padding: 0px;
+}
+
+#nav_wrap {
+  background-color: #555;
+}
 
 .example_box {
   background-color: #eeeeee;

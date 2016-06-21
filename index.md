@@ -17,7 +17,7 @@ To use the library, you need to include the ol3-google-maps script as well as
 the Google Maps API:
 
 ```javascript
-<script src="https://maps.googleapis.com/maps/api/js?v=3.21&key=mykey"></script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3&key=mykey"></script>
 <script src="ol3gm.js"></script>
 ```
 
@@ -52,8 +52,8 @@ olGM.activate();
 
 There are three steps in this example:
 
-1. Create a Google Maps layer. This is not mandatory, but if you do not use a
-google maps layer, there's no point in using this library.
+1. Create a Google Maps layer. This is not mandatory, but if you do not wish
+to include Google Maps layers, you don't need to use this library.
 
 2. Create a map containing the Google Maps layer. Other layers of your choice
 can be included as well.
