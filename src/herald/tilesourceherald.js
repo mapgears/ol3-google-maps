@@ -43,8 +43,6 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
     return;
   }
 
-  goog.asserts.assertInstanceof(source, ol.source.TileImage);
-
   this.layers_.push(tileLayer);
 
   // opacity
@@ -56,27 +54,10 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
     opacity: opacity
   });
 
-  var getTileUrlFunction = source.getTileUrlFunction();
-  var proj = ol.proj.get('EPSG:3857');
-
-  var googleGetTileUrlFunction = function(coords, zoom) {
-    var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
-    var result = getTileUrlFunction(ol3Coords, 1, proj);
-
-    // TileJSON sources don't have their url function right away, try again
-    if (result === undefined) {
-      goog.asserts.assertInstanceof(source, ol.source.TileImage);
-      getTileUrlFunction = source.getTileUrlFunction();
-      result = getTileUrlFunction(ol3Coords, 1, proj);
-    }
-
-    return result;
-  };
-
   var tileSize = new google.maps.Size(256, 256);
 
   var options = {
-    'getTileUrl': googleGetTileUrlFunction,
+    'getTileUrl': this.googleGetTileUrlFunction_.bind(this, tileLayer),
     'tileSize': tileSize,
     'isPng': true,
     'opacity': opacity
@@ -96,6 +77,68 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
   this.cache_.push(cacheItem);
+};
+
+
+/**
+ * This function is used by google maps to get the url for a tile at the given
+ * coordinates and zoom level
+ * @param {ol.layer.Tile} tileLayer
+ * @param {google.maps.Point} coords
+ * @param {Number} zoom
+ * @return {string|undefined}
+ * @private
+ */
+olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
+    tileLayer, coords, zoom) {
+  var source = tileLayer.getSource();
+  goog.asserts.assertInstanceof(source, ol.source.TileImage);
+
+  // Get a few variables from the source object
+  var getTileUrlFunction = source.getTileUrlFunction();
+  var proj = ol.proj.get('EPSG:3857');
+  var tileGrid = source.getTileGrid();
+
+  // Convert the coords from google maps to ol3 tile format
+  var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
+
+  // Save the extent for this layer, default to the one for the projection
+  var extent = tileLayer.getExtent();
+  if (!extent) {
+    extent = proj.getExtent();
+  }
+
+  /* Google Maps checks for tiles which might not exist, for example tiles
+   * above the world map. We need to filter out these to avoid invalid
+   * requests.
+   */
+  if (tileGrid) {
+    /* Get the intersection area between the wanted tile's extent and the
+     * layer's extent. If that intersection has an area smaller than 1, it
+     * means it's not part of the map. We do this because a tile directly
+     * above the map but not inside it still counts as an intersection, but
+     * with a size of 0.
+     */
+    var intersection = ol.extent.getIntersection(
+        extent, tileGrid.getTileCoordExtent(ol3Coords));
+    var intersectionSize = ol.extent.getSize(intersection);
+    var intersectionArea = intersectionSize[0] * intersectionSize[1];
+
+    if (intersectionArea < 1 || intersectionArea == Infinity) {
+      return;
+    }
+  }
+
+  var result = getTileUrlFunction(ol3Coords, 1, proj);
+
+  // TileJSON sources don't have their url function right away, try again
+  if (result === undefined) {
+    goog.asserts.assertInstanceof(source, ol.source.TileImage);
+    getTileUrlFunction = source.getTileUrlFunction();
+    result = getTileUrlFunction(ol3Coords, 1, proj);
+  }
+
+  return result;
 };
 
 
