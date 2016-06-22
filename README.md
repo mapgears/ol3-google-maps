@@ -20,21 +20,20 @@ Live examples
 
 See OL3-Google-Maps in action:
 
- * [Simple](http://dev5.mapgears.com/ol3-google-maps/examples/simple.html)
- * [Vector](http://dev5.mapgears.com/ol3-google-maps/examples/vector.html)
- * [Label](http://dev5.mapgears.com/ol3-google-maps/examples/label.html)
- * [Concept](http://dev5.mapgears.com/ol3-google-maps/examples/concept.html)
+ * [Simple](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/simple.html)
+ * [Vector](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/vector.html)
+ * [Label](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/label.html)
+ * [Concept](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/concept.html)
 
-See all other example at:
-http://dev5.mapgears.com/ol3-google-maps/examples/
+See all other examples at:
+http://mapgears.github.io/ol3-google-maps/examples/
 
 
-Developping
+Developing
 -----------
 
 See the [developing](DEVELOPING.md) instructions if you want to contribute
 new features or patches to OL3-Google-Maps.
-
 
 
 Known Limitations
@@ -43,4 +42,11 @@ Known Limitations
 Please see the known [limitations](LIMITATIONS.md) of this library in details.
 
 
-Stay tuned for more!
+Bugs and issues
+---------------
+
+For bugs or feature requests, use the
+[issue tracker](https://github.com/mapgears/ol3-google-maps/issues)
+
+If you need help with the library, use
+[StackOverflow under the ol3-google-maps tag](http://stackoverflow.com/questions/tagged/ol3-google-maps)
