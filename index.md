@@ -60,3 +60,20 @@ can be included as well.
 
 3. Activate the library. This tells the library to hide OL3 layers and render
 them using the Google Maps API instead.
+
+### Community ###
+
+This project relies on the community to grow and prosper. Get involved with
+the following links:
+
+* If you have an idea for a feature to add to the library, or if you find a
+bug, use our
+[issue tracker](https://github.com/mapgears/ol3-google-maps/issues) to tell us
+about it.
+
+* If you want to contribute to the library, take a look at the
+[developing page](https://github.com/mapgears/ol3-google-maps/blob/master/DEVELOPING.md)
+and create a [pull request](https://github.com/mapgears/ol3-google-maps/pulls)
+
+* If you need help using the library, use [StackOverflow with the
+ol3-google-maps tag](http://stackoverflow.com/tags/ol3-google-maps/)
