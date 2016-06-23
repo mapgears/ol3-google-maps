@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # cd to script directory
+DEST_DIR=$(pwd)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 
@@ -50,5 +51,7 @@ else
     filename=$dirname".tar.gz"
     tar czf $filename $dirname
 fi
+
+mv $filename $DEST_DIR
 
 rm -rf $dirname
