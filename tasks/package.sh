@@ -1,57 +1,36 @@
 #!/bin/bash
 
-# cd to script directory
+# save current directory cd to script directory
 DEST_DIR=$(pwd)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 
-# 1==zip, 0==tgz
-zip=1
-
 PREFIX="ol3-google-maps"
-#PREFIX=""
-
-#VERSION="dev"
-
 dirname=""
 
+# Check for appropriate usage of the command
 if [ $# != 1 ];
 then
     echo "Usage: package.sh <version>"
     exit 1
 fi
 
+# Build the file name
 VERSION=$1
+dirname+=$PREFIX
+dirname+="-"
+dirname+=$VERSION
 
-if [ "$PREFIX" != "" ];
-then
-    dirname+=$PREFIX
-fi
-
-if [ "$VERSION" != "" ];
-then
-    if [ "$dirname" != "" ];
-    then
-        dirname+="-"
-    fi
-    dirname+=$VERSION
-fi
-
-
+# Create a folder containing the appropriate files
 mkdir $dirname
 cp ../dist/ol3gm-debug.js $dirname
 cp ../dist/ol3gm.js $dirname
 cp ../css/ol3gm.css $dirname
 
-if [ "$zip" == "1" ];
-then
-    filename=$dirname".zip"
-    zip -r $filename $dirname
-else
-    filename=$dirname".tar.gz"
-    tar czf $filename $dirname
-fi
+# Zip the folder
+filename=$dirname".zip"
+zip -r $filename $dirname
 
+# Clean up
 mv $filename $DEST_DIR
-
 rm -rf $dirname
