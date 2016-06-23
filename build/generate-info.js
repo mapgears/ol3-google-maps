@@ -12,7 +12,13 @@ var sourceDirs = [sourceDirOL, sourceDirSelf];
 var infoPath = path.join(__dirname, '..', '.build', 'info.json');
 var jsdoc = path.join(__dirname, '..', 'node_modules', '.bin', 'jsdoc');
 var jsdocConfig = path.join(__dirname, 'jsdoc', 'info', 'conf.json');
+var jsdocConfigGen = path.join(__dirname, '..', 'build', 'jsdoc', 'info', 'conf-generated.json');
 
+var platformWindows = process.platform.indexOf('win') === 0;
+
+if(platformWindows) {
+  jsdoc += '.cmd';
+}
 
 /**
  * Get the mtime of the info file.
@@ -91,7 +97,16 @@ function spawnJSDoc(paths, callback) {
   var output = '';
   var errors = '';
   var cwd = path.join(__dirname, '..');
-  var child = spawn(jsdoc, ['-c', jsdocConfig].concat(paths), {cwd: cwd});
+  var child;
+
+  if(platformWindows) {
+    var confObj = fse.readJsonSync(jsdocConfig);
+    confObj.source.include = paths;
+    fse.writeJsonSync(jsdocConfigGen, confObj);
+    child = spawn(jsdoc, ['-c', jsdocConfigGen]);
+  } else {
+    child = spawn(jsdoc, ['-c', jsdocConfig].concat(paths), {cwd: cwd});
+  }
 
   child.stdout.on('data', function(data) {
     output += String(data);

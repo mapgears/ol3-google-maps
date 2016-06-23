@@ -10,6 +10,17 @@ EXAMPLES_JS_FILES := $(shell find examples -type f -name '*.js')
 EXAMPLES_HTML_FILES := $(shell find examples -type f -name '*.html')
 EXAMPLES_GEOJSON_FILES := $(shell find examples/data/ -name '*.geojson')
 
+ifeq ($(OS),Windows_NT)
+LINT_COMMAND := .build/python-venv/Scripts/gjslint.exe
+else
+LINT_COMMAND := .build/python-venv/bin/gjslint
+endif
+
+ifeq ($(OS),Windows_NT)
+PIP_COMMAND := .build/python-venv/Scripts/pip.exe
+else
+PIP_COMMAND := .build/python-venv/bin/pip
+endif
 
 .PHONY: all
 all: help
@@ -78,7 +89,7 @@ cleanall: clean
 	touch $@
 
 .build/gjslint.timestamp: $(SRC_JS_FILES)
-	.build/python-venv/bin/gjslint --jslint_error=all --strict --custom_jsdoc_tags=api $?
+	$(LINT_COMMAND) --jslint_error=all --strict --custom_jsdoc_tags=api $?
 	touch $@
 
 .build/dist-examples.timestamp: node_modules/openlayers/build/olX dist/ol3gm.js $(EXAMPLES_JS_FILES) $(EXAMPLES_HTML_FILES)
@@ -103,7 +114,7 @@ cleanall: clean
 	virtualenv --no-site-packages $@
 
 .build/python-venv/bin/gjslint: .build/python-venv
-	.build/python-venv/bin/pip install "http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz"
+	$(PIP_COMMAND) install "http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz"
 	touch $@
 
 dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) build/build.js npm-install
