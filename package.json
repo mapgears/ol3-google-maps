@@ -2,7 +2,15 @@
   "name": "ol3-google-maps",
   "version": "0.7.0",
   "description": "OpenLayers 3 Google Maps integration library",
+  "keywords": [
+    "map",
+    "mapping",
+    "ol3",
+    "google maps"
+  ],
+  "homepage": "http://mapgears.github.io/ol3-google-maps/",
   "scripts": {},
+  "main": "dist/ol3gm.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/mapgears/ol3-google-maps.git"
@@ -11,6 +19,10 @@
   "bugs": {
     "url": "https://github.com/mapgears/ol3-google-maps/issues"
   },
+  "browser": "dist/ol3gm.js",
+  "style": [
+    "css/ol3gm.css"
+  ],
   "dependencies": {
     "async": "~0.2.10",
     "htmlparser2": "~3.7.1"
