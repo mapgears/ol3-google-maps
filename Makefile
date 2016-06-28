@@ -47,6 +47,7 @@ npm-install: .build/node_modules.timestamp
 
 .PHONY: serve
 serve: node_modules/openlayers/build/olX
+	./tasks/setkey.sh
 	node build/serve.js
 
 .PHONY: dist

@@ -11,7 +11,7 @@ examples="$script_dir/../examples/*.html"
 key_length=${#api_key}
 
 if [ $key_length -le 1 ] ; then
-    echo "Skipping key step (examples won't work)"
+    echo "Skipping key step (examples might not work)"
     exit 0
 fi
 
