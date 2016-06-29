@@ -4,11 +4,10 @@ goog.require('olgm.herald.Source');
 goog.require('olgm.herald.VectorFeature');
 
 
-
 /**
  * Listen to a Vector layer
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Source}
  */
@@ -31,7 +30,7 @@ goog.inherits(olgm.herald.VectorSource, olgm.herald.Source);
 
 
 /**
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @override
  */
 olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
@@ -83,7 +82,7 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
 
 /**
  * Unwatch the WMS tile layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
@@ -124,7 +123,7 @@ olgm.herald.VectorSource.prototype.activate = function() {
 
 /**
  * Activates an image WMS layer cache item.
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to activate
  * @private
  */
 olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
@@ -150,7 +149,8 @@ olgm.herald.VectorSource.prototype.deactivate = function() {
 
 /**
  * Deactivates a Tile WMS layer cache item.
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to
+ * deactivate
  * @private
  */
 olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
@@ -162,7 +162,8 @@ olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
 
 /**
  * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.VectorSource.prototype.handleVisibleChange_ = function(

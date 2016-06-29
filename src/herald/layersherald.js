@@ -10,7 +10,6 @@ goog.require('olgm.herald.View');
 goog.require('olgm.layer.Google');
 
 
-
 /**
  * The Layers Herald is responsible of synchronizing the layers from the
  * OpenLayers map to the Google Maps one. It listens to layers added and
@@ -41,9 +40,9 @@ goog.require('olgm.layer.Google');
  *     fully transparent, making the interactions still possible over it
  *     while being invisible.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
- * @param {boolean} watchVector
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
+ * @param {boolean} watchVector whether we should watch vector layers or not
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -184,7 +183,7 @@ olgm.herald.Layers.prototype.deactivate = function() {
 
 
 /**
- * @return {boolean}
+ * @return {boolean} whether google maps is active or not
  */
 olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
   return this.googleMapsIsActive_;
@@ -193,7 +192,7 @@ olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
 
 /**
  * Set the googleMapsIsActive value and spread the change to the heralds
- * @param {boolean} active
+ * @param {boolean} active value to update the google maps active flag with
  * @private
  */
 olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
@@ -230,7 +229,7 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
 
 /**
  * Watch the layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @private
  */
 olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
@@ -251,7 +250,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
 
 /**
  * Watch the google layer
- * @param {olgm.layer.Google} layer
+ * @param {olgm.layer.Google} layer google layer to watch
  * @private
  */
 olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
@@ -268,7 +267,7 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
 
 /**
  * Unwatch the layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @private
  */
 olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
@@ -277,7 +276,6 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.vectorSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
-    var source = layer.getSource();
     this.tileSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Image) {
     var source = layer.getSource();
@@ -290,7 +288,7 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
 
 /**
  * Unwatch the google layer
- * @param {olgm.layer.Google} layer
+ * @param {olgm.layer.Google} layer google layer to unwatch
  * @private
  */
 olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {

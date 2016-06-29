@@ -10,10 +10,10 @@ goog.require('olgm.gm.MapLabel');
 
 /**
  * Create a Google Maps feature using an OpenLayers one.
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature feature to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.Feature}
+ * @return {google.maps.Data.Feature} google Feature
  */
 olgm.gm.createFeature = function(feature, opt_ol3map) {
   var geometry = feature.getGeometry();
@@ -27,10 +27,11 @@ olgm.gm.createFeature = function(feature, opt_ol3map) {
 
 /**
  * Create a Google Maps geometry using an OpenLayers one.
- * @param {ol.geom.Geometry} geometry
+ * @param {ol.geom.Geometry} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.Geometry|google.maps.LatLng|google.maps.LatLng}
+ * google Geometry or LatLng
  */
 olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
@@ -52,10 +53,10 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps LatLng object using an OpenLayers Point.
- * @param {ol.geom.Point|ol.Coordinate} object
+ * @param {ol.geom.Point|ol.Coordinate} object coordinate to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.LatLng}
+ * @return {google.maps.LatLng} google LatLng object
  */
 olgm.gm.createLatLng = function(object, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -73,10 +74,11 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon} geometry
+ * @param {ol.geom.LineString|ol.geom.Polygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.Polygon}
+ * @return {google.maps.Data.LineString|google.maps.Data.Polygon} google
+ * LineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -113,9 +115,10 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers object.
- * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
- * @param {number=} opt_index
- * @return {?google.maps.Data.StyleOptions}
+ * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
+ * object style object
+ * @param {number=} opt_index index for the object
+ * @return {?google.maps.Data.StyleOptions} google style options
  */
 olgm.gm.createStyle = function(object, opt_index) {
   var gmStyle = null;
@@ -129,9 +132,9 @@ olgm.gm.createStyle = function(object, opt_index) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
- * @param {ol.style.Style} style
- * @param {number=} opt_index
- * @return {google.maps.Data.StyleOptions}
+ * @param {ol.style.Style} style style object
+ * @param {number=} opt_index index for the object
+ * @return {google.maps.Data.StyleOptions} google style options
  */
 olgm.gm.createStyleInternal = function(style, opt_index) {
 
@@ -277,10 +280,10 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
 
 /**
  * Create a MapLabel object from a text style and Lat/Lng location.
- * @param {ol.style.Text} textStyle
- * @param {google.maps.LatLng} latLng
- * @param {number} index
- * @return {olgm.gm.MapLabel}
+ * @param {ol.style.Text} textStyle style for the text
+ * @param {google.maps.LatLng} latLng position of the label
+ * @param {number} index index for the label
+ * @return {olgm.gm.MapLabel} map label
  */
 olgm.gm.createLabel = function(textStyle, latLng, index) {
 

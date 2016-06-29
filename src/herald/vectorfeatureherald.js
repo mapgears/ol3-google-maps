@@ -5,17 +5,16 @@ goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * The VectorFeature Herald is responsible of sychronizing the features from
  * an ol3 vector source. The existing features in addition of those that are
  * added and removed are all managed. Each existing or added feature is bound
  * to a `olgm.herald.Feature` object. It gets unbound when removed.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
- * @param {!ol.source.Vector} source
- * @param {!google.maps.Data} data
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
+ * @param {!ol.source.Vector} source vector source
+ * @param {!google.maps.Data} data google maps data object
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -78,7 +77,7 @@ olgm.herald.VectorFeature.prototype.deactivate = function() {
 
 
 /**
- * @param {ol.source.VectorEvent} event
+ * @param {ol.source.VectorEvent} event addFeature event
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
@@ -89,7 +88,7 @@ olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
 
 
 /**
- * @param {ol.source.VectorEvent} event
+ * @param {ol.source.VectorEvent} event removeFeature event
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
@@ -100,7 +99,7 @@ olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
 
 
 /**
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature feature to watch
  * @private
  */
 olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
@@ -127,7 +126,7 @@ olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
 
 
 /**
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature feature to unwatch
  * @private
  */
 olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {

@@ -3,11 +3,10 @@ goog.provide('olgm.herald.TileSource');
 goog.require('olgm.herald.Source');
 
 
-
 /**
  * Listen to a tiled layer
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Source}
  */
@@ -30,7 +29,7 @@ goog.inherits(olgm.herald.TileSource, olgm.herald.Source);
 
 
 /**
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @override
  */
 olgm.herald.TileSource.prototype.watchLayer = function(layer) {
@@ -83,10 +82,10 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
 /**
  * This function is used by google maps to get the url for a tile at the given
  * coordinates and zoom level
- * @param {ol.layer.Tile} tileLayer
- * @param {google.maps.Point} coords
- * @param {Number} zoom
- * @return {string|undefined}
+ * @param {ol.layer.Tile} tileLayer layer to query
+ * @param {google.maps.Point} coords coordinates of the tile
+ * @param {Number} zoom current zoom level
+ * @return {string|undefined} url to the tile
  * @private
  */
 olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
@@ -144,7 +143,7 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
 
 /**
  * Unwatch the tile layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
@@ -188,7 +187,7 @@ olgm.herald.TileSource.prototype.activate = function() {
 
 /**
  * Activates an tile layer cache item.
- * @param {olgm.herald.TileSource.LayerCache} cacheItem
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to activate
  * @private
  */
 olgm.herald.TileSource.prototype.activateCacheItem_ = function(
@@ -213,7 +212,7 @@ olgm.herald.TileSource.prototype.deactivate = function() {
 
 /**
  * Deactivates a Tile layer cache item.
- * @param {olgm.herald.TileSource.LayerCache} cacheItem
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to deactivate
  * @private
  */
 olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
@@ -224,7 +223,8 @@ olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
 
 /**
  * Deal with the google tile layer when we enable or disable the OL3 tile layer
- * @param {olgm.herald.TileSource.LayerCache} cacheItem
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.TileSource.prototype.handleVisibleChange_ = function(

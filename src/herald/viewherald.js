@@ -7,7 +7,6 @@ goog.require('olgm');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * The View Herald is responsible of synchronizing the view (center/zoom)
  * of boths maps together. The ol3 map view is the master here, i.e. changes
@@ -15,8 +14,8 @@ goog.require('olgm.herald.Herald');
  *
  * When the browser window gets resized, the gmap map is also updated.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Herald}
  */
