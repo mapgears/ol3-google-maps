@@ -10,6 +10,7 @@
   "globals": {
     "goog": false,
     "google": false,
-    "ol": false
+    "ol": false,
+    "olgm": false
   }
 }
