@@ -61,6 +61,24 @@ To run the examples you first need to start the dev server:
 
     $ make serve
 
+The first time you run this command, you will be asked for a Google Maps API
+key. If you don't already have one, follow the instructions on
+[this page](https://developers.google.com/maps/documentation/javascript/get-api-key)
+to create one.
+
 Then, just point your browser <http://localhost:3000/examples> in your browser.
 
 To build the examples for deployment, use the `dist-examples` build target.
+
+## Contributing
+
+To contribute to the project, create a branch tracking master and work from
+there. Feel free to create several small commits for each of your changes, they
+will be squashed into one commit when the branch is merged. When your fix is
+complete, create a pull request
+[here](https://github.com/mapgears/ol3-google-maps/pulls).
+
+When creating a commit for this project, do not include the modifications in
+the examples that involve changing the API key for your own. To revert these
+changes, you can run the script located in `tasks/resetkey.sh`. You can also
+choose which lines to add to a commit with the `git add -p <file>` command.
