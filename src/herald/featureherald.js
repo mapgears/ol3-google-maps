@@ -6,7 +6,6 @@ goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * The Feature Herald is responsible of synchronizing a single ol3 vector
  * feature to a gmap feature. Here's what synchronized within the feature:
@@ -14,11 +13,11 @@ goog.require('olgm.herald.Herald');
  * - its geometry
  * - its style
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
- * @param {ol.Feature} feature
- * @param {!google.maps.Data} data
- * @param {number} index
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
+ * @param {ol.Feature} feature feature to synchronise
+ * @param {!google.maps.Data} data google maps data
+ * @param {number} index feature index
  * @constructor
  * @extends {olgm.herald.Herald}
  */

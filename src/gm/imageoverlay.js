@@ -1,7 +1,6 @@
 goog.provide('olgm.gm.ImageOverlay');
 
 
-
 /**
  * Creates a new image overlay.
  * @constructor

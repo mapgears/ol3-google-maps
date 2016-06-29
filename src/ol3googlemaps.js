@@ -4,7 +4,6 @@ goog.require('olgm.Abstract');
 goog.require('olgm.herald.Layers');
 
 
-
 /**
  * The main component of this library. It binds an existing OpenLayers map to
  * a Google Maps map it creates through the use of `herald` objects. Each
@@ -120,7 +119,7 @@ olgm.OLGoogleMaps.prototype.deactivate = function() {
 
 
 /**
- * @return {boolean}
+ * @return {boolean} whether or not google maps is active
  * @api
  */
 olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
@@ -129,7 +128,7 @@ olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
 
 
 /**
- * @return {google.maps.Map}
+ * @return {google.maps.Map} the google maps map
  * @api
  */
 olgm.OLGoogleMaps.prototype.getGoogleMapsMap = function() {

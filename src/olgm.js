@@ -32,8 +32,8 @@ olgm.RESOLUTIONS = [
 
 
 /**
- * @param {ol.geom.Geometry} geometry
- * @return {ol.Coordinate}
+ * @param {ol.geom.Geometry} geometry the geometry to get the center of
+ * @return {ol.Coordinate} the center coordinates
  */
 olgm.getCenterOf = function(geometry) {
 
@@ -52,8 +52,9 @@ olgm.getCenterOf = function(geometry) {
 
 
 /**
- * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color
- * @return {string}
+ * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color the color
+ * to parse
+ * @return {string} the parsed color
  */
 olgm.getColor = function(color) {
 
@@ -82,8 +83,9 @@ olgm.getColor = function(color) {
 
 
 /**
- * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color
- * @return {?number}
+ * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color the color
+ * to check
+ * @return {?number} the color's opacity
  */
 olgm.getColorOpacity = function(color) {
 
@@ -111,9 +113,9 @@ olgm.getColorOpacity = function(color) {
 
 /**
  * Get the style from the specified object.
- * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
-
- * @return {?ol.style.Style}
+ * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
+ object object from which we get the style
+ * @return {?ol.style.Style} the style of the object
  */
 olgm.getStyleOf = function(object) {
 
@@ -136,8 +138,8 @@ olgm.getStyleOf = function(object) {
 
 
 /**
- * @param {number} resolution
- * @return {?number}
+ * @param {number} resolution the resolution to get the zoom from
+ * @return {?number} the zoom from the resolution, if found
  */
 olgm.getZoomFromResolution = function(resolution) {
 
@@ -159,8 +161,8 @@ olgm.getZoomFromResolution = function(resolution) {
 /**
  * Source: http://stackoverflow.com/questions/7543818/\
  *     regex-javascript-to-match-both-rgb-and-rgba
- * @param {string} rgbaString
- * @return {?Array.<number>}
+ * @param {string} rgbaString the rgbaString to parse
+ * @return {?Array.<number>} the rgba color in number array format
  */
 olgm.parseRGBA = function(rgbaString) {
   var rgba = null;
@@ -179,9 +181,9 @@ olgm.parseRGBA = function(rgbaString) {
 
 
 /**
- * @param {string} string
- * @param {string} needle
- * @return {boolean}
+ * @param {string} string string to check
+ * @param {string} needle string to find
+ * @return {boolean} whether or not the needle was found in the string
  */
 olgm.stringStartsWith = function(string, needle) {
   return (string.indexOf(needle) === 0);
@@ -189,8 +191,9 @@ olgm.stringStartsWith = function(string, needle) {
 
 
 /**
- * @param {Array.<ol.events.Key|Array.<ol.events.Key>>} listenerKeys
- * @param {Array.<goog.events.Key>=} opt_googListenerKeys
+ * @param {Array.<ol.events.Key|Array.<ol.events.Key>>} listenerKeys listener
+ * keys
+ * @param {Array.<goog.events.Key>=} opt_googListenerKeys closure listener keys
  */
 olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
   listenerKeys.forEach(ol.Observable.unByKey);

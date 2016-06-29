@@ -4,11 +4,10 @@ goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
 
 
-
 /**
  * Listen to a Image WMS layer
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Source}
  */
@@ -31,7 +30,7 @@ goog.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
 
 
 /**
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
@@ -74,7 +73,7 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
 
 /**
  * Unwatch the WMS Image layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
@@ -106,7 +105,8 @@ olgm.herald.ImageWMSSource.prototype.activate = function() {
 
 /**
  * Activates an image WMS layer cache item.
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem to
+ * activate
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
@@ -133,7 +133,8 @@ olgm.herald.ImageWMSSource.prototype.deactivate = function() {
 
 /**
  * Deactivates an Image WMS layer cache item.
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem to
+ * deactivate
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
@@ -148,8 +149,8 @@ olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
 
 /**
  * Generate a wms request url for a single image
- * @param {ol.layer.Image} layer
- * @return {string}
+ * @param {ol.layer.Image} layer layer to query
+ * @return {string} url to the requested tile
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
@@ -196,7 +197,8 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
 
 /**
  * Refresh the custom image overlay on google maps
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+ * layer to update
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
@@ -254,7 +256,8 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
 
 /**
  * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
@@ -272,7 +275,8 @@ olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
 
 /**
  * Handle the map being panned when an ImageWMS layer is present
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(

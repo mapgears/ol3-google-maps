@@ -34,7 +34,6 @@
 goog.provide('olgm.gm.MapLabel');
 
 
-
 /**
  * Creates a new Map Label
  * @constructor
@@ -79,7 +78,7 @@ olgm.gm.MapLabel.prototype.width_ = 0;
 
 /**
  * Note: mark as `@api` to make the minimized version include this method.
- * @param {string} prop
+ * @param {string} prop property
  * @api
  */
 olgm.gm.MapLabel.prototype.changed = function(prop) {
@@ -101,6 +100,8 @@ olgm.gm.MapLabel.prototype.changed = function(prop) {
     case 'offsetY':
     case 'position':
       this.draw();
+      break;
+    default:
       break;
   }
 };
@@ -201,7 +202,7 @@ olgm.gm.MapLabel.prototype.draw = function() {
 
 /**
  * Note: mark as `@api` to make the minimized version include this method.
- * @return {boolean}
+ * @return {boolean} whether or not the function ran successfully
  * @private
  */
 olgm.gm.MapLabel.prototype.redraw_ = function() {

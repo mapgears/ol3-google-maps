@@ -3,7 +3,6 @@ goog.provide('olgm.layer.Google');
 goog.require('ol.layer.Group');
 
 
-
 /**
  * An ol3 layer object serving the purpose of being added to the ol3 map
  * as dummy layer. The `mapTypeId` defines which Google Maps map type the
@@ -38,7 +37,7 @@ goog.inherits(olgm.layer.Google, ol.layer.Group);
 
 
 /**
- * @return {google.maps.MapTypeId.<(number|string)>|string}
+ * @return {google.maps.MapTypeId.<(number|string)>|string} map type id
  * @api
  */
 olgm.layer.Google.prototype.getMapTypeId = function() {
@@ -47,7 +46,7 @@ olgm.layer.Google.prototype.getMapTypeId = function() {
 
 
 /**
- * @return {?Array.<google.maps.MapTypeStyle>}
+ * @return {?Array.<google.maps.MapTypeStyle>} map styles
  */
 olgm.layer.Google.prototype.getStyles = function() {
   return this.styles_;

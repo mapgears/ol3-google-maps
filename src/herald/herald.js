@@ -4,14 +4,13 @@ goog.require('olgm');
 goog.require('olgm.Abstract');
 
 
-
 /**
  * Abstract class for all heralds. When activated, an herald synchronizes
  * something from the OpenLayers map to the Google Maps one. When deactivated,
  * it stops doing so.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.Abstract}
  */

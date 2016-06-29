@@ -3,13 +3,12 @@ goog.provide('olgm.herald.Source');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * This is an abstract class. Children of this class will listen to one or
  * multiple layers of a specific class to render them using the Google Maps
  * API whenever a Google Maps layer is active.
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -48,7 +47,7 @@ olgm.herald.Source.prototype.unwatchLayer = goog.abstractMethod;
 
 /**
  * Set the googleMapsIsActive value to true or false
- * @param {boolean} active
+ * @param {boolean} active whether or not google maps is active
  * @api
  */
 olgm.herald.Source.prototype.setGoogleMapsActive = function(active) {
