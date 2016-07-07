@@ -2,7 +2,7 @@
  * The following file was borrowed from the MapLabel project, which original
  * source code is available at:
  *
- *     http://google-maps-utility-library-v3.googlecode.com/svn/trunk/maplabel
+ *     https://github.com/googlemaps/js-map-label
  *
  * Here's a copy of its license:
  *

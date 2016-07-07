@@ -176,6 +176,7 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
 
   var image = style.getImage();
   if (image) {
+
     var gmIcon = {};
     var gmSymbol = {};
 
@@ -214,44 +215,6 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
       if (imageRadius) {
         gmSymbol['scale'] = imageRadius;
       }
-    } else if (image instanceof ol.style.Icon) {
-      // --- ol.style.Icon ---
-
-      var imageSrc = image.getSrc();
-      if (imageSrc) {
-        gmSymbol['url'] = imageSrc;
-      }
-
-      var imageScale = image.getScale();
-
-      var imageAnchor = image.getAnchor();
-      if (imageAnchor) {
-        if (imageScale !== undefined) {
-          gmSymbol['anchor'] = new google.maps.Point(
-              imageAnchor[0] * imageScale, imageAnchor[1] * imageScale);
-        } else {
-          gmSymbol['anchor'] = new google.maps.Point(
-              imageAnchor[0], imageAnchor[1]);
-        }
-      }
-
-      var imageOrigin = image.getOrigin();
-      if (imageOrigin) {
-        gmSymbol['origin'] = new google.maps.Point(
-            imageOrigin[0], imageOrigin[1]);
-      }
-
-      var imageSize = image.getSize();
-      if (imageSize) {
-        gmSymbol['size'] = new google.maps.Size(imageSize[0], imageSize[1]);
-
-        if (imageScale !== undefined) {
-          gmSymbol['scaledSize'] = new google.maps.Size(
-              imageSize[0] * imageScale, imageSize[1] * imageScale);
-        }
-      }
-
-      // NOTE - google.maps.Icon does not support opacity
     }
 
     if (Object.keys(gmIcon).length) {
@@ -345,4 +308,15 @@ olgm.gm.createLabel = function(textStyle, latLng, index) {
   }
 
   return new olgm.gm.MapLabel(labelOptions);
+};
+
+olgm.gm.createMarker = function(imageStyle, latLng, index) {
+
+  var markerOptions = {
+    align: 'center',
+    position: latLng,
+    zIndex: index * 2 + 1
+  };
+
+  return new olgm.gm.MapMarker(imageStyle, markerOptions);
 };

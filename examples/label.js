@@ -72,6 +72,39 @@ marker.setStyle(new ol.style.Style({
   }));
 
 source.addFeatures([feature, feature2, feature3, marker]);
+
+// Add some randomly generated markers
+
+var markers = [];
+var letters = "abcdefghijklmnopqrstuvwxyz"
+
+for (var i = 0; i < 10; i++) {
+  var x = Math.floor((Math.random() * 10000) - 7912700);
+  var y =  Math.floor((Math.random() * 10000) + 6171500);
+  var marker = new ol.Feature(new ol.geom.Point([x, y]));
+  marker.setStyle(new ol.style.Style({
+      image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+        anchor: [0.5, 46],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'pixels',
+        src: 'data/icon.png',
+      })),
+      text: new ol.style.Text({
+        offsetX: 0,
+        offsetY: -32,
+        font: 'normal 14pt Courrier',
+        text: letters.charAt(i) + letters.charAt(i+1),
+        fill: new ol.style.Fill({color: 'black'}),
+        stroke: new ol.style.Stroke({color: '#aaffaa', width: 6}),
+      }),
+      zIndex: i
+    })
+  );
+  markers.push(marker);
+}
+
+source.addFeatures(markers);
+
 var vector = new ol.layer.Vector({
   source: source
 });

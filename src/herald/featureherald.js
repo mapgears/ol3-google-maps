@@ -60,6 +60,8 @@ olgm.herald.Feature.prototype.gmapFeature_ = null;
  */
 olgm.herald.Feature.prototype.label_ = null;
 
+olgm.herald.Feature.prototype.marker_ = null;
+
 
 /**
  * @inheritDoc
@@ -81,11 +83,18 @@ olgm.herald.Feature.prototype.activate = function() {
   }
 
   // if the feature has text style, add a map label to gmap
+  var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
   var style = olgm.getStyleOf(this.feature_);
+
   if (style) {
+    var image = style.getImage();
+    if (image && image instanceof ol.style.Icon) {
+      this.marker_ = olgm.gm.createMarker(image, latLng, this.index_);
+      this.marker_.setMap(this.gmap);
+    }
+
     var text = style.getText();
     if (text) {
-      var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
       this.label_ = olgm.gm.createLabel(text, latLng, this.index_);
       this.label_.setMap(this.gmap);
     }
@@ -113,6 +122,12 @@ olgm.herald.Feature.prototype.deactivate = function() {
   this.data_.remove(this.gmapFeature_);
   this.gmapFeature_ = null;
 
+  // remove feature
+  if (this.marker_) {
+    this.marker_.setMap(null);
+    this.marker_ = null;
+  }
+
   // remove label
   if (this.label_) {
     this.label_.setMap(null);
@@ -131,9 +146,16 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
   this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
 
+  var latLng;
+
   if (this.label_) {
-    var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
     this.label_.set('position', latLng);
+  }
+
+  if (this.marker_) {
+    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    this.marker_.set('position', latLng);
   }
 };
 
