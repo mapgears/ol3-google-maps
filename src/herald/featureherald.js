@@ -87,15 +87,18 @@ olgm.herald.Feature.prototype.activate = function() {
   var style = olgm.getStyleOf(this.feature_);
 
   if (style) {
+    var zIndex = style.getZIndex();
+    var index = zIndex !== undefined ? zIndex : this.index_;
+
     var image = style.getImage();
     if (image && image instanceof ol.style.Icon) {
-      this.marker_ = olgm.gm.createMarker(image, latLng, this.index_);
+      this.marker_ = olgm.gm.createMarker(image, latLng, index);
       this.marker_.setMap(this.gmap);
     }
 
     var text = style.getText();
     if (text) {
-      this.label_ = olgm.gm.createLabel(text, latLng, this.index_);
+      this.label_ = olgm.gm.createLabel(text, latLng, index);
       this.label_.setMap(this.gmap);
     }
   }
