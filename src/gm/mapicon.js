@@ -23,12 +23,6 @@ olgm.gm.MapIcon = function(imageStyle, opt_options) {
    */
   this.imageStyle_ = imageStyle;
 
-  /**
-   * @type {Number}
-   * @private
-   */
-  this.scale_ = this.imageStyle_.getScale() || 1;
-
   this.setValues(opt_options);
 };
 goog.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
@@ -77,15 +71,21 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   ctx.clearRect(0,0,canvas.width, canvas.height);
 
   var anchor = this.imageStyle_.getAnchor();
+  var scale = this.imageStyle_.getScale() || 1;
+  var rotation = this.imageStyle_.getRotation() || 0;
 
-  var offsetX = anchor[0] * this.scale_;
-  var offsetY = anchor[1] * this.scale_;
+  var offsetX = anchor[0] * scale;
+  var offsetY = anchor[1] * scale;
 
   var x = canvas.width / 2 - offsetX;
   var y = canvas.height / 2 - offsetY;
 
+  ctx.translate(x + offsetX, y + offsetY);
+  ctx.rotate(rotation);
+  ctx.translate(-x - offsetX, -y - offsetY);
+
   ctx.drawImage(image, x, y,
-    image.width * this.scale_, image.height * this.scale_);
+    image.width * scale, image.height * scale);
 };
 
 
