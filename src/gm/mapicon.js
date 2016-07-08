@@ -23,6 +23,12 @@ olgm.gm.MapIcon = function(imageStyle, opt_options) {
    */
   this.imageStyle_ = imageStyle;
 
+  /**
+   * @type {Number}
+   * @private
+   */
+  this.scale_ = this.imageStyle_.getScale() || 1;
+
   this.setValues(opt_options);
 };
 goog.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
@@ -72,12 +78,14 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
 
   var anchor = this.imageStyle_.getAnchor();
 
-  var offsetX = anchor[0];
-  var offsetY = anchor[1];
+  var offsetX = anchor[0] * this.scale_;
+  var offsetY = anchor[1] * this.scale_;
 
   var x = canvas.width / 2 - offsetX;
   var y = canvas.height / 2 - offsetY;
-  ctx.drawImage(image, x, y);
+
+  ctx.drawImage(image, x, y,
+    image.width * this.scale_, image.height * this.scale_);
 };
 
 
@@ -94,6 +102,6 @@ olgm.gm.MapIcon.prototype.onAdd = function() {
 
   var panes = this.getPanes();
   if (panes) {
-    panes.iconLayer.appendChild(canvas);
+    panes.markerLayer.appendChild(canvas);
   }
 };
