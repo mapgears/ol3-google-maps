@@ -73,6 +73,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   var anchor = this.imageStyle_.getAnchor();
   var scale = this.imageStyle_.getScale() || 1;
   var rotation = this.imageStyle_.getRotation() || 0;
+  var opacity = this.imageStyle_.getOpacity() || 1;
 
   var offsetX = anchor[0] * scale;
   var offsetY = anchor[1] * scale;
@@ -83,6 +84,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   ctx.translate(x + offsetX, y + offsetY);
   ctx.rotate(rotation);
   ctx.translate(-x - offsetX, -y - offsetY);
+  ctx.globalAlpha = opacity;
 
   ctx.drawImage(image, x, y,
     image.width * scale, image.height * scale);
