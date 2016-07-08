@@ -3,6 +3,7 @@ goog.provide('olgm.gm');
 goog.require('goog.asserts');
 goog.require('olgm');
 goog.require('olgm.gm.MapLabel');
+goog.require('olgm.gm.MapIcon');
 
 
 // === Data ===
@@ -318,5 +319,5 @@ olgm.gm.createMarker = function(imageStyle, latLng, index) {
     zIndex: index * 2 + 1
   };
 
-  return new olgm.gm.MapMarker(imageStyle, markerOptions);
+  return new olgm.gm.MapIcon(imageStyle, markerOptions);
 };

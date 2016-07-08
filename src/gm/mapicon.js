@@ -1,21 +1,21 @@
-goog.provide('olgm.gm.MapMarker');
+goog.provide('olgm.gm.MapIcon');
 
 goog.require('olgm.gm.MapElement');
 
 
 /**
- * Creates a new Map Marker
+ * Creates a new map icon
  * @constructor
  * @extends {olgm.gm.MapElement}
  * @param {olx.style.IconOptions} imageStyle ol3 style properties
  * @param {Object.<string, *>=} opt_options Optional properties to set.
  * @api
  */
-olgm.gm.MapMarker = function(imageStyle, opt_options) {
+olgm.gm.MapIcon = function(imageStyle, opt_options) {
   goog.base(this);
 
   /**
-   * This object contains the ol3 style properties for the marker. We keep
+   * This object contains the ol3 style properties for the icon. We keep
    * it as an object because its properties can change, for example the size
    * is only defined after the image is done loading.
    * @type {olx.style.IconOptions}
@@ -25,7 +25,7 @@ olgm.gm.MapMarker = function(imageStyle, opt_options) {
 
   this.setValues(opt_options);
 };
-goog.inherits(olgm.gm.MapMarker, olgm.gm.MapElement);
+goog.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
 
 
 /**
@@ -33,7 +33,7 @@ goog.inherits(olgm.gm.MapMarker, olgm.gm.MapElement);
  * @param {string} prop property
  * @api
  */
-olgm.gm.MapMarker.prototype.changed = function(prop) {
+olgm.gm.MapIcon.prototype.changed = function(prop) {
   switch (prop) {
     case 'maxZoom':
     case 'minZoom':
@@ -49,10 +49,10 @@ olgm.gm.MapMarker.prototype.changed = function(prop) {
 
 
 /**
- * Draws the marker to the canvas 2d context.
+ * Draws the icon to the canvas 2d context.
  * @private
  */
-olgm.gm.MapMarker.prototype.drawCanvas_ = function() {
+olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   var canvas = this.canvas_;
   if (!canvas) {
     return;
@@ -85,7 +85,7 @@ olgm.gm.MapMarker.prototype.drawCanvas_ = function() {
  * Manage feature being added to the map
  * @api
  */
-olgm.gm.MapMarker.prototype.onAdd = function() {
+olgm.gm.MapIcon.prototype.onAdd = function() {
   var canvas = this.canvas_ = document.createElement('canvas');
   var style = canvas.style;
   style.position = 'absolute';
@@ -94,6 +94,6 @@ olgm.gm.MapMarker.prototype.onAdd = function() {
 
   var panes = this.getPanes();
   if (panes) {
-    panes.markerLayer.appendChild(canvas);
+    panes.iconLayer.appendChild(canvas);
   }
 };
