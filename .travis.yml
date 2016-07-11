@@ -1,0 +1,11 @@
+language: node_js
+
+node_js:
+  - "4"   # npm 2
+  - "6"   # npm 3
+
+script: "make check"
+
+branches:
+  except:
+    - gh-pages
