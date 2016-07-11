@@ -125,10 +125,10 @@ dist/ol3gm-debug.js: build/ol3gm-debug.json $(SRC_JS_FILES) build/build.js npm-i
 
 
 node_modules/openlayers/node_modules/rbush/package.json: node_modules/openlayers/package.json
-	(cd ol3 && npm install --production)
+	(cd node_modules/openlayers && npm install --production)
 
 node_modules/openlayers/build/ol.ext/rbush.js: node_modules/openlayers/node_modules/rbush/package.json
-	(cd ol3 && node tasks/build-ext.js)
+	(cd node_modules/openlayers && node tasks/build-ext.js)
 
 # A sourcemap is prepared, the source is exected to be deployed in 'source' directory
 dist/ol3gm.js: build/ol3gm.json $(SRC_JS_FILES) build/build.js npm-install node_modules/openlayers/build/ol.ext/rbush.js
