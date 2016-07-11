@@ -1,6 +1,8 @@
 OL3-Google-Maps
 ===============
 
+[![Build Status](https://travis-ci.org/mapgears/ol3-google-maps.svg?branch=add-travis-ci)](https://travis-ci.org/mapgears/ol3-google-maps)
+
 OpenLayers - Google Maps integration library. Create a map using
 [OpenLayers 3](http://openlayers.org/) with the possibility to use Google Maps
 as base map and much more.
