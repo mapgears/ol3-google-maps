@@ -10,7 +10,8 @@
   ],
   "homepage": "http://mapgears.github.io/ol3-google-maps/",
   "scripts": {
-    "pretest": "eslint src/"
+    "pretest": "eslint src/",
+    "test": "tasks/runtests.sh"
   },
   "main": "dist/ol3gm.js",
   "repository": {
@@ -30,6 +31,7 @@
     "htmlparser2": "~3.7.1"
   },
   "devDependencies": {
+    "chai": "3.5.0",
     "closure-util": "1.14.0",
     "geojsonhint": "^1.0.0",
     "eslint": "2.8.0",
@@ -37,6 +39,8 @@
     "fs-extra": "~0.8.1",
     "graceful-fs": "~3.0.2",
     "jsdoc": "~3.4.0",
+    "mocha": "2.5.3",
+    "mocha-phantomjs": "4.1.0",
     "openlayers": "openlayers/ol3#v3.16.0",
     "nomnom": "~1.6.2",
     "temp": "~0.7.0",
