@@ -63,7 +63,7 @@ dist-apidoc:
 
 .PHONY: lint
 lint:
-	npm test
+	node node_modules/.bin/eslint src/ test/
 
 .build/geojsonhint.timestamp: $(EXAMPLES_GEOJSON_FILES)
 	$(foreach file,$?, echo $(file); node_modules/geojsonhint/bin/geojsonhint $(file);)
