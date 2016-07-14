@@ -9,14 +9,19 @@ var log = closure.log;
 /**
  * Create a debug server for ol and Closure Library sources.
  * @param {function(Error, closure.Server)} callback Callback.
+ * @param {boolean} loadTests whether the tests should be loaded
  */
-var createServer = exports.createServer = function(callback) {
+var createServer = exports.createServer = function(callback, loadTests) {
+  var lib = [
+    'src/**/*.js'
+  ];
+
+  if (loadTests) {
+    lib.push('test/**/*.test.js');
+  }
   var manager = new closure.Manager({
     closure: true, // use the bundled Closure Library
-    lib: [
-      'src/**/*.js',
-      'test/**/*.test.js',
-    ],
+    lib: lib,
     ignoreRequires: '^ol\\.'
   });
   manager.on('error', function(e) {

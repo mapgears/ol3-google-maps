@@ -80,7 +80,7 @@ function runTests(conf, callback) {
         callback(code);
       });
     });
-  });
+  }, true);
 }
 
 if (require.main === module) {
