@@ -32,9 +32,10 @@ help:
 	@echo "Main targets:"
 	@echo
 	@echo "- dist                    Create a "distribution" for the library (dist/ol3gm.js)"
-	@echo "- check                   Perform a number of checks on the code (lint, compile, etc.)"
+	@echo "- check                   Perform a number of checks on the code (lint, compile, test etc.)"
 	@echo "- lint                    Check the code with the linter"
 	@echo "- serve                   Run a development web server for running the examples"
+	@echo "- test                    Run unit tests in the console"
 	@echo "- dist-examples           Create a "distribution" for the examples (dist/examples/)"
 	@echo "- dist-apidoc             Create a "distribution" for the api docs (dist/apidoc/)"
 	@echo "- clean                   Remove generated files"
@@ -63,14 +64,14 @@ dist-apidoc:
 
 .PHONY: lint
 lint:
-	npm test
+	node node_modules/.bin/eslint src/ test/
 
 .build/geojsonhint.timestamp: $(EXAMPLES_GEOJSON_FILES)
 	$(foreach file,$?, echo $(file); node_modules/geojsonhint/bin/geojsonhint $(file);)
 	touch $@
 
 .PHONY: check
-check: lint dist .build/geojsonhint.timestamp
+check: lint dist test .build/geojsonhint.timestamp
 
 .PHONY: clean
 clean:
@@ -84,6 +85,10 @@ clean:
 .PHONY: cleanall
 cleanall: clean
 	rm -rf .build
+
+.PHONY: test
+test:
+	node tasks/test.js
 
 .build/node_modules.timestamp: package.json
 	npm install
