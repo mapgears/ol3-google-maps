@@ -118,14 +118,17 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
  * Create a Google Maps data style options from an OpenLayers object.
  * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
  * object style object
+ * @param {boolean} useCanvas whether or not we should draw on canvases when
+ * we can, instead of using the Google Maps API. This fixes z-index issues
+ * with labels on markers
  * @param {number=} opt_index index for the object
  * @return {?google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyle = function(object, opt_index) {
+olgm.gm.createStyle = function(object, useCanvas, opt_index) {
   var gmStyle = null;
   var style = olgm.getStyleOf(object);
   if (style) {
-    gmStyle = olgm.gm.createStyleInternal(style, opt_index);
+    gmStyle = olgm.gm.createStyleInternal(style, useCanvas, opt_index);
   }
   return gmStyle;
 };
@@ -134,10 +137,13 @@ olgm.gm.createStyle = function(object, opt_index) {
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
  * @param {ol.style.Style} style style object
+ * @param {boolean} useCanvas whether or not we should draw on canvases when
+ * we can, instead of using the Google Maps API. This fixes z-index issues
+ * with labels on markers
  * @param {number=} opt_index index for the object
  * @return {google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyleInternal = function(style, opt_index) {
+olgm.gm.createStyleInternal = function(style, useCanvas, opt_index) {
 
   var gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
 
@@ -216,6 +222,44 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
       if (imageRadius) {
         gmSymbol['scale'] = imageRadius;
       }
+    } else if (image instanceof ol.style.Icon && !useCanvas) {
+      // --- ol.style.Icon ---
+
+      var imageSrc = image.getSrc();
+      if (imageSrc) {
+        gmSymbol['url'] = imageSrc;
+      }
+
+      var imageScale = image.getScale();
+
+      var imageAnchor = image.getAnchor();
+      if (imageAnchor) {
+        if (imageScale !== undefined) {
+          gmSymbol['anchor'] = new google.maps.Point(
+              imageAnchor[0] * imageScale, imageAnchor[1] * imageScale);
+        } else {
+          gmSymbol['anchor'] = new google.maps.Point(
+              imageAnchor[0], imageAnchor[1]);
+        }
+      }
+
+      var imageOrigin = image.getOrigin();
+      if (imageOrigin) {
+        gmSymbol['origin'] = new google.maps.Point(
+            imageOrigin[0], imageOrigin[1]);
+      }
+
+      var imageSize = image.getSize();
+      if (imageSize) {
+        gmSymbol['size'] = new google.maps.Size(imageSize[0], imageSize[1]);
+
+        if (imageScale !== undefined) {
+          gmSymbol['scaledSize'] = new google.maps.Size(
+              imageSize[0] * imageScale, imageSize[1] * imageScale);
+        }
+      }
+
+      // NOTE - google.maps.Icon does not support opacity
     }
 
     if (Object.keys(gmIcon).length) {

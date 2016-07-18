@@ -43,10 +43,13 @@ goog.require('olgm.layer.Google');
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
  * @param {boolean} watchVector whether we should watch vector layers or not
+ * @param {boolean} useCanvas whether or not we should draw on canvases when
+ * we can, instead of using the Google Maps API. This fixes z-index issues
+ * with labels on markers
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Layers = function(ol3map, gmap, watchVector) {
+olgm.herald.Layers = function(ol3map, gmap, watchVector, useCanvas) {
 
   /**
    * @type {Array.<olgm.layer.Google>}
@@ -76,7 +79,7 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
    * @type {olgm.herald.VectorSource}
    * @private
    */
-  this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap);
+  this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap, useCanvas);
 
   /**
    * @type {olgm.herald.View}

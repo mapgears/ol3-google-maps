@@ -87,7 +87,7 @@ for (var i = 0; i < 10; i++) {
         anchor: [0.5, 46],
         anchorXUnits: 'fraction',
         anchorYUnits: 'pixels',
-        src: 'data/icon.png',
+        src: 'data/icon.png'
       })),
       text: new ol.style.Text({
         offsetX: 0,
@@ -124,7 +124,10 @@ var map = new ol.Map({
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+var olGM = new olgm.OLGoogleMaps({
+  map: map,
+  useCanvas: true
+}); // map is the ol.Map instance
 olGM.activate();
 
 

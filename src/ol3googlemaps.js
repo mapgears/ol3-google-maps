@@ -64,12 +64,14 @@ olgm.OLGoogleMaps = function(options) {
   var watchVector = options.watchVector !== undefined ?
       options.watchVector : true;
 
+  var useCanvas = options.useCanvas !== undefined ? options.useCanvas : false;
+
   /**
    * @type {olgm.herald.Layers}
    * @private
    */
   this.layersHerald_ = new olgm.herald.Layers(
-      this.ol3map, this.gmap, watchVector);
+      this.ol3map, this.gmap, watchVector, useCanvas);
   this.heralds_.push(this.layersHerald_);
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
