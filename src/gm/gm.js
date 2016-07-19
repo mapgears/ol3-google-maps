@@ -182,7 +182,8 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
 
     var gmIcon = {};
     var gmSymbol = {};
-    var useCanvas = mapIconOptions.useCanvas;
+    var useCanvas = mapIconOptions.useCanvas !== undefined ?
+        mapIconOptions.useCanvas : false;
 
     if (image instanceof ol.style.Circle) {
       // --- ol.style.Circle ---

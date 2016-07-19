@@ -65,7 +65,7 @@ olgm.OLGoogleMaps = function(options) {
       options.watchVector : true;
 
   var mapIconOptions = options.mapIconOptions !== undefined ?
-      options.mapIconOptions : {useCanvas: false};
+      options.mapIconOptions : {};
 
   /**
    * @type {olgm.herald.Layers}

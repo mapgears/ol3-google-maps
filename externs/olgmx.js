@@ -50,7 +50,7 @@ olgmx.gm = {};
 
 /**
  * @typedef {{
- *   useCanvas: (boolean)
+ *   useCanvas: (boolean|undefined)
  * }}
  * @api
  */
@@ -60,7 +60,7 @@ olgmx.gm.MapIconOptions;
 /**
  * Whether or not we should draw on canvases when we can, instead of using the
  * Google Maps API. This fixes z-index issues with labels on markers
- * @type {boolean}
+ * @type {boolean|undefined}
  * @api
  */
 olgmx.gm.MapIconOptions.prototype.useCanvas;
