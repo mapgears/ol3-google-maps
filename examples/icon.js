@@ -16,7 +16,9 @@ feature.setStyle(new ol.style.Style({
       anchorYUnits: 'pixels',
       size: [32, 48],
       scale: 0.75,
-      src: 'data/icon.png'
+      src: 'data/icon.png',
+      rotation: 0.25 * Math.PI,
+      opacity: 0.5
     }))
   }));
 source.addFeature(feature);
@@ -39,7 +41,11 @@ var map = new ol.Map({
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+var olGM = new olgm.OLGoogleMaps({
+  map: map,
+  mapIconOptions: {
+    useCanvas: true
+  }}); // map is the ol.Map instance
 olGM.activate();
 
 

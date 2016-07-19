@@ -15,31 +15,35 @@ goog.require('olgm.herald.Herald');
  *
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
- * @param {ol.Feature} feature feature to synchronise
- * @param {!google.maps.Data} data google maps data
- * @param {number} index feature index
+ * @param {olgmx.herald.FeatureOptions} options options
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Feature = function(ol3map, gmap, feature, data, index) {
+olgm.herald.Feature = function(ol3map, gmap, options) {
 
   /**
    * @type {ol.Feature}
    * @private
    */
-  this.feature_ = feature;
+  this.feature_ = options.feature;
 
   /**
    * @type {!google.maps.Data}
    * @private
    */
-  this.data_ = data;
+  this.data_ = options.data;
 
   /**
    * @type {number}
    * @private
    */
-  this.index_ = index;
+  this.index_ = options.index;
+
+  /**
+   * @type {olgmx.gm.MapIconOptions}
+   * @private
+   */
+  this.mapIconOptions_ = options.mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 
@@ -60,6 +64,15 @@ olgm.herald.Feature.prototype.gmapFeature_ = null;
  */
 olgm.herald.Feature.prototype.label_ = null;
 
+/**
+ * The marker object contains a marker to draw on a canvas instead of using
+ * the Google Maps API. If useCanvas_ is set to false, this variable won't
+ * be used.
+ * @type {olgm.gm.MapIcon}
+ * @private
+ */
+olgm.herald.Feature.prototype.marker_ = null;
+
 
 /**
  * @inheritDoc
@@ -75,18 +88,31 @@ olgm.herald.Feature.prototype.activate = function() {
   this.data_.add(this.gmapFeature_);
 
   // override style if a style is defined at the feature level
-  var gmStyle = olgm.gm.createStyle(this.feature_, this.index_);
+  var gmStyle = olgm.gm.createStyle(
+      this.feature_, this.mapIconOptions_, this.index_);
   if (gmStyle) {
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
   }
 
   // if the feature has text style, add a map label to gmap
+  var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
   var style = olgm.getStyleOf(this.feature_);
+
   if (style) {
+    var zIndex = style.getZIndex();
+    var index = zIndex !== undefined ? zIndex : this.index_;
+
+    var image = style.getImage();
+    var useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
+        this.mapIconOptions_.useCanvas : false;
+    if (image && image instanceof ol.style.Icon && useCanvas) {
+      this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
+      this.marker_.setMap(this.gmap);
+    }
+
     var text = style.getText();
     if (text) {
-      var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
-      this.label_ = olgm.gm.createLabel(text, latLng, this.index_);
+      this.label_ = olgm.gm.createLabel(text, latLng, index);
       this.label_.setMap(this.gmap);
     }
   }
@@ -113,6 +139,12 @@ olgm.herald.Feature.prototype.deactivate = function() {
   this.data_.remove(this.gmapFeature_);
   this.gmapFeature_ = null;
 
+  // remove feature
+  if (this.marker_) {
+    this.marker_.setMap(null);
+    this.marker_ = null;
+  }
+
   // remove label
   if (this.label_) {
     this.label_.setMap(null);
@@ -131,9 +163,16 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
   this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
 
+  var latLng;
+
   if (this.label_) {
-    var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
     this.label_.set('position', latLng);
+  }
+
+  if (this.marker_) {
+    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    this.marker_.set('position', latLng);
   }
 };
 

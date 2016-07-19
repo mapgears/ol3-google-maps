@@ -43,10 +43,11 @@ goog.require('olgm.layer.Google');
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
  * @param {boolean} watchVector whether we should watch vector layers or not
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Layers = function(ol3map, gmap, watchVector) {
+olgm.herald.Layers = function(ol3map, gmap, watchVector, mapIconOptions) {
 
   /**
    * @type {Array.<olgm.layer.Google>}
@@ -76,7 +77,8 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
    * @type {olgm.herald.VectorSource}
    * @private
    */
-  this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap);
+  this.vectorSourceHerald_ = new olgm.herald.VectorSource(
+      ol3map, gmap, mapIconOptions);
 
   /**
    * @type {olgm.herald.View}
