@@ -126,7 +126,9 @@ var map = new ol.Map({
 
 var olGM = new olgm.OLGoogleMaps({
   map: map,
-  useCanvas: true
+  mapIconOptions: {
+    useCanvas: true
+  }
 }); // map is the ol.Map instance
 olGM.activate();
 

@@ -8,13 +8,11 @@ goog.require('olgm.herald.VectorFeature');
  * Listen to a Vector layer
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
- * @param {boolean} useCanvas whether or not we should draw on canvases when
- * we can, instead of using the Google Maps API. This fixes z-index issues
- * with labels on markers
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @constructor
  * @extends {olgm.herald.Source}
  */
-olgm.herald.VectorSource = function(ol3map, gmap, useCanvas) {
+olgm.herald.VectorSource = function(ol3map, gmap, mapIconOptions) {
   /**
   * @type {Array.<olgm.herald.VectorSource.LayerCache>}
   * @private
@@ -28,10 +26,10 @@ olgm.herald.VectorSource = function(ol3map, gmap, useCanvas) {
   this.layers_ = [];
 
   /**
-   * @type {boolean}
+   * @type {olgmx.gm.MapIconOptions}
    * @private
    */
-  this.useCanvas_ = useCanvas;
+  this.mapIconOptions_ = mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 };
@@ -60,14 +58,14 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
   });
 
   // Style
-  var gmStyle = olgm.gm.createStyle(vectorLayer, this.useCanvas_);
+  var gmStyle = olgm.gm.createStyle(vectorLayer, this.mapIconOptions_);
   if (gmStyle) {
     data.setStyle(gmStyle);
   }
 
   // herald
   var herald = new olgm.herald.VectorFeature(
-      this.ol3map, this.gmap, source, data, this.useCanvas_);
+      this.ol3map, this.gmap, source, data, this.mapIconOptions_);
 
   // opacity
   var opacity = vectorLayer.getOpacity();

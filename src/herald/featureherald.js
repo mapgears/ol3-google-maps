@@ -40,10 +40,10 @@ olgm.herald.Feature = function(ol3map, gmap, options) {
   this.index_ = options.index;
 
   /**
-   * @type {boolean}
+   * @type {olgmx.gm.MapIconOptions}
    * @private
    */
-  this.useCanvas_ = options.useCanvas;
+  this.mapIconOptions_ = options.mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 
@@ -66,7 +66,7 @@ olgm.herald.Feature.prototype.label_ = null;
 
 /**
  * The marker object contains a marker to draw on a canvas instead of using
- * the Google Maps API. If useCanvas_ is set to false, this variable won't 
+ * the Google Maps API. If useCanvas_ is set to false, this variable won't
  * be used.
  * @type {olgm.gm.MapIcon}
  * @private
@@ -88,7 +88,8 @@ olgm.herald.Feature.prototype.activate = function() {
   this.data_.add(this.gmapFeature_);
 
   // override style if a style is defined at the feature level
-  var gmStyle = olgm.gm.createStyle(this.feature_, this.useCanvas_, this.index_);
+  var gmStyle = olgm.gm.createStyle(
+      this.feature_, this.mapIconOptions_, this.index_);
   if (gmStyle) {
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
   }
@@ -102,7 +103,8 @@ olgm.herald.Feature.prototype.activate = function() {
     var index = zIndex !== undefined ? zIndex : this.index_;
 
     var image = style.getImage();
-    if (image && image instanceof ol.style.Icon && this.useCanvas_) {
+    var useCanvas = this.mapIconOptions_.useCanvas;
+    if (image && image instanceof ol.style.Icon && useCanvas) {
       this.marker_ = olgm.gm.createMarker(image, latLng, index);
       this.marker_.setMap(this.gmap);
     }

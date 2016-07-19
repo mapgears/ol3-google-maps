@@ -41,7 +41,11 @@ var map = new ol.Map({
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+var olGM = new olgm.OLGoogleMaps({
+  map: map,
+  mapIconOptions: {
+    useCanvas: true
+  }}); // map is the ol.Map instance
 olGM.activate();
 
 

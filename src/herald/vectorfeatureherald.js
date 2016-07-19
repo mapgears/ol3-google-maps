@@ -15,13 +15,12 @@ goog.require('olgm.herald.Herald');
  * @param {!google.maps.Map} gmap google maps map
  * @param {!ol.source.Vector} source vector source
  * @param {!google.maps.Data} data google maps data object
- * @param {boolean} useCanvas whether or not we should draw on canvases when
- * we can, instead of using the Google Maps API. This fixes z-index issues
- * with labels on markers
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.VectorFeature = function(ol3map, gmap, source, data, useCanvas) {
+olgm.herald.VectorFeature = function(
+    ol3map, gmap, source, data, mapIconOptions) {
 
   /**
    * @type {Array.<ol.Feature>}
@@ -48,10 +47,10 @@ olgm.herald.VectorFeature = function(ol3map, gmap, source, data, useCanvas) {
   this.source_ = source;
 
   /**
-   * @type {boolean}
+   * @type {olgmx.gm.MapIconOptions}
    * @private
    */
-  this.useCanvas_ = useCanvas;
+  this.mapIconOptions_ = mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 };
@@ -127,7 +126,7 @@ olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
     feature: feature,
     data: data,
     index: index,
-    useCanvas: this.useCanvas_
+    mapIconOptions: this.mapIconOptions_
   };
   var herald = new olgm.herald.Feature(ol3map, gmap, options);
   herald.activate();

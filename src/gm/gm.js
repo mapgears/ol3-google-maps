@@ -118,17 +118,15 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
  * Create a Google Maps data style options from an OpenLayers object.
  * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
  * object style object
- * @param {boolean} useCanvas whether or not we should draw on canvases when
- * we can, instead of using the Google Maps API. This fixes z-index issues
- * with labels on markers
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {?google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyle = function(object, useCanvas, opt_index) {
+olgm.gm.createStyle = function(object, mapIconOptions, opt_index) {
   var gmStyle = null;
   var style = olgm.getStyleOf(object);
   if (style) {
-    gmStyle = olgm.gm.createStyleInternal(style, useCanvas, opt_index);
+    gmStyle = olgm.gm.createStyleInternal(style, mapIconOptions, opt_index);
   }
   return gmStyle;
 };
@@ -137,13 +135,11 @@ olgm.gm.createStyle = function(object, useCanvas, opt_index) {
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
  * @param {ol.style.Style} style style object
- * @param {boolean} useCanvas whether or not we should draw on canvases when
- * we can, instead of using the Google Maps API. This fixes z-index issues
- * with labels on markers
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyleInternal = function(style, useCanvas, opt_index) {
+olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
 
   var gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
 
@@ -186,6 +182,7 @@ olgm.gm.createStyleInternal = function(style, useCanvas, opt_index) {
 
     var gmIcon = {};
     var gmSymbol = {};
+    var useCanvas = mapIconOptions.useCanvas;
 
     if (image instanceof ol.style.Circle) {
       // --- ol.style.Circle ---

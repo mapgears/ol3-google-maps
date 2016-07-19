@@ -64,14 +64,15 @@ olgm.OLGoogleMaps = function(options) {
   var watchVector = options.watchVector !== undefined ?
       options.watchVector : true;
 
-  var useCanvas = options.useCanvas !== undefined ? options.useCanvas : false;
+  var mapIconOptions = options.mapIconOptions !== undefined ?
+      options.mapIconOptions : {useCanvas: false};
 
   /**
    * @type {olgm.herald.Layers}
    * @private
    */
   this.layersHerald_ = new olgm.herald.Layers(
-      this.ol3map, this.gmap, watchVector, useCanvas);
+      this.ol3map, this.gmap, watchVector, mapIconOptions);
   this.heralds_.push(this.layersHerald_);
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
