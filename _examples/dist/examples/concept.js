@@ -197,32 +197,42 @@ var addPointFeatures = function(len, opt_style) {
   for (var i = 0; i < len; i++) {
     feature = generatePointFeature();
     if (opt_style) {
-      feature.setStyle(opt_style);
+      var style = new ol.style.Style(opt_style);
+      style.setZIndex(Math.floor(Math.random() * 1000));
+      feature.setStyle(style);
     }
     vector.getSource().addFeature(feature);
   }
 };
 
 var addMarkerFeatures = function(len) {
-  addPointFeatures(len, new ol.style.Style({
+  addPointFeatures(len, {
     image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
       anchor: [0.5, 46],
       anchorXUnits: 'fraction',
       anchorYUnits: 'pixels',
       opacity: 0.75,
       src: 'data/icon.png'
-    }))
-  }));
+    })),
+    text: new ol.style.Text({
+      offsetX: 0,
+      offsetY: -32,
+      font: 'normal 14pt Courrier',
+      text: 'hi',
+      fill: new ol.style.Fill({color: 'black'}),
+      stroke: new ol.style.Stroke({color: '#ffffff', width: 5}),
+    })
+  });
 };
 
 var addCircleFeatures = function(len) {
-  addPointFeatures(len, new ol.style.Style({
+  addPointFeatures(len, {
     image: new ol.style.Circle({
       'fill': new ol.style.Fill({color: 'rgba(153,51,51,0.3)'}),
       'stroke': new ol.style.Stroke({color: 'rgb(153,51,51)', width: 2}),
       'radius': 20
     })
-  }));
+  });
 };
 
 var addLineFeatures = function(len, opt_style) {
@@ -238,7 +248,7 @@ var addLineFeatures = function(len, opt_style) {
 
 
 addPointFeatures(3);
-addPointFeatures(3, new ol.style.Style({
+addPointFeatures(3, {
   image: new ol.style.Circle({
     'fill': new ol.style.Fill({color: '#3F5D7D'}),
     'stroke': new ol.style.Stroke({color: 'rgb(30,30,30)', width: 2}),
@@ -250,7 +260,7 @@ addPointFeatures(3, new ol.style.Style({
     fill: new ol.style.Fill({color: 'black'}),
     stroke: new ol.style.Stroke({color: 'white', width: 3})
   })
-}));
+});
 addMarkerFeatures(3);
 addCircleFeatures(3);
 addLineFeatures(1);
@@ -281,7 +291,11 @@ poly2.setStyle(new ol.style.Style({
 vector.getSource().addFeature(poly2);
 
 
-var olGM = new olgm.OLGoogleMaps({map: map});
+var olGM = new olgm.OLGoogleMaps({
+  map: map,
+  mapIconOptions: {
+    useCanvas: true
+  }});
 olGM.activate();
 
 document.getElementById('toggle').onclick = function() {

@@ -228,6 +228,8 @@ goog.require('ol.webgl.Context');
 goog.require('ol.xml');
 goog.require('olgm.OLGoogleMaps');
 goog.require('olgm.gm.ImageOverlay');
+goog.require('olgm.gm.MapElement');
+goog.require('olgm.gm.MapIcon');
 goog.require('olgm.gm.MapLabel');
 goog.require('olgm.herald.Source');
 goog.require('olgm.herald.TileSource');
@@ -4248,6 +4250,34 @@ goog.exportProperty(
     olgm.gm.ImageOverlay.prototype.onRemove);
 
 goog.exportSymbol(
+    'olgm.gm.MapElement',
+    olgm.gm.MapElement);
+
+goog.exportProperty(
+    olgm.gm.MapElement.prototype,
+    'draw',
+    olgm.gm.MapElement.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.MapElement.prototype,
+    'onRemove',
+    olgm.gm.MapElement.prototype.onRemove);
+
+goog.exportSymbol(
+    'olgm.gm.MapIcon',
+    olgm.gm.MapIcon);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'changed',
+    olgm.gm.MapIcon.prototype.changed);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'onAdd',
+    olgm.gm.MapIcon.prototype.onAdd);
+
+goog.exportSymbol(
     'olgm.gm.MapLabel',
     olgm.gm.MapLabel);
 
@@ -4260,16 +4290,6 @@ goog.exportProperty(
     olgm.gm.MapLabel.prototype,
     'onAdd',
     olgm.gm.MapLabel.prototype.onAdd);
-
-goog.exportProperty(
-    olgm.gm.MapLabel.prototype,
-    'draw',
-    olgm.gm.MapLabel.prototype.draw);
-
-goog.exportProperty(
-    olgm.gm.MapLabel.prototype,
-    'onRemove',
-    olgm.gm.MapLabel.prototype.onRemove);
 
 goog.exportProperty(
     ol.CollectionEvent.prototype,
@@ -14935,3 +14955,23 @@ goog.exportProperty(
     olgm.herald.VectorSource.prototype,
     'setGoogleMapsActive',
     olgm.herald.VectorSource.prototype.setGoogleMapsActive);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'draw',
+    olgm.gm.MapIcon.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'onRemove',
+    olgm.gm.MapIcon.prototype.onRemove);
+
+goog.exportProperty(
+    olgm.gm.MapLabel.prototype,
+    'draw',
+    olgm.gm.MapLabel.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.MapLabel.prototype,
+    'onRemove',
+    olgm.gm.MapLabel.prototype.onRemove);

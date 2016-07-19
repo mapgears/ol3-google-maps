@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.6-8-gbc0e223
+// Version: v0.7.2-5-gbbcf546
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -105472,14 +105472,13 @@ ol.style.RegularShape.prototype.getChecksum = function() {
 goog.provide('olgm.Abstract');
 
 
-
 /**
  * Abstract class for most classes of this library, which receives a reference
  * to the `google.maps.Map` and `ol.Map` objects an behave accordingly with
  * them.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  */
 olgm.Abstract = function(ol3map, gmap) {
@@ -105532,8 +105531,8 @@ olgm.RESOLUTIONS = [
 
 
 /**
- * @param {ol.geom.Geometry} geometry
- * @return {ol.Coordinate}
+ * @param {ol.geom.Geometry} geometry the geometry to get the center of
+ * @return {ol.Coordinate} the center coordinates
  */
 olgm.getCenterOf = function(geometry) {
 
@@ -105552,8 +105551,9 @@ olgm.getCenterOf = function(geometry) {
 
 
 /**
- * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color
- * @return {string}
+ * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color the color
+ * to parse
+ * @return {string} the parsed color
  */
 olgm.getColor = function(color) {
 
@@ -105582,8 +105582,9 @@ olgm.getColor = function(color) {
 
 
 /**
- * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color
- * @return {?number}
+ * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color the color
+ * to check
+ * @return {?number} the color's opacity
  */
 olgm.getColorOpacity = function(color) {
 
@@ -105611,9 +105612,9 @@ olgm.getColorOpacity = function(color) {
 
 /**
  * Get the style from the specified object.
- * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
-
- * @return {?ol.style.Style}
+ * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
+ object object from which we get the style
+ * @return {?ol.style.Style} the style of the object
  */
 olgm.getStyleOf = function(object) {
 
@@ -105636,8 +105637,8 @@ olgm.getStyleOf = function(object) {
 
 
 /**
- * @param {number} resolution
- * @return {?number}
+ * @param {number} resolution the resolution to get the zoom from
+ * @return {?number} the zoom from the resolution, if found
  */
 olgm.getZoomFromResolution = function(resolution) {
 
@@ -105659,8 +105660,8 @@ olgm.getZoomFromResolution = function(resolution) {
 /**
  * Source: http://stackoverflow.com/questions/7543818/\
  *     regex-javascript-to-match-both-rgb-and-rgba
- * @param {string} rgbaString
- * @return {?Array.<number>}
+ * @param {string} rgbaString the rgbaString to parse
+ * @return {?Array.<number>} the rgba color in number array format
  */
 olgm.parseRGBA = function(rgbaString) {
   var rgba = null;
@@ -105679,9 +105680,9 @@ olgm.parseRGBA = function(rgbaString) {
 
 
 /**
- * @param {string} string
- * @param {string} needle
- * @return {boolean}
+ * @param {string} string string to check
+ * @param {string} needle string to find
+ * @return {boolean} whether or not the needle was found in the string
  */
 olgm.stringStartsWith = function(string, needle) {
   return (string.indexOf(needle) === 0);
@@ -105689,8 +105690,9 @@ olgm.stringStartsWith = function(string, needle) {
 
 
 /**
- * @param {Array.<ol.events.Key|Array.<ol.events.Key>>} listenerKeys
- * @param {Array.<goog.events.Key>=} opt_googListenerKeys
+ * @param {Array.<ol.events.Key|Array.<ol.events.Key>>} listenerKeys listener
+ * keys
+ * @param {Array.<goog.events.Key>=} opt_googListenerKeys closure listener keys
  */
 olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
   listenerKeys.forEach(ol.Observable.unByKey);
@@ -105737,7 +105739,6 @@ olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
 goog.provide('olgm.gm.MapLabel');
 
 
-
 /**
  * Creates a new Map Label
  * @constructor
@@ -105782,7 +105783,7 @@ olgm.gm.MapLabel.prototype.width_ = 0;
 
 /**
  * Note: mark as `@api` to make the minimized version include this method.
- * @param {string} prop
+ * @param {string} prop property
  * @api
  */
 olgm.gm.MapLabel.prototype.changed = function(prop) {
@@ -105804,6 +105805,8 @@ olgm.gm.MapLabel.prototype.changed = function(prop) {
     case 'offsetY':
     case 'position':
       this.draw();
+      break;
+    default:
       break;
   }
 };
@@ -105904,7 +105907,7 @@ olgm.gm.MapLabel.prototype.draw = function() {
 
 /**
  * Note: mark as `@api` to make the minimized version include this method.
- * @return {boolean}
+ * @return {boolean} whether or not the function ran successfully
  * @private
  */
 olgm.gm.MapLabel.prototype.redraw_ = function() {
@@ -105984,10 +105987,10 @@ goog.require('olgm.gm.MapLabel');
 
 /**
  * Create a Google Maps feature using an OpenLayers one.
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature feature to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.Feature}
+ * @return {google.maps.Data.Feature} google Feature
  */
 olgm.gm.createFeature = function(feature, opt_ol3map) {
   var geometry = feature.getGeometry();
@@ -106001,10 +106004,11 @@ olgm.gm.createFeature = function(feature, opt_ol3map) {
 
 /**
  * Create a Google Maps geometry using an OpenLayers one.
- * @param {ol.geom.Geometry} geometry
+ * @param {ol.geom.Geometry} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.Geometry|google.maps.LatLng|google.maps.LatLng}
+ * google Geometry or LatLng
  */
 olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
@@ -106026,10 +106030,10 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps LatLng object using an OpenLayers Point.
- * @param {ol.geom.Point|ol.Coordinate} object
+ * @param {ol.geom.Point|ol.Coordinate} object coordinate to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.LatLng}
+ * @return {google.maps.LatLng} google LatLng object
  */
 olgm.gm.createLatLng = function(object, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -106047,10 +106051,11 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon} geometry
+ * @param {ol.geom.LineString|ol.geom.Polygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.Polygon}
+ * @return {google.maps.Data.LineString|google.maps.Data.Polygon} google
+ * LineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -106087,9 +106092,10 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers object.
- * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature} object
- * @param {number=} opt_index
- * @return {?google.maps.Data.StyleOptions}
+ * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
+ * object style object
+ * @param {number=} opt_index index for the object
+ * @return {?google.maps.Data.StyleOptions} google style options
  */
 olgm.gm.createStyle = function(object, opt_index) {
   var gmStyle = null;
@@ -106103,9 +106109,9 @@ olgm.gm.createStyle = function(object, opt_index) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
- * @param {ol.style.Style} style
- * @param {number=} opt_index
- * @return {google.maps.Data.StyleOptions}
+ * @param {ol.style.Style} style style object
+ * @param {number=} opt_index index for the object
+ * @return {google.maps.Data.StyleOptions} google style options
  */
 olgm.gm.createStyleInternal = function(style, opt_index) {
 
@@ -106150,9 +106156,40 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
     var gmIcon = {};
     var gmSymbol = {};
 
-    if (image instanceof ol.style.Circle) {
+    if (image instanceof ol.style.Circle ||
+        image instanceof ol.style.RegularShape) {
       // --- ol.style.Circle ---
-      gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
+      if (image instanceof ol.style.Circle) {
+        gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
+      } else if (image instanceof ol.style.RegularShape) {
+        // Google Maps support SVG Paths. We'll build one manually.
+        var path = 'M ';
+
+        // Get a few variables from the image style;
+        var nbPoints = image.getPoints();
+        var outerRadius = image.getRadius();
+        var innerRadius = image.getRadius2() !== undefined ?
+            image.getRadius2() : image.getRadius();
+        var size = 0.1;
+        var rotation = image.getRotation() + image.getAngle();
+
+        if (innerRadius == 0) {
+          nbPoints = nbPoints / 2;
+        }
+
+        for (var i = 0; i < nbPoints; i++) {
+          var radius = i % 2 == 0 ? outerRadius : innerRadius;
+          var angle = (i * 2 * Math.PI / nbPoints) - (Math.PI / 2) + rotation;
+
+          var x = size * radius * Math.cos(angle);
+          var y = size * radius * Math.sin(angle);
+          path += x + ',' + y + ' ';
+        }
+
+        // Close the path
+        path += 'Z';
+        gmSymbol['path'] = path;
+      }
 
       var imageStroke = image.getStroke();
       if (imageStroke) {
@@ -106251,10 +106288,10 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
 
 /**
  * Create a MapLabel object from a text style and Lat/Lng location.
- * @param {ol.style.Text} textStyle
- * @param {google.maps.LatLng} latLng
- * @param {number} index
- * @return {olgm.gm.MapLabel}
+ * @param {ol.style.Text} textStyle style for the text
+ * @param {google.maps.LatLng} latLng position of the label
+ * @param {number} index index for the label
+ * @return {olgm.gm.MapLabel} map label
  */
 olgm.gm.createLabel = function(textStyle, latLng, index) {
 
@@ -106319,7 +106356,6 @@ olgm.gm.createLabel = function(textStyle, latLng, index) {
 };
 
 goog.provide('olgm.gm.ImageOverlay');
-
 
 
 /**
@@ -106438,14 +106474,13 @@ goog.require('olgm');
 goog.require('olgm.Abstract');
 
 
-
 /**
  * Abstract class for all heralds. When activated, an herald synchronizes
  * something from the OpenLayers map to the Google Maps one. When deactivated,
  * it stops doing so.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.Abstract}
  */
@@ -106489,7 +106524,6 @@ goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * The Feature Herald is responsible of synchronizing a single ol3 vector
  * feature to a gmap feature. Here's what synchronized within the feature:
@@ -106497,11 +106531,11 @@ goog.require('olgm.herald.Herald');
  * - its geometry
  * - its style
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
- * @param {ol.Feature} feature
- * @param {!google.maps.Data} data
- * @param {number} index
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
+ * @param {ol.Feature} feature feature to synchronise
+ * @param {!google.maps.Data} data google maps data
+ * @param {number} index feature index
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -106643,13 +106677,12 @@ goog.provide('olgm.herald.Source');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * This is an abstract class. Children of this class will listen to one or
  * multiple layers of a specific class to render them using the Google Maps
  * API whenever a Google Maps layer is active.
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -106688,7 +106721,7 @@ olgm.herald.Source.prototype.unwatchLayer = goog.abstractMethod;
 
 /**
  * Set the googleMapsIsActive value to true or false
- * @param {boolean} active
+ * @param {boolean} active whether or not google maps is active
  * @api
  */
 olgm.herald.Source.prototype.setGoogleMapsActive = function(active) {
@@ -106701,11 +106734,10 @@ goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
 
 
-
 /**
  * Listen to a Image WMS layer
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Source}
  */
@@ -106728,7 +106760,7 @@ goog.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
 
 
 /**
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
@@ -106771,7 +106803,7 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
 
 /**
  * Unwatch the WMS Image layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
@@ -106803,7 +106835,8 @@ olgm.herald.ImageWMSSource.prototype.activate = function() {
 
 /**
  * Activates an image WMS layer cache item.
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem to
+ * activate
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
@@ -106830,7 +106863,8 @@ olgm.herald.ImageWMSSource.prototype.deactivate = function() {
 
 /**
  * Deactivates an Image WMS layer cache item.
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem to
+ * deactivate
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
@@ -106845,8 +106879,8 @@ olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
 
 /**
  * Generate a wms request url for a single image
- * @param {ol.layer.Image} layer
- * @return {string}
+ * @param {ol.layer.Image} layer layer to query
+ * @return {string} url to the requested tile
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
@@ -106893,7 +106927,8 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
 
 /**
  * Refresh the custom image overlay on google maps
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+ * layer to update
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
@@ -106951,7 +106986,8 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
 
 /**
  * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
@@ -106969,7 +107005,8 @@ olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
 
 /**
  * Handle the map being panned when an ImageWMS layer is present
- * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(
@@ -106996,11 +107033,10 @@ goog.provide('olgm.herald.TileSource');
 goog.require('olgm.herald.Source');
 
 
-
 /**
  * Listen to a tiled layer
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Source}
  */
@@ -107023,7 +107059,7 @@ goog.inherits(olgm.herald.TileSource, olgm.herald.Source);
 
 
 /**
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @override
  */
 olgm.herald.TileSource.prototype.watchLayer = function(layer) {
@@ -107036,8 +107072,6 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
     return;
   }
 
-  goog.asserts.assertInstanceof(source, ol.source.TileImage);
-
   this.layers_.push(tileLayer);
 
   // opacity
@@ -107049,27 +107083,10 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
     opacity: opacity
   });
 
-  var getTileUrlFunction = source.getTileUrlFunction();
-  var proj = ol.proj.get('EPSG:3857');
-
-  var googleGetTileUrlFunction = function(coords, zoom) {
-    var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
-    var result = getTileUrlFunction(ol3Coords, 1, proj);
-
-    // TileJSON sources don't have their url function right away, try again
-    if (result === undefined) {
-      goog.asserts.assertInstanceof(source, ol.source.TileImage);
-      getTileUrlFunction = source.getTileUrlFunction();
-      result = getTileUrlFunction(ol3Coords, 1, proj);
-    }
-
-    return result;
-  };
-
   var tileSize = new google.maps.Size(256, 256);
 
   var options = {
-    'getTileUrl': googleGetTileUrlFunction,
+    'getTileUrl': this.googleGetTileUrlFunction_.bind(this, tileLayer),
     'tileSize': tileSize,
     'isPng': true,
     'opacity': opacity
@@ -107093,8 +107110,70 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
 
 
 /**
+ * This function is used by google maps to get the url for a tile at the given
+ * coordinates and zoom level
+ * @param {ol.layer.Tile} tileLayer layer to query
+ * @param {google.maps.Point} coords coordinates of the tile
+ * @param {Number} zoom current zoom level
+ * @return {string|undefined} url to the tile
+ * @private
+ */
+olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
+    tileLayer, coords, zoom) {
+  var source = tileLayer.getSource();
+  goog.asserts.assertInstanceof(source, ol.source.TileImage);
+
+  // Get a few variables from the source object
+  var getTileUrlFunction = source.getTileUrlFunction();
+  var proj = ol.proj.get('EPSG:3857');
+  var tileGrid = source.getTileGrid();
+
+  // Convert the coords from google maps to ol3 tile format
+  var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
+
+  // Save the extent for this layer, default to the one for the projection
+  var extent = tileLayer.getExtent();
+  if (!extent) {
+    extent = proj.getExtent();
+  }
+
+  /* Google Maps checks for tiles which might not exist, for example tiles
+   * above the world map. We need to filter out these to avoid invalid
+   * requests.
+   */
+  if (tileGrid) {
+    /* Get the intersection area between the wanted tile's extent and the
+     * layer's extent. If that intersection has an area smaller than 1, it
+     * means it's not part of the map. We do this because a tile directly
+     * above the map but not inside it still counts as an intersection, but
+     * with a size of 0.
+     */
+    var intersection = ol.extent.getIntersection(
+        extent, tileGrid.getTileCoordExtent(ol3Coords));
+    var intersectionSize = ol.extent.getSize(intersection);
+    var intersectionArea = intersectionSize[0] * intersectionSize[1];
+
+    if (intersectionArea < 1 || intersectionArea == Infinity) {
+      return;
+    }
+  }
+
+  var result = getTileUrlFunction(ol3Coords, 1, proj);
+
+  // TileJSON sources don't have their url function right away, try again
+  if (result === undefined) {
+    goog.asserts.assertInstanceof(source, ol.source.TileImage);
+    getTileUrlFunction = source.getTileUrlFunction();
+    result = getTileUrlFunction(ol3Coords, 1, proj);
+  }
+
+  return result;
+};
+
+
+/**
  * Unwatch the tile layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
@@ -107138,7 +107217,7 @@ olgm.herald.TileSource.prototype.activate = function() {
 
 /**
  * Activates an tile layer cache item.
- * @param {olgm.herald.TileSource.LayerCache} cacheItem
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to activate
  * @private
  */
 olgm.herald.TileSource.prototype.activateCacheItem_ = function(
@@ -107163,7 +107242,7 @@ olgm.herald.TileSource.prototype.deactivate = function() {
 
 /**
  * Deactivates a Tile layer cache item.
- * @param {olgm.herald.TileSource.LayerCache} cacheItem
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to deactivate
  * @private
  */
 olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
@@ -107174,7 +107253,8 @@ olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
 
 /**
  * Deal with the google tile layer when we enable or disable the OL3 tile layer
- * @param {olgm.herald.TileSource.LayerCache} cacheItem
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.TileSource.prototype.handleVisibleChange_ = function(
@@ -107221,17 +107301,16 @@ goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * The VectorFeature Herald is responsible of sychronizing the features from
  * an ol3 vector source. The existing features in addition of those that are
  * added and removed are all managed. Each existing or added feature is bound
  * to a `olgm.herald.Feature` object. It gets unbound when removed.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
- * @param {!ol.source.Vector} source
- * @param {!google.maps.Data} data
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
+ * @param {!ol.source.Vector} source vector source
+ * @param {!google.maps.Data} data google maps data object
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -107294,7 +107373,7 @@ olgm.herald.VectorFeature.prototype.deactivate = function() {
 
 
 /**
- * @param {ol.source.VectorEvent} event
+ * @param {ol.source.VectorEvent} event addFeature event
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
@@ -107305,7 +107384,7 @@ olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
 
 
 /**
- * @param {ol.source.VectorEvent} event
+ * @param {ol.source.VectorEvent} event removeFeature event
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
@@ -107316,7 +107395,7 @@ olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
 
 
 /**
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature feature to watch
  * @private
  */
 olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
@@ -107343,7 +107422,7 @@ olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
 
 
 /**
- * @param {ol.Feature} feature
+ * @param {ol.Feature} feature feature to unwatch
  * @private
  */
 olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {
@@ -107373,11 +107452,10 @@ goog.require('olgm.herald.Source');
 goog.require('olgm.herald.VectorFeature');
 
 
-
 /**
  * Listen to a Vector layer
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Source}
  */
@@ -107400,7 +107478,7 @@ goog.inherits(olgm.herald.VectorSource, olgm.herald.Source);
 
 
 /**
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @override
  */
 olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
@@ -107452,7 +107530,7 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
 
 /**
  * Unwatch the WMS tile layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
@@ -107493,7 +107571,7 @@ olgm.herald.VectorSource.prototype.activate = function() {
 
 /**
  * Activates an image WMS layer cache item.
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to activate
  * @private
  */
 olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
@@ -107519,7 +107597,8 @@ olgm.herald.VectorSource.prototype.deactivate = function() {
 
 /**
  * Deactivates a Tile WMS layer cache item.
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to
+ * deactivate
  * @private
  */
 olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
@@ -107531,7 +107610,8 @@ olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
 
 /**
  * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem
+ * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
  * @private
  */
 olgm.herald.VectorSource.prototype.handleVisibleChange_ = function(
@@ -110610,7 +110690,6 @@ goog.require('olgm');
 goog.require('olgm.herald.Herald');
 
 
-
 /**
  * The View Herald is responsible of synchronizing the view (center/zoom)
  * of boths maps together. The ol3 map view is the master here, i.e. changes
@@ -110618,8 +110697,8 @@ goog.require('olgm.herald.Herald');
  *
  * When the browser window gets resized, the gmap map is also updated.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -110733,7 +110812,6 @@ goog.provide('olgm.layer.Google');
 goog.require('ol.layer.Group');
 
 
-
 /**
  * An ol3 layer object serving the purpose of being added to the ol3 map
  * as dummy layer. The `mapTypeId` defines which Google Maps map type the
@@ -110768,7 +110846,7 @@ goog.inherits(olgm.layer.Google, ol.layer.Group);
 
 
 /**
- * @return {google.maps.MapTypeId.<(number|string)>|string}
+ * @return {google.maps.MapTypeId.<(number|string)>|string} map type id
  * @api
  */
 olgm.layer.Google.prototype.getMapTypeId = function() {
@@ -110777,7 +110855,7 @@ olgm.layer.Google.prototype.getMapTypeId = function() {
 
 
 /**
- * @return {?Array.<google.maps.MapTypeStyle>}
+ * @return {?Array.<google.maps.MapTypeStyle>} map styles
  */
 olgm.layer.Google.prototype.getStyles = function() {
   return this.styles_;
@@ -110793,7 +110871,6 @@ goog.require('olgm.herald.TileSource');
 goog.require('olgm.herald.VectorSource');
 goog.require('olgm.herald.View');
 goog.require('olgm.layer.Google');
-
 
 
 /**
@@ -110826,9 +110903,9 @@ goog.require('olgm.layer.Google');
  *     fully transparent, making the interactions still possible over it
  *     while being invisible.
  *
- * @param {!ol.Map} ol3map
- * @param {!google.maps.Map} gmap
- * @param {boolean} watchVector
+ * @param {!ol.Map} ol3map openlayers map
+ * @param {!google.maps.Map} gmap google maps map
+ * @param {boolean} watchVector whether we should watch vector layers or not
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -110969,7 +111046,7 @@ olgm.herald.Layers.prototype.deactivate = function() {
 
 
 /**
- * @return {boolean}
+ * @return {boolean} whether google maps is active or not
  */
 olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
   return this.googleMapsIsActive_;
@@ -110978,7 +111055,7 @@ olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
 
 /**
  * Set the googleMapsIsActive value and spread the change to the heralds
- * @param {boolean} active
+ * @param {boolean} active value to update the google maps active flag with
  * @private
  */
 olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
@@ -111015,7 +111092,7 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
 
 /**
  * Watch the layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
  * @private
  */
 olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
@@ -111036,7 +111113,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
 
 /**
  * Watch the google layer
- * @param {olgm.layer.Google} layer
+ * @param {olgm.layer.Google} layer google layer to watch
  * @private
  */
 olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
@@ -111053,7 +111130,7 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
 
 /**
  * Unwatch the layer
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
  * @private
  */
 olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
@@ -111062,7 +111139,6 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
     this.vectorSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
-    var source = layer.getSource();
     this.tileSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Image) {
     var source = layer.getSource();
@@ -111075,7 +111151,7 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
 
 /**
  * Unwatch the google layer
- * @param {olgm.layer.Google} layer
+ * @param {olgm.layer.Google} layer google layer to unwatch
  * @private
  */
 olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
@@ -111260,7 +111336,6 @@ goog.require('olgm.Abstract');
 goog.require('olgm.herald.Layers');
 
 
-
 /**
  * The main component of this library. It binds an existing OpenLayers map to
  * a Google Maps map it creates through the use of `herald` objects. Each
@@ -111376,7 +111451,7 @@ olgm.OLGoogleMaps.prototype.deactivate = function() {
 
 
 /**
- * @return {boolean}
+ * @return {boolean} whether or not google maps is active
  * @api
  */
 olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
@@ -111385,7 +111460,7 @@ olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
 
 
 /**
- * @return {google.maps.Map}
+ * @return {google.maps.Map} the google maps map
  * @api
  */
 olgm.OLGoogleMaps.prototype.getGoogleMapsMap = function() {
