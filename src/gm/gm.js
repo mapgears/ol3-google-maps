@@ -185,9 +185,40 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
     var useCanvas = mapIconOptions.useCanvas !== undefined ?
         mapIconOptions.useCanvas : false;
 
-    if (image instanceof ol.style.Circle) {
+    if (image instanceof ol.style.Circle ||
+        image instanceof ol.style.RegularShape) {
       // --- ol.style.Circle ---
-      gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
+      if (image instanceof ol.style.Circle) {
+        gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
+      } else if (image instanceof ol.style.RegularShape) {
+        // Google Maps support SVG Paths. We'll build one manually.
+        var path = 'M ';
+
+        // Get a few variables from the image style;
+        var nbPoints = image.getPoints();
+        var outerRadius = image.getRadius();
+        var innerRadius = image.getRadius2() !== undefined ?
+            image.getRadius2() : image.getRadius();
+        var size = 0.1;
+        var rotation = image.getRotation() + image.getAngle();
+
+        if (innerRadius == 0) {
+          nbPoints = nbPoints / 2;
+        }
+
+        for (var i = 0; i < nbPoints; i++) {
+          var radius = i % 2 == 0 ? outerRadius : innerRadius;
+          var angle = (i * 2 * Math.PI / nbPoints) - (Math.PI / 2) + rotation;
+
+          var x = size * radius * Math.cos(angle);
+          var y = size * radius * Math.sin(angle);
+          path += x + ',' + y + ' ';
+        }
+
+        // Close the path
+        path += 'Z';
+        gmSymbol['path'] = path;
+      }
 
       var imageStroke = image.getStroke();
       if (imageStroke) {
