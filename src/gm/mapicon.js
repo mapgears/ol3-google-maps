@@ -7,7 +7,7 @@ goog.require('olgm.gm.MapElement');
  * Creates a new map icon
  * @constructor
  * @extends {olgm.gm.MapElement}
- * @param {olx.style.IconOptions} imageStyle ol3 style properties
+ * @param {ol.style.Icon} imageStyle ol3 style properties
  * @param {Object.<string, *>=} opt_options Optional properties to set.
  * @api
  */
@@ -18,7 +18,7 @@ olgm.gm.MapIcon = function(imageStyle, opt_options) {
    * This object contains the ol3 style properties for the icon. We keep
    * it as an object because its properties can change, for example the size
    * is only defined after the image is done loading.
-   * @type {olx.style.IconOptions}
+   * @type {ol.style.Icon}
    * @private
    */
   this.imageStyle_ = imageStyle;
@@ -58,7 +58,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
     return;
   }
 
-  var image = this.imageStyle_.getImage();
+  var image = this.imageStyle_.getImage(1);
   if (!image) {
     return;
   }

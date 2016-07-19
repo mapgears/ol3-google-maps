@@ -105,7 +105,7 @@ olgm.herald.Feature.prototype.activate = function() {
     var image = style.getImage();
     var useCanvas = this.mapIconOptions_.useCanvas;
     if (image && image instanceof ol.style.Icon && useCanvas) {
-      this.marker_ = olgm.gm.createMarker(image, latLng, index);
+      this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
       this.marker_.setMap(this.gmap);
     }
 

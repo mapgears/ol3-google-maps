@@ -352,13 +352,21 @@ olgm.gm.createLabel = function(textStyle, latLng, index) {
   return new olgm.gm.MapLabel(labelOptions);
 };
 
-olgm.gm.createMarker = function(imageStyle, latLng, index) {
 
-  var markerOptions = {
+/**
+ * Create a mapIcon object from an image style and Lat/Lng location
+ * @param {ol.style.Icon} iconStyle style for the icon
+ * @param {google.maps.LatLng} latLng position of the label
+ * @param {number} index index for the label
+ * @return {olgm.gm.MapIcon} map label
+ */
+olgm.gm.createMapIcon = function(iconStyle, latLng, index) {
+
+  var iconOptions = {
     align: 'center',
     position: latLng,
     zIndex: index * 2 + 1
   };
 
-  return new olgm.gm.MapIcon(imageStyle, markerOptions);
+  return new olgm.gm.MapIcon(iconStyle, iconOptions);
 };
