@@ -85,6 +85,9 @@ olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
     var cacheItem = this.cache_[index];
     olgm.unlistenAllByKey(cacheItem.listenerKeys);
 
+    // Clean previous overlay
+    this.resetImageOverlay_(cacheItem);
+
     // opacity
     layer.setOpacity(cacheItem.opacity);
 
@@ -203,6 +206,23 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
 
 
 /**
+ * Clean-up the image overlay
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem
+ * @private
+ */
+olgm.herald.ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
+  // Clean previous overlay
+  if (cacheItem.imageOverlay) {
+    // Remove the overlay from the map
+    cacheItem.imageOverlay.setMap(null);
+
+    // Destroy the overlay
+    cacheItem.imageOverlay = null;
+  }
+};
+
+
+/**
  * Refresh the custom image overlay on google maps
  * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
  * layer to update
@@ -248,13 +268,7 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
   overlay.setMap(this.gmap);
 
   // Clean previous overlay
-  if (cacheItem.imageOverlay) {
-    // Remove the overlay from the map
-    cacheItem.imageOverlay.setMap(null);
-
-    // Destroy the overlay
-    cacheItem.imageOverlay = null;
-  }
+  this.resetImageOverlay_(cacheItem);
 
   // Save new overlay
   cacheItem.imageOverlay = overlay;
