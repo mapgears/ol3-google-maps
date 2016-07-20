@@ -178,6 +178,13 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var transparent = params['TRANSPARENT'] ? params['TRANSPARENT'] : 'TRUE';
   var tiled = params['TILED'] ? params['TILED'] : 'FALSE';
 
+  // Check whether or not we're using WMS 1.3.0
+  var versionNumbers = version.split('.');
+  var wms13 = (
+      parseInt(versionNumbers[0], 10) >= 1 &&
+      parseInt(versionNumbers[1], 10) >= 3);
+  var referenceSystem = wms13 ? 'CRS' : 'SRS';
+
   url += '?SERVICE=WMS';
   url += '&VERSION=' + version;
   url += '&REQUEST=GetMap';
@@ -185,7 +192,7 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   url += '&STYLES=' + styles;
   url += '&FORMAT=' + format;
   url += '&TRANSPARENT=' + transparent;
-  url += '&SRS=EPSG:3857';
+  url += '&' + referenceSystem + '=EPSG:3857';
   url += '&BBOX=' + bbox;
   url += '&WIDTH=' + size[0];
   url += '&HEIGHT=' + size[1];
