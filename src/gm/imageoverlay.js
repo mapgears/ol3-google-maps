@@ -15,25 +15,25 @@ olgm.gm.ImageOverlay = function(src, size, topLeft) {
    * @type {string}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.src_ = src;
+  this.src_ = src;
 
   /**
    * @type {Array.<number>}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.size_ = size;
+  this.size_ = size;
 
   /**
    * @type {google.maps.LatLng}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.topLeft_ = topLeft;
+  this.topLeft_ = topLeft;
 
   /**
    * @type {Element}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.div_ = null;
+  this.div_ = null;
 };
 if (window.google && window.google.maps) {
   goog.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);

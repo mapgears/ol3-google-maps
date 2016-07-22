@@ -10,6 +10,16 @@ var osmLayer = new ol.layer.Tile({
 var tileWMSLayer  =  new ol.layer.Tile({
   extent: [-13884991, 2870341, -7455066, 6338219],
   source: new ol.source.TileWMS({
+    url: 'http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en',
+    params: {'LAYERS': 'limits', 'TILED': true},
+    serverType: 'geoserver'
+  }),
+  visible: true
+});
+
+var tileWMSLayer2  =  new ol.layer.Tile({
+  extent: [-13884991, 2870341, -7455066, 6338219],
+  source: new ol.source.TileWMS({
     url: 'http://demo.boundlessgeo.com/geoserver/wms',
     params: {'LAYERS': 'topp:states', 'TILED': true},
     serverType: 'geoserver'
@@ -18,6 +28,16 @@ var tileWMSLayer  =  new ol.layer.Tile({
 });
 
 var imageWMSLayer = new ol.layer.Image({
+  extent: [-13884991, 2870341, -7455066, 6338219],
+  source: new ol.source.ImageWMS({
+    url: 'http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en',
+    params: {'LAYERS': 'limits', 'TILED': true},
+    serverType: 'geoserver'
+  }),
+  visible: false
+})
+
+var imageWMSLayer2 = new ol.layer.Image({
   extent: [-13884991, 2870341, -7455066, 6338219],
   source: new ol.source.ImageWMS({
     url: 'http://demo.boundlessgeo.com/geoserver/wms',
@@ -34,7 +54,9 @@ var map = new ol.Map({
     googleLayer,
     osmLayer,
     tileWMSLayer,
-    imageWMSLayer
+    tileWMSLayer2,
+    imageWMSLayer,
+    imageWMSLayer2
   ],
   target: 'map',
   view: new ol.View({
@@ -53,7 +75,9 @@ function toggleOSM() {
 
 function toggleWMS() {
   tileWMSLayer.setVisible(!tileWMSLayer.getVisible());
+  tileWMSLayer2.setVisible(!tileWMSLayer2.getVisible());
   imageWMSLayer.setVisible(!imageWMSLayer.getVisible());
+  imageWMSLayer2.setVisible(!imageWMSLayer2.getVisible());
   var spanText = tileWMSLayer.getVisible() ? 'tiled' : 'image';
   document.getElementById('currentMode').innerHTML = spanText;
 }
