@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.7.2-5-gbbcf546
+// Version: v0.8.0
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -105703,11 +105703,161 @@ olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
   }
 };
 
+goog.provide('olgm.gm.MapElement');
+
+/**
+ * This class is a parent for all elements that are drawn manually onto Google
+ * Maps. This means drawing elements on a canvas attached to the Google Maps
+ * map instead of drawing features on map tiles using their API.
+ * This needs to be done for elements that are supported in OpenLayers 3 but
+ * not in Google Maps, such as text labels on markers.
+ *
+ * Some of this code was borrowed from the MapLabel project, whose source code
+ * can be found here: https://github.com/googlemaps/js-map-label
+ */
+
+/**
+ * Creates a new Map Element, to be drawn as an OverlayView
+ * @constructor
+ * @extends {google.maps.OverlayView}
+ * @api
+ */
+olgm.gm.MapElement = function() {
+
+};
+if (window.google && window.google.maps) {
+  goog.inherits(olgm.gm.MapElement, google.maps.OverlayView);
+}
+
+
+/**
+ * @type {boolean}
+ * @private
+ */
+olgm.gm.MapElement.prototype.drawn_ = false;
+
+
+/**
+ * @type {number}
+ * @private
+ */
+olgm.gm.MapElement.prototype.height_ = 0;
+
+
+/**
+ * @type {number}
+ * @private
+ */
+olgm.gm.MapElement.prototype.width_ = 0;
+
+
+/**
+ * Draw features to the map (call redraw) and setup canvas if it's the first
+ * time we draw
+ * @api
+ */
+olgm.gm.MapElement.prototype.draw = function() {
+  if (this.drawn_) {
+    this.redraw_();
+    return;
+  }
+
+  var canvas = this.canvas_;
+  if (!canvas) {
+    // onAdd has not been called yet.
+    return;
+  }
+
+  var ctx = canvas.getContext('2d');
+  var height = ctx.canvas.height;
+  var width = ctx.canvas.width;
+  this.width_ = width;
+  this.height_ = height;
+
+  if (!this.redraw_()) {
+    return;
+  }
+
+  this.drawn_ = true;
+};
+
+
+/**
+ * Redraw features to the map
+ * @return {boolean} whether or not the function ran successfully
+ * @private
+ */
+olgm.gm.MapElement.prototype.redraw_ = function() {
+  var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
+  if (!latLng) {
+    return false;
+  }
+
+  var projection = this.getProjection();
+  if (!projection) {
+    // The map projection is not ready yet so do nothing
+    return false;
+  }
+
+  var pos = projection.fromLatLngToDivPixel(latLng);
+  var height = this.height_;
+  var width = this.width_;
+
+  var offsetX = this.get('offsetX') || 0;
+  var offsetY = this.get('offsetY') || 0;
+
+  var style = this.canvas_.style;
+  style['top'] = (pos.y - (height / 2) + offsetY) + 'px';
+  style['left'] = (pos.x - (width / 2) + offsetX) + 'px';
+
+  style['visibility'] = this.getVisible_();
+
+  return true;
+};
+
+
+/**
+ * Get the visibility of the element.
+ * @private
+ * @return {string} blank string if visible, 'hidden' if invisible.
+ */
+olgm.gm.MapElement.prototype.getVisible_ = function() {
+  var minZoom = /** @type {number} */ (this.get('minZoom'));
+  var maxZoom = /** @type {number} */ (this.get('maxZoom'));
+
+  if (minZoom === undefined && maxZoom === undefined) {
+    return '';
+  }
+
+  var map = this.getMap();
+  if (!map) {
+    return '';
+  }
+
+  var mapZoom = map.getZoom();
+  if (mapZoom < minZoom || mapZoom > maxZoom) {
+    return 'hidden';
+  }
+  return '';
+};
+
+
+/**
+ * Delete canvas when removing the element
+ * @api
+ */
+olgm.gm.MapElement.prototype.onRemove = function() {
+  var canvas = this.canvas_;
+  if (canvas && canvas.parentNode) {
+    canvas.parentNode.removeChild(canvas);
+  }
+};
+
 /**
  * The following file was borrowed from the MapLabel project, which original
  * source code is available at:
  *
- *     http://google-maps-utility-library-v3.googlecode.com/svn/trunk/maplabel
+ *     https://github.com/googlemaps/js-map-label
  *
  * Here's a copy of its license:
  *
@@ -105738,15 +105888,19 @@ olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
 
 goog.provide('olgm.gm.MapLabel');
 
+goog.require('olgm.gm.MapElement');
+
 
 /**
  * Creates a new Map Label
  * @constructor
- * @extends {google.maps.OverlayView}
+ * @extends {olgm.gm.MapElement}
  * @param {Object.<string, *>=} opt_options Optional properties to set.
  * @api
  */
 olgm.gm.MapLabel = function(opt_options) {
+  goog.base(this);
+
   this.set('font', 'normal 10px sans-serif');
   this.set('textAlign', 'center');
   this.set('textBaseline', 'middle');
@@ -105755,30 +105909,7 @@ olgm.gm.MapLabel = function(opt_options) {
 
   this.setValues(opt_options);
 };
-if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.MapLabel, google.maps.OverlayView);
-}
-
-
-/**
- * @type {boolean}
- * @private
- */
-olgm.gm.MapLabel.prototype.drawn_ = false;
-
-
-/**
- * @type {number}
- * @private
- */
-olgm.gm.MapLabel.prototype.height_ = 0;
-
-
-/**
- * @type {number}
- * @private
- */
-olgm.gm.MapLabel.prototype.width_ = 0;
+goog.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
 
 
 /**
@@ -105873,105 +106004,113 @@ olgm.gm.MapLabel.prototype.onAdd = function() {
   }
 };
 
+goog.provide('olgm.gm.MapIcon');
+
+goog.require('olgm.gm.MapElement');
+
 
 /**
- * Note: mark as `@api` to make the minimized version include this method.
+ * Creates a new map icon
+ * @constructor
+ * @extends {olgm.gm.MapElement}
+ * @param {ol.style.Icon} imageStyle ol3 style properties
+ * @param {Object.<string, *>=} opt_options Optional properties to set.
  * @api
  */
-olgm.gm.MapLabel.prototype.draw = function() {
+olgm.gm.MapIcon = function(imageStyle, opt_options) {
+  goog.base(this);
 
-  if (this.drawn_) {
-    this.redraw_();
-    return;
+  /**
+   * This object contains the ol3 style properties for the icon. We keep
+   * it as an object because its properties can change, for example the size
+   * is only defined after the image is done loading.
+   * @type {ol.style.Icon}
+   * @private
+   */
+  this.imageStyle_ = imageStyle;
+
+  this.setValues(opt_options);
+};
+goog.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
+
+
+/**
+ * Listen to property changes and react accordingly
+ * @param {string} prop property
+ * @api
+ */
+olgm.gm.MapIcon.prototype.changed = function(prop) {
+  switch (prop) {
+    case 'maxZoom':
+    case 'minZoom':
+    case 'offsetX':
+    case 'offsetY':
+    case 'position':
+      this.draw();
+      break;
+    default:
+      break;
   }
+};
 
+
+/**
+ * Draws the icon to the canvas 2d context.
+ * @private
+ */
+olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   var canvas = this.canvas_;
   if (!canvas) {
-    // onAdd has not been called yet.
     return;
   }
+
+  var image = this.imageStyle_.getImage(1);
+  if (!image) {
+    return;
+  }
+
+  var style = canvas.style;
+
+  style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
   var ctx = canvas.getContext('2d');
-  var height = ctx.canvas.height;
-  var width = ctx.canvas.width;
-  this.width_ = width;
-  this.height_ = height;
+  ctx.clearRect(0,0,canvas.width, canvas.height);
 
-  if (!this.redraw_()) {
-    return;
-  }
+  var anchor = this.imageStyle_.getAnchor();
+  var scale = this.imageStyle_.getScale() || 1;
+  var rotation = this.imageStyle_.getRotation() || 0;
+  var opacity = this.imageStyle_.getOpacity() || 1;
 
-  this.drawn_ = true;
+  var offsetX = anchor[0] * scale;
+  var offsetY = anchor[1] * scale;
+
+  var x = canvas.width / 2 - offsetX;
+  var y = canvas.height / 2 - offsetY;
+
+  ctx.translate(x + offsetX, y + offsetY);
+  ctx.rotate(rotation);
+  ctx.translate(-x - offsetX, -y - offsetY);
+  ctx.globalAlpha = opacity;
+
+  ctx.drawImage(image, x, y,
+    image.width * scale, image.height * scale);
 };
 
 
 /**
- * Note: mark as `@api` to make the minimized version include this method.
- * @return {boolean} whether or not the function ran successfully
- * @private
- */
-olgm.gm.MapLabel.prototype.redraw_ = function() {
-  var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
-  if (!latLng) {
-    return false;
-  }
-
-  var projection = this.getProjection();
-  if (!projection) {
-    // The map projection is not ready yet so do nothing
-    return false;
-  }
-
-  var pos = projection.fromLatLngToDivPixel(latLng);
-  var height = this.height_;
-  var width = this.width_;
-
-  var offsetX = this.get('offsetX') || 0;
-  var offsetY = this.get('offsetY') || 0;
-  var style = this.canvas_.style;
-  style['top'] = (pos.y - (height / 2) + offsetY) + 'px';
-  style['left'] = (pos.x - (width / 2) + offsetX) + 'px';
-
-  style['visibility'] = this.getVisible_();
-
-  return true;
-};
-
-
-/**
- * Get the visibility of the label.
- * @private
- * @return {string} blank string if visible, 'hidden' if invisible.
- */
-olgm.gm.MapLabel.prototype.getVisible_ = function() {
-  var minZoom = /** @type {number} */ (this.get('minZoom'));
-  var maxZoom = /** @type {number} */ (this.get('maxZoom'));
-
-  if (minZoom === undefined && maxZoom === undefined) {
-    return '';
-  }
-
-  var map = this.getMap();
-  if (!map) {
-    return '';
-  }
-
-  var mapZoom = map.getZoom();
-  if (mapZoom < minZoom || mapZoom > maxZoom) {
-    return 'hidden';
-  }
-  return '';
-};
-
-
-/**
- * Note: mark as `@api` to make the minimized version include this method.
+ * Manage feature being added to the map
  * @api
  */
-olgm.gm.MapLabel.prototype.onRemove = function() {
-  var canvas = this.canvas_;
-  if (canvas && canvas.parentNode) {
-    canvas.parentNode.removeChild(canvas);
+olgm.gm.MapIcon.prototype.onAdd = function() {
+  var canvas = this.canvas_ = document.createElement('canvas');
+  var style = canvas.style;
+  style.position = 'absolute';
+
+  this.drawCanvas_();
+
+  var panes = this.getPanes();
+  if (panes) {
+    panes.markerLayer.appendChild(canvas);
   }
 };
 
@@ -105980,6 +106119,7 @@ goog.provide('olgm.gm');
 goog.require('goog.asserts');
 goog.require('olgm');
 goog.require('olgm.gm.MapLabel');
+goog.require('olgm.gm.MapIcon');
 
 
 // === Data ===
@@ -106094,14 +106234,15 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
  * Create a Google Maps data style options from an OpenLayers object.
  * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
  * object style object
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {?google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyle = function(object, opt_index) {
+olgm.gm.createStyle = function(object, mapIconOptions, opt_index) {
   var gmStyle = null;
   var style = olgm.getStyleOf(object);
   if (style) {
-    gmStyle = olgm.gm.createStyleInternal(style, opt_index);
+    gmStyle = olgm.gm.createStyleInternal(style, mapIconOptions, opt_index);
   }
   return gmStyle;
 };
@@ -106110,10 +106251,11 @@ olgm.gm.createStyle = function(object, opt_index) {
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
  * @param {ol.style.Style} style style object
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyleInternal = function(style, opt_index) {
+olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
 
   var gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
 
@@ -106153,8 +106295,11 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
 
   var image = style.getImage();
   if (image) {
+
     var gmIcon = {};
     var gmSymbol = {};
+    var useCanvas = mapIconOptions.useCanvas !== undefined ?
+        mapIconOptions.useCanvas : false;
 
     if (image instanceof ol.style.Circle ||
         image instanceof ol.style.RegularShape) {
@@ -106222,7 +106367,7 @@ olgm.gm.createStyleInternal = function(style, opt_index) {
       if (imageRadius) {
         gmSymbol['scale'] = imageRadius;
       }
-    } else if (image instanceof ol.style.Icon) {
+    } else if (image instanceof ol.style.Icon && !useCanvas) {
       // --- ol.style.Icon ---
 
       var imageSrc = image.getSrc();
@@ -106355,6 +106500,25 @@ olgm.gm.createLabel = function(textStyle, latLng, index) {
   return new olgm.gm.MapLabel(labelOptions);
 };
 
+
+/**
+ * Create a mapIcon object from an image style and Lat/Lng location
+ * @param {ol.style.Icon} iconStyle style for the icon
+ * @param {google.maps.LatLng} latLng position of the label
+ * @param {number} index index for the label
+ * @return {olgm.gm.MapIcon} map label
+ */
+olgm.gm.createMapIcon = function(iconStyle, latLng, index) {
+
+  var iconOptions = {
+    align: 'center',
+    position: latLng,
+    zIndex: index * 2 + 1
+  };
+
+  return new olgm.gm.MapIcon(iconStyle, iconOptions);
+};
+
 goog.provide('olgm.gm.ImageOverlay');
 
 
@@ -106372,25 +106536,25 @@ olgm.gm.ImageOverlay = function(src, size, topLeft) {
    * @type {string}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.src_ = src;
+  this.src_ = src;
 
   /**
    * @type {Array.<number>}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.size_ = size;
+  this.size_ = size;
 
   /**
    * @type {google.maps.LatLng}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.topLeft_ = topLeft;
+  this.topLeft_ = topLeft;
 
   /**
    * @type {Element}
    * @private
    */
-  olgm.gm.ImageOverlay.prototype.div_ = null;
+  this.div_ = null;
 };
 if (window.google && window.google.maps) {
   goog.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
@@ -106533,31 +106697,35 @@ goog.require('olgm.herald.Herald');
  *
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
- * @param {ol.Feature} feature feature to synchronise
- * @param {!google.maps.Data} data google maps data
- * @param {number} index feature index
+ * @param {olgmx.herald.FeatureOptions} options options
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Feature = function(ol3map, gmap, feature, data, index) {
+olgm.herald.Feature = function(ol3map, gmap, options) {
 
   /**
    * @type {ol.Feature}
    * @private
    */
-  this.feature_ = feature;
+  this.feature_ = options.feature;
 
   /**
    * @type {!google.maps.Data}
    * @private
    */
-  this.data_ = data;
+  this.data_ = options.data;
 
   /**
    * @type {number}
    * @private
    */
-  this.index_ = index;
+  this.index_ = options.index;
+
+  /**
+   * @type {olgmx.gm.MapIconOptions}
+   * @private
+   */
+  this.mapIconOptions_ = options.mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 
@@ -106578,6 +106746,15 @@ olgm.herald.Feature.prototype.gmapFeature_ = null;
  */
 olgm.herald.Feature.prototype.label_ = null;
 
+/**
+ * The marker object contains a marker to draw on a canvas instead of using
+ * the Google Maps API. If useCanvas_ is set to false, this variable won't
+ * be used.
+ * @type {olgm.gm.MapIcon}
+ * @private
+ */
+olgm.herald.Feature.prototype.marker_ = null;
+
 
 /**
  * @inheritDoc
@@ -106593,18 +106770,31 @@ olgm.herald.Feature.prototype.activate = function() {
   this.data_.add(this.gmapFeature_);
 
   // override style if a style is defined at the feature level
-  var gmStyle = olgm.gm.createStyle(this.feature_, this.index_);
+  var gmStyle = olgm.gm.createStyle(
+      this.feature_, this.mapIconOptions_, this.index_);
   if (gmStyle) {
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
   }
 
   // if the feature has text style, add a map label to gmap
+  var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
   var style = olgm.getStyleOf(this.feature_);
+
   if (style) {
+    var zIndex = style.getZIndex();
+    var index = zIndex !== undefined ? zIndex : this.index_;
+
+    var image = style.getImage();
+    var useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
+        this.mapIconOptions_.useCanvas : false;
+    if (image && image instanceof ol.style.Icon && useCanvas) {
+      this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
+      this.marker_.setMap(this.gmap);
+    }
+
     var text = style.getText();
     if (text) {
-      var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
-      this.label_ = olgm.gm.createLabel(text, latLng, this.index_);
+      this.label_ = olgm.gm.createLabel(text, latLng, index);
       this.label_.setMap(this.gmap);
     }
   }
@@ -106631,6 +106821,12 @@ olgm.herald.Feature.prototype.deactivate = function() {
   this.data_.remove(this.gmapFeature_);
   this.gmapFeature_ = null;
 
+  // remove feature
+  if (this.marker_) {
+    this.marker_.setMap(null);
+    this.marker_ = null;
+  }
+
   // remove label
   if (this.label_) {
     this.label_.setMap(null);
@@ -106649,9 +106845,16 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
   this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
 
+  var latLng;
+
   if (this.label_) {
-    var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
     this.label_.set('position', latLng);
+  }
+
+  if (this.marker_) {
+    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    this.marker_.set('position', latLng);
   }
 };
 
@@ -106815,6 +107018,9 @@ olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
     var cacheItem = this.cache_[index];
     olgm.unlistenAllByKey(cacheItem.listenerKeys);
 
+    // Clean previous overlay
+    this.resetImageOverlay_(cacheItem);
+
     // opacity
     layer.setOpacity(cacheItem.opacity);
 
@@ -106908,6 +107114,13 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var transparent = params['TRANSPARENT'] ? params['TRANSPARENT'] : 'TRUE';
   var tiled = params['TILED'] ? params['TILED'] : 'FALSE';
 
+  // Check whether or not we're using WMS 1.3.0
+  var versionNumbers = version.split('.');
+  var wms13 = (
+      parseInt(versionNumbers[0], 10) >= 1 &&
+      parseInt(versionNumbers[1], 10) >= 3);
+  var referenceSystem = wms13 ? 'CRS' : 'SRS';
+
   url += '?SERVICE=WMS';
   url += '&VERSION=' + version;
   url += '&REQUEST=GetMap';
@@ -106915,13 +107128,30 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   url += '&STYLES=' + styles;
   url += '&FORMAT=' + format;
   url += '&TRANSPARENT=' + transparent;
-  url += '&SRS=EPSG:3857';
+  url += '&' + referenceSystem + '=EPSG:3857';
   url += '&BBOX=' + bbox;
   url += '&WIDTH=' + size[0];
   url += '&HEIGHT=' + size[1];
   url += '&TILED=' + tiled;
 
   return url;
+};
+
+
+/**
+ * Clean-up the image overlay
+ * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem
+ * @private
+ */
+olgm.herald.ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
+  // Clean previous overlay
+  if (cacheItem.imageOverlay) {
+    // Remove the overlay from the map
+    cacheItem.imageOverlay.setMap(null);
+
+    // Destroy the overlay
+    cacheItem.imageOverlay = null;
+  }
 };
 
 
@@ -106971,13 +107201,7 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
   overlay.setMap(this.gmap);
 
   // Clean previous overlay
-  if (cacheItem.imageOverlay) {
-    // Remove the overlay from the map
-    cacheItem.imageOverlay.setMap(null);
-
-    // Destroy the overlay
-    cacheItem.imageOverlay = null;
-  }
+  this.resetImageOverlay_(cacheItem);
 
   // Save new overlay
   cacheItem.imageOverlay = overlay;
@@ -107311,10 +107535,12 @@ goog.require('olgm.herald.Herald');
  * @param {!google.maps.Map} gmap google maps map
  * @param {!ol.source.Vector} source vector source
  * @param {!google.maps.Data} data google maps data object
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.VectorFeature = function(ol3map, gmap, source, data) {
+olgm.herald.VectorFeature = function(
+    ol3map, gmap, source, data, mapIconOptions) {
 
   /**
    * @type {Array.<ol.Feature>}
@@ -107339,6 +107565,12 @@ olgm.herald.VectorFeature = function(ol3map, gmap, source, data) {
    * @private
    */
   this.source_ = source;
+
+  /**
+   * @type {olgmx.gm.MapIconOptions}
+   * @private
+   */
+  this.mapIconOptions_ = mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 };
@@ -107410,7 +107642,13 @@ olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
   var index = this.features_.indexOf(feature);
 
   // create and activate feature herald
-  var herald = new olgm.herald.Feature(ol3map, gmap, feature, data, index);
+  var options = {
+    feature: feature,
+    data: data,
+    index: index,
+    mapIconOptions: this.mapIconOptions_
+  };
+  var herald = new olgm.herald.Feature(ol3map, gmap, options);
   herald.activate();
 
   // push to cache
@@ -107456,10 +107694,11 @@ goog.require('olgm.herald.VectorFeature');
  * Listen to a Vector layer
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @constructor
  * @extends {olgm.herald.Source}
  */
-olgm.herald.VectorSource = function(ol3map, gmap) {
+olgm.herald.VectorSource = function(ol3map, gmap, mapIconOptions) {
   /**
   * @type {Array.<olgm.herald.VectorSource.LayerCache>}
   * @private
@@ -107471,6 +107710,12 @@ olgm.herald.VectorSource = function(ol3map, gmap) {
   * @private
   */
   this.layers_ = [];
+
+  /**
+   * @type {olgmx.gm.MapIconOptions}
+   * @private
+   */
+  this.mapIconOptions_ = mapIconOptions;
 
   goog.base(this, ol3map, gmap);
 };
@@ -107499,14 +107744,14 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
   });
 
   // Style
-  var gmStyle = olgm.gm.createStyle(vectorLayer);
+  var gmStyle = olgm.gm.createStyle(vectorLayer, this.mapIconOptions_);
   if (gmStyle) {
     data.setStyle(gmStyle);
   }
 
   // herald
   var herald = new olgm.herald.VectorFeature(
-      this.ol3map, this.gmap, source, data);
+      this.ol3map, this.gmap, source, data, this.mapIconOptions_);
 
   // opacity
   var opacity = vectorLayer.getOpacity();
@@ -110906,10 +111151,11 @@ goog.require('olgm.layer.Google');
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
  * @param {boolean} watchVector whether we should watch vector layers or not
+ * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Layers = function(ol3map, gmap, watchVector) {
+olgm.herald.Layers = function(ol3map, gmap, watchVector, mapIconOptions) {
 
   /**
    * @type {Array.<olgm.layer.Google>}
@@ -110939,7 +111185,8 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector) {
    * @type {olgm.herald.VectorSource}
    * @private
    */
-  this.vectorSourceHerald_ = new olgm.herald.VectorSource(ol3map, gmap);
+  this.vectorSourceHerald_ = new olgm.herald.VectorSource(
+      ol3map, gmap, mapIconOptions);
 
   /**
    * @type {olgm.herald.View}
@@ -111396,12 +111643,15 @@ olgm.OLGoogleMaps = function(options) {
   var watchVector = options.watchVector !== undefined ?
       options.watchVector : true;
 
+  var mapIconOptions = options.mapIconOptions !== undefined ?
+      options.mapIconOptions : {};
+
   /**
    * @type {olgm.herald.Layers}
    * @private
    */
   this.layersHerald_ = new olgm.herald.Layers(
-      this.ol3map, this.gmap, watchVector);
+      this.ol3map, this.gmap, watchVector, mapIconOptions);
   this.heralds_.push(this.layersHerald_);
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
@@ -111755,6 +112005,8 @@ goog.require('ol.webgl.Context');
 goog.require('ol.xml');
 goog.require('olgm.OLGoogleMaps');
 goog.require('olgm.gm.ImageOverlay');
+goog.require('olgm.gm.MapElement');
+goog.require('olgm.gm.MapIcon');
 goog.require('olgm.gm.MapLabel');
 goog.require('olgm.herald.Source');
 goog.require('olgm.herald.TileSource');
@@ -115775,6 +116027,34 @@ goog.exportProperty(
     olgm.gm.ImageOverlay.prototype.onRemove);
 
 goog.exportSymbol(
+    'olgm.gm.MapElement',
+    olgm.gm.MapElement);
+
+goog.exportProperty(
+    olgm.gm.MapElement.prototype,
+    'draw',
+    olgm.gm.MapElement.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.MapElement.prototype,
+    'onRemove',
+    olgm.gm.MapElement.prototype.onRemove);
+
+goog.exportSymbol(
+    'olgm.gm.MapIcon',
+    olgm.gm.MapIcon);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'changed',
+    olgm.gm.MapIcon.prototype.changed);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'onAdd',
+    olgm.gm.MapIcon.prototype.onAdd);
+
+goog.exportSymbol(
     'olgm.gm.MapLabel',
     olgm.gm.MapLabel);
 
@@ -115787,16 +116067,6 @@ goog.exportProperty(
     olgm.gm.MapLabel.prototype,
     'onAdd',
     olgm.gm.MapLabel.prototype.onAdd);
-
-goog.exportProperty(
-    olgm.gm.MapLabel.prototype,
-    'draw',
-    olgm.gm.MapLabel.prototype.draw);
-
-goog.exportProperty(
-    olgm.gm.MapLabel.prototype,
-    'onRemove',
-    olgm.gm.MapLabel.prototype.onRemove);
 
 goog.exportProperty(
     ol.CollectionEvent.prototype,
@@ -126462,3 +126732,23 @@ goog.exportProperty(
     olgm.herald.VectorSource.prototype,
     'setGoogleMapsActive',
     olgm.herald.VectorSource.prototype.setGoogleMapsActive);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'draw',
+    olgm.gm.MapIcon.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.MapIcon.prototype,
+    'onRemove',
+    olgm.gm.MapIcon.prototype.onRemove);
+
+goog.exportProperty(
+    olgm.gm.MapLabel.prototype,
+    'draw',
+    olgm.gm.MapLabel.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.MapLabel.prototype,
+    'onRemove',
+    olgm.gm.MapLabel.prototype.onRemove);
