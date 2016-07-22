@@ -96,8 +96,12 @@ Update the compiled examples and library, then commit the changes:
     git commit -m 'Update examples for v0.8.0'
 
 The link to the latest distribution also needs to be updated. The link to be
-changed is lovated in the `_layouts/default.html` file, in the downloads
-section. It should point to the package uploaded in the release's description.
+changed is located in the download section of the following files:
+
+ * `_layouts/default.html`
+ * `_layouts/example-list.html`
+
+It should point to the package uploaded in the release's description.
 
 Finally, commit and push the changes
 
