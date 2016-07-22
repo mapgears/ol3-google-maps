@@ -30,10 +30,12 @@ Commit the changelog:
 We track our current version in `package.json` for npm. Set the new version
 number in the `"version"` attribute, without the `v` prefix.
 
-Then, commit the change:
+Then, commit and push the changes:
 
     git add package.json
     git commit -m 'Update package version to 0.8.0'
+    git push origin
+    git push upstream
 
 This should be the last commit before the release.
 
@@ -44,8 +46,8 @@ We need to create a tag for the new version, and push it to our branch (and
 upstream):
 
     git tag -a v0.8.0 -m '0.8.0'
-    git push --tags master
-    git push --tags upstream
+    git push origin --tags
+    git push upstream --tags
 
 ### Create a distributable package ###
 
@@ -101,7 +103,8 @@ Finally, commit and push the changes
 
     git add _layouts
     git commit -m 'Update distribution link for v0.8.0'
-    git push
+    git push origin
+    git push upstream
 
 ### Announce the release ###
 
