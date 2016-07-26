@@ -49,6 +49,9 @@ olgm.herald.View.prototype.activate = function() {
   // listen to resolution change
   keys.push(view.on('change:resolution', this.setZoom, this));
 
+  // listen to rotation change
+  keys.push(view.on('change:rotation', this.setRotation, this));
+
   // listen to browser window resize
   this.googListenerKeys.push(goog.events.listen(
       window,
@@ -57,8 +60,12 @@ olgm.herald.View.prototype.activate = function() {
       false,
       this));
 
-  this.setCenter();
-  this.setZoom();
+  // Rotate and recenter the map after it's ready
+  google.maps.event.addListenerOnce(this.gmap, 'idle', goog.bind(function() {
+    this.setRotation();
+    this.setCenter();
+    this.setZoom();
+  }, this));
 };
 
 
@@ -81,6 +88,71 @@ olgm.herald.View.prototype.setCenter = function() {
     center = ol.proj.transform(center, projection, 'EPSG:4326');
     goog.asserts.assertArray(center);
     this.gmap.setCenter(new google.maps.LatLng(center[1], center[0]));
+  }
+};
+
+
+/**
+ * Rotate the gmap map like the ol3 map. The first time it is ran, the map
+ * will be resized to be a square.
+ */
+olgm.herald.View.prototype.setRotation = function() {
+  var view = this.ol3map.getView();
+  var rotation = view.getRotation();
+
+  var mapDiv = this.gmap.getDiv();
+  var tilesDiv = mapDiv.childNodes[0].childNodes[0];
+
+  // If googlemaps is fully loaded
+  if (tilesDiv) {
+
+    // Rotate the div containing the map tiles
+    var tilesDivStyle = tilesDiv.style;
+    tilesDivStyle.transform = 'rotate(' + rotation + 'rad)';
+
+    var width = this.ol3map.getSize()[0];
+    var height = this.ol3map.getSize()[1];
+
+    // Change the size of the rendering area to a square
+    if (width != height && rotation != 0) {
+      var sideSize = Math.max(width, height);
+      var mapDivStyle = mapDiv.style;
+      mapDivStyle.width = sideSize + 'px';
+      mapDivStyle.height = sideSize + 'px';
+
+      // Hide the overflow
+      this.ol3map.getTargetElement().style.overflow = 'hidden';
+
+      // Adjust the map's center to offset with the new size
+      var diffX = width - sideSize;
+      var diffY = height - sideSize;
+
+      tilesDivStyle.top = (diffY / 2) + 'px';
+      tilesDivStyle.left = (diffX / 2) + 'px';
+
+      // Trigger a resize event
+      google.maps.event.trigger(this.gmap, 'resize');
+
+      // Replace the map
+      this.setCenter();
+      this.setZoom();
+
+      // Move up the elements at the bottom of the map
+      var childNodes = mapDiv.childNodes[0].childNodes;
+      for (var i = 0; i < childNodes.length; i++) {
+        // Set the bottom to where the overflow starts being hidden
+        var style = childNodes[i].style;
+        if (style.bottom == '0px') {
+          style.bottom = Math.abs(diffY) + 'px';
+        }
+      }
+
+      // Set the ol3map's viewport size to px instead of 100%
+      var viewportStyle = this.ol3map.getViewport().style;
+      if (viewportStyle.height == '100%') {
+        viewportStyle.height = height + 'px';
+      }
+    }
   }
 };
 
