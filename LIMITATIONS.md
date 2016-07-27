@@ -69,7 +69,7 @@ rendered directly in Google Maps for a smooth effect while interacting the map:
  * `ol.layer.Vector`
  * `olgm.layer.Google`
  * `ol.layer.Image` with `ol.source.ImageWMS`
- * `ol.layer.Tile` with `ol.source.TileWMS`, `ol.source.WMTS` and 
+ * `ol.layer.Tile` with `ol.source.TileWMS`, `ol.source.WMTS` and
  `ol.source.XYZ`
 
 All the other layers currently stay in OpenLayers, on top of Google Maps.
@@ -81,12 +81,16 @@ Rotation
 --------
 
 OpenLayers 3 supports rotating the map in a 'free' way, i.e. the view of the
-map can be rotated in any direction, in any angle.  Google Maps also supports
-rotating the map, but not as freely.  For that reason, it is not recommended
-to allow your maps to be rotated at all when using this library.
+map can be rotated in any direction, in any angle. Google Maps' API only
+allows rotating the map in increments of 90 degrees.
+
+There is a workaround implemented to rotate the div containing the Google Maps
+map, which should be enough for basic rotation support, but it won't be
+perfectly functional until Google Maps implements a way to rotate the map
+freely in their API.
 
 Recommendation: use `interactions: olgm.interactions.defaults()` in your OL3
-map options, in which the interations that allow rotating the map are not
+map options, in which the interactions that allow rotating the map are not
 included.
 
 

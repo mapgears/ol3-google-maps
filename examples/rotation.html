@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps rotation example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
+    <link rel="stylesheet" href="../css/ol3gm.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Rotation example</h4>
+          <p>
+            Demonstrates the support of rotated maps with OL3-Google-Maps.
+          </p>
+          <p>
+            Use Alt + Shift + Drag to rotate the map.
+          </p>
+
+          <input id="toggle" type="button" onclick="toggle();"
+                 value="Toggle Between OL3 and GMAPS" />
+
+        </div>
+      </div>
+    </div>
+
+    <script src="../node_modules/openlayers/build/ol.js"></script>
+
+    <!-- When loading Google Maps outside of localhost, replace the src with
+         https://maps.googleapis.com/maps/api/js?v=3&key=mykey
+         where mykey is your Google Maps API key -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3"></script>
+
+    <script src="/@loader"></script>
+    <script src="rotation.js"></script>
+  </body>
+</html>
