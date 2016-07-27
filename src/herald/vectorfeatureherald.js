@@ -52,6 +52,12 @@ olgm.herald.VectorFeature = function(
    */
   this.mapIconOptions_ = mapIconOptions;
 
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.visible_ = true;
+
   goog.base(this, ol3map, gmap);
 };
 goog.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
@@ -81,6 +87,18 @@ olgm.herald.VectorFeature.prototype.deactivate = function() {
   this.source_.getFeatures().forEach(this.unwatchFeature_, this);
 
   goog.base(this, 'deactivate');
+};
+
+
+/**
+ * Set each feature visible or invisible
+ * @param {boolean} value true for visible, false for invisible
+ */
+olgm.herald.VectorFeature.prototype.setVisible = function(value) {
+  this.visible_ = value;
+  for (var i = 0; i < this.cache_.length; i++) {
+    this.cache_[i].herald.setVisible(value);
+  }
 };
 
 
@@ -126,7 +144,8 @@ olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
     feature: feature,
     data: data,
     index: index,
-    mapIconOptions: this.mapIconOptions_
+    mapIconOptions: this.mapIconOptions_,
+    visible: this.visible_
   };
   var herald = new olgm.herald.Feature(ol3map, gmap, options);
   herald.activate();

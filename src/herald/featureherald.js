@@ -45,6 +45,12 @@ olgm.herald.Feature = function(ol3map, gmap, options) {
    */
   this.mapIconOptions_ = options.mapIconOptions;
 
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.visible_ = options.visible !== undefined ? options.visible : true;
+
   goog.base(this, ol3map, gmap);
 
 };
@@ -85,7 +91,10 @@ olgm.herald.Feature.prototype.activate = function() {
 
   // create gmap feature
   this.gmapFeature_ = olgm.gm.createFeature(this.feature_);
-  this.data_.add(this.gmapFeature_);
+
+  if (this.visible_) {
+    this.data_.add(this.gmapFeature_);
+  }
 
   // override style if a style is defined at the feature level
   var gmStyle = olgm.gm.createStyle(
@@ -107,13 +116,17 @@ olgm.herald.Feature.prototype.activate = function() {
         this.mapIconOptions_.useCanvas : false;
     if (image && image instanceof ol.style.Icon && useCanvas) {
       this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
-      this.marker_.setMap(this.gmap);
+      if (this.visible_) {
+        this.marker_.setMap(this.gmap);
+      }
     }
 
     var text = style.getText();
     if (text) {
       this.label_ = olgm.gm.createLabel(text, latLng, index);
-      this.label_.setMap(this.gmap);
+      if (this.visible_) {
+        this.label_.setMap(this.gmap);
+      }
     }
   }
 
@@ -152,6 +165,40 @@ olgm.herald.Feature.prototype.deactivate = function() {
   }
 
   goog.base(this, 'deactivate');
+};
+
+
+/**
+ * Set visible or invisible, without deleting the feature object
+ * @param {boolean} value true to set visible, false to set invisible
+ */
+olgm.herald.Feature.prototype.setVisible = function(value) {
+  if (value && !this.visible_) {
+    this.data_.add(this.gmapFeature_);
+
+    if (this.marker_) {
+      this.marker_.setMap(this.gmap);
+    }
+
+    if (this.label_) {
+      this.label_.setMap(this.gmap);
+    }
+
+    this.visible_ = true;
+  } else if (!value && this.visible_) {
+
+    this.data_.remove(this.gmapFeature_);
+
+    if (this.marker_) {
+      this.marker_.setMap(null);
+    }
+
+    if (this.label_) {
+      this.label_.setMap(null);
+    }
+
+    this.visible_ = false;
+  }
 };
 
 

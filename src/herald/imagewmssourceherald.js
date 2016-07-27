@@ -232,6 +232,15 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
   var layer = cacheItem.layer;
   var url = this.generateImageWMSFunction_(layer);
 
+  // Check if we're within the accepted resolutions
+  var minResolution = layer.getMinResolution();
+  var maxResolution = layer.getMaxResolution();
+  var currentResolution = this.ol3map.getView().getResolution();
+  if (currentResolution < minResolution || currentResolution > maxResolution) {
+    this.resetImageOverlay_(cacheItem);
+    return;
+  }
+
   /* We listen to both change:resolution and moveend events. However, changing
    * resolution eventually sends a moveend event as well. Using only the
    * moveend event makes zooming in/out look bad. To prevent rendering the
