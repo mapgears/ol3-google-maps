@@ -93,6 +93,15 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
   var source = tileLayer.getSource();
   goog.asserts.assertInstanceof(source, ol.source.TileImage);
 
+  // Check if we're within the accepted resolutions
+  var minResolution = tileLayer.getMinResolution();
+  var maxResolution = tileLayer.getMaxResolution();
+  var currentResolution = this.ol3map.getView().getResolution();
+  if (currentResolution < minResolution || currentResolution > maxResolution) {
+    return;
+  }
+
+
   // Get a few variables from the source object
   var getTileUrlFunction = source.getTileUrlFunction();
   var proj = ol.proj.get('EPSG:3857');

@@ -81,6 +81,11 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
   cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
       this.handleVisibleChange_.bind(this, cacheItem), this));
 
+  var view = this.ol3map.getView();
+  cacheItem.listenerKeys.push(view.on('change:resolution',
+      this.handleResolutionChange_.bind(this, cacheItem), this));
+
+
   this.activateCacheItem_(cacheItem);
 
   this.cache_.push(cacheItem);
@@ -164,6 +169,21 @@ olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
     cacheItem) {
   cacheItem.herald.deactivate();
   cacheItem.layer.setOpacity(cacheItem.opacity);
+};
+
+
+olgm.herald.VectorSource.prototype.handleResolutionChange_ = function(
+    cacheItem) {
+  var layer = cacheItem.layer;
+
+  var minResolution = layer.getMinResolution();
+  var maxResolution = layer.getMaxResolution();
+  var currentResolution = this.ol3map.getView().getResolution();
+  if (currentResolution < minResolution || currentResolution > maxResolution) {
+    cacheItem.herald.setVisible(false);
+  } else {
+    cacheItem.herald.setVisible(true);
+  }
 };
 
 
