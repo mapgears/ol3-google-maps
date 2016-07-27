@@ -173,6 +173,14 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var view = ol3map.getView();
   var bbox = view.calculateExtent(size);
 
+  // Set all keys in params to uppercase
+  for (var key in params) {
+    var upperCaseKey = key.toUpperCase();
+    if (key != upperCaseKey && !params[upperCaseKey]) {
+      params[upperCaseKey] = params[key];
+    }
+  }
+
   // Get params
   var version = params['VERSION'] ? params['VERSION'] : '1.3.0';
   var layers = params['LAYERS'] ? params['LAYERS'] : '';
