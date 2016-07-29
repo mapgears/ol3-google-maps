@@ -10,7 +10,7 @@ var olgmx;
  * @typedef {{
  *   map: (!ol.Map),
  *   mapIconOptions: (olgmx.gm.MapIconOptions|undefined),
- *   watchVector: (boolean|undefined)
+ *   watchOptions: (olgmx.herald.WatchOptions|undefined)
  * }}
  * @api
  */
@@ -34,12 +34,13 @@ olgmx.OLGoogleMapsOptions.prototype.mapIconOptions;
 
 
 /**
- * Whether the library should watch vector layers and let them be rendered
- * by Google Maps with the latter is activated or not.  Defaults to `true`.
- * @type {boolean|undefined}
+ * For each layer type, a boolean indicating whether the library should watch
+ * and let layers of that type them be rendered by Google Maps or not.
+ * Defaults to `true` for each option.
+ * @type {olgmx.herald.WatchOptions|undefined}
  * @api
  */
-olgmx.OLGoogleMapsOptions.prototype.watchVector;
+olgmx.OLGoogleMapsOptions.prototype.watchOptions;
 
 
 /**
@@ -82,6 +83,17 @@ olgmx.herald = {};
  * @api
  */
 olgmx.herald.FeatureOptions;
+
+
+/**
+ * @typedef {{
+ *   image: (boolean|undefined),
+ *   tile: (boolean|undefined),
+ *   vector: (boolean|undefined)
+ * }}
+ * @api
+ */
+olgmx.herald.WatchOptions;
 
 
 /**
