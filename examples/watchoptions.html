@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps watch options example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
+    <link rel="stylesheet" href="../css/ol3gm.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+    <style>
+      table button {
+        width: 100%;
+      }
+      table {
+        margin: 5px;
+      }
+      td {
+        border-color: #555;
+        border-style: solid;
+        border-width: 3px;
+      }
+      td.inactive {
+        background-color: #ffaaaa;
+      }
+      td.active {
+        background-color: #aaffaa;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Watch options example</h4>
+          <p>
+            Demonstrates the watch options
+          </p>
+          <p>
+            You can choose to let OL3 render the layers over the Google Maps
+            basemap. It will cause a visible lag when panning or zooming, but
+            it will eliminate any limitation of the library for that type of
+            layer.
+          </p>
+          <p>
+            In this example, you can enable and disable watching different
+            types of layers with the buttons below. When it's green, it means
+            Google Maps is allowed to render it when a Google Layer is visible.
+            When it's red, OpenLayers renders that layer type at all times.
+          </p>
+
+          <table>
+            <tr>
+              <td colspan=3>
+                <button id="toggle" type="button" onclick="toggle();">
+                  Toggle Between OL3 and GMAPS
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td class="inactive" id="image">
+                <button type="button" onclick="toggleWatch('image')">
+                  Toggle watch image layers
+                </button>
+              </td>
+              <td class="inactive" id="tile">
+                <button type="button" onclick="toggleWatch('tile')">
+                  Toggle watch tile layers
+                </button>
+              </td>
+              <td class="inactive" id="vector">
+                <button type="button" onclick="toggleWatch('vector')">
+                  Toggle watch vector layers
+                </button>
+              </td>
+            </tr>
+          </table>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="../node_modules/openlayers/build/ol.js"></script>
+
+    <!-- When loading Google Maps outside of localhost, replace the src with
+         https://maps.googleapis.com/maps/api/js?v=3&key=mykey
+         where mykey is your Google Maps API key -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3"></script>
+
+    <script src="/@loader"></script>
+    <script src="watchoptions.js"></script>
+  </body>
+</html>

@@ -61,8 +61,8 @@ olgm.OLGoogleMaps = function(options) {
 
   goog.base(this, options.map, gmap);
 
-  var watchVector = options.watchVector !== undefined ?
-      options.watchVector : true;
+  var watchOptions = options.watch !== undefined ?
+      options.watch : {};
 
   var mapIconOptions = options.mapIconOptions !== undefined ?
       options.mapIconOptions : {};
@@ -72,7 +72,7 @@ olgm.OLGoogleMaps = function(options) {
    * @private
    */
   this.layersHerald_ = new olgm.herald.Layers(
-      this.ol3map, this.gmap, watchVector, mapIconOptions);
+      this.ol3map, this.gmap, mapIconOptions, watchOptions);
   this.heralds_.push(this.layersHerald_);
 };
 goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
@@ -136,6 +136,18 @@ olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
  */
 olgm.OLGoogleMaps.prototype.getGoogleMapsMap = function() {
   return this.gmap;
+};
+
+
+/**
+ * Set the watch options
+ * @param {olgmx.herald.WatchOptions} watchOptions whether each layer type
+ * should be watched
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.setWatchOptions = function(watchOptions) {
+  var newWatchOptions = watchOptions !== undefined ? watchOptions : {};
+  this.layersHerald_.setWatchOptions(newWatchOptions);
 };
 
 

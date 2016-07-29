@@ -42,12 +42,13 @@ goog.require('olgm.layer.Google');
  *
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
- * @param {boolean} watchVector whether we should watch vector layers or not
  * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+ * @param {olgmx.herald.WatchOptions} watchOptions for each layer,
+ * whether we should watch that type of layer or not
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Layers = function(ol3map, gmap, watchVector, mapIconOptions) {
+olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
 
   /**
    * @type {Array.<olgm.layer.Google>}
@@ -87,10 +88,10 @@ olgm.herald.Layers = function(ol3map, gmap, watchVector, mapIconOptions) {
   this.viewHerald_ = new olgm.herald.View(ol3map, gmap);
 
   /**
-   * @type {boolean}
+   * @type {olgmx.herald.WatchOptions}
    * @private
    */
-  this.watchVector_ = watchVector;
+  this.watchOptions_ = watchOptions;
 
 
   // === Elements  === //
@@ -206,6 +207,21 @@ olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
 
 
 /**
+ * Set the watch options
+ * @param {olgmx.herald.WatchOptions} watchOptions whether each layer type
+ * should be watched
+ * @api
+ */
+olgm.herald.Layers.prototype.setWatchOptions = function(watchOptions) {
+  this.watchOptions_ = watchOptions;
+
+  // Re-watch the appropriate layers
+  this.deactivate();
+  this.activate();
+};
+
+
+/**
  * Callback method fired when a new layer is added to the map.
  * @param {ol.CollectionEvent} event Collection event.
  * @private
@@ -237,11 +253,14 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
 olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
   if (layer instanceof olgm.layer.Google) {
     this.watchGoogleLayer_(layer);
-  } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
+  } else if (layer instanceof ol.layer.Vector &&
+        this.watchOptions_.vector !== false) {
     this.vectorSourceHerald_.watchLayer(layer);
-  } else if (layer instanceof ol.layer.Tile) {
+  } else if (layer instanceof ol.layer.Tile &&
+        this.watchOptions_.tile !== false) {
     this.tileSourceHerald_.watchLayer(layer);
-  } else if (layer instanceof ol.layer.Image) {
+  } else if (layer instanceof ol.layer.Image &&
+        this.watchOptions_.image !== false) {
     var source = layer.getSource();
     if (source instanceof ol.source.ImageWMS) {
       this.imageWMSSourceHerald_.watchLayer(layer);
@@ -275,7 +294,7 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
 olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   if (layer instanceof olgm.layer.Google) {
     this.unwatchGoogleLayer_(layer);
-  } else if (layer instanceof ol.layer.Vector && this.watchVector_) {
+  } else if (layer instanceof ol.layer.Vector) {
     this.vectorSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Tile) {
     this.tileSourceHerald_.unwatchLayer(layer);
