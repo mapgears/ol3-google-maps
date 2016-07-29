@@ -61,8 +61,8 @@ olgm.OLGoogleMaps = function(options) {
 
   goog.base(this, options.map, gmap);
 
-  var watchOptions = options.watchOptions !== undefined ?
-      options.watchOptions : {};
+  var watchOptions = options.watch !== undefined ?
+      options.watch : {};
 
   var mapIconOptions = options.mapIconOptions !== undefined ?
       options.mapIconOptions : {};

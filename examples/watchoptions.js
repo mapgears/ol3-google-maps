@@ -76,7 +76,7 @@ var map = new ol.Map({
 
 var olGM = new olgm.OLGoogleMaps({
   map: map,
-  watchOptions: watchOptions
+  watch: watchOptions
 }); // map is the ol.Map instance
 olGM.activate();
 

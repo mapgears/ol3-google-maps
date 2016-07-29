@@ -10,7 +10,7 @@ var olgmx;
  * @typedef {{
  *   map: (!ol.Map),
  *   mapIconOptions: (olgmx.gm.MapIconOptions|undefined),
- *   watchOptions: (olgmx.herald.WatchOptions|undefined)
+ *   watch: (olgmx.herald.WatchOptions|undefined)
  * }}
  * @api
  */
@@ -40,7 +40,7 @@ olgmx.OLGoogleMapsOptions.prototype.mapIconOptions;
  * @type {olgmx.herald.WatchOptions|undefined}
  * @api
  */
-olgmx.OLGoogleMapsOptions.prototype.watchOptions;
+olgmx.OLGoogleMapsOptions.prototype.watch;
 
 
 /**
@@ -94,6 +94,30 @@ olgmx.herald.FeatureOptions;
  * @api
  */
 olgmx.herald.WatchOptions;
+
+
+/**
+ * Whether to watch image layers or not
+ * @type {boolean|undefined}
+ * @api
+ */
+olgmx.herald.WatchOptions.prototype.image;
+
+
+/**
+ * Whether to watch tiled layers or not
+ * @type {boolean|undefined}
+ * @api
+ */
+olgmx.herald.WatchOptions.prototype.tile;
+
+
+/**
+ * Whether to watch vector layers or not
+ * @type {boolean|undefined}
+ * @api
+ */
+olgmx.herald.WatchOptions.prototype.vector;
 
 
 /**
