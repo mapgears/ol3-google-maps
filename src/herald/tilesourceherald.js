@@ -58,7 +58,7 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
 
   if (tileGrid) {
     var tileGridTileSize = tileGrid.getTileSize(0);
-    if (tileGridTileSize instanceof Number) {
+    if (goog.isNumber(tileGridTileSize)) {
       tileSize = tileGridTileSize;
     }
   }
