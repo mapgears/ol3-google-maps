@@ -29,6 +29,11 @@ It's possible to assign a custom tile grid to a tile layer. However, the
 extent for the tile grid should cover the whole map for it to work with the
 Google Maps API, otherwise it will appear in the top left corner.
 
+Larger square tiles seem to work well, but rectangular tile sizes haven't been
+tested. Origins other than the top left corner or the center will probably be
+problematic. Different tile sizes and origins for each zoom level also remains
+untested.
+
 Recommendation: set the TileGrid's extent to the default extent for that
 projection: `ol.proj.get('EPSG:3857').getExtent()`
 

@@ -53,11 +53,21 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
     opacity: opacity
   });
 
-  var tileSize = new google.maps.Size(256, 256);
+  var tileGrid = source.getTileGrid();
+  var tileSize = 256;
+
+  if (tileGrid) {
+    var tileGridTileSize = tileGrid.getTileSize(0);
+    if (goog.isNumber(tileGridTileSize)) {
+      tileSize = tileGridTileSize;
+    }
+  }
+
+  var googleTileSize = new google.maps.Size(tileSize, tileSize);
 
   var options = {
     'getTileUrl': this.googleGetTileUrlFunction_.bind(this, tileLayer),
-    'tileSize': tileSize,
+    'tileSize': googleTileSize,
     'isPng': true,
     'opacity': opacity
   };
@@ -92,6 +102,7 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
     tileLayer, coords, zoom) {
   var source = tileLayer.getSource();
   goog.asserts.assertInstanceof(source, ol.source.TileImage);
+  goog.asserts.assertNumber(zoom);
 
   // Check if we're within the accepted resolutions
   var minResolution = tileLayer.getMinResolution();
@@ -101,11 +112,9 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
     return;
   }
 
-
   // Get a few variables from the source object
   var getTileUrlFunction = source.getTileUrlFunction();
   var proj = ol.proj.get('EPSG:3857');
-  var tileGrid = source.getTileGrid();
 
   // Convert the coords from google maps to ol3 tile format
   var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
@@ -116,11 +125,47 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
     extent = proj.getExtent();
   }
 
-  /* Google Maps checks for tiles which might not exist, for example tiles
-   * above the world map. We need to filter out these to avoid invalid
-   * requests.
+  /* Perform some verifications only possible with a TileGrid:
+   * 1. If the origin for the layer isn't in the upper left corner, we need
+   *    to move the tiles there. Google Maps doesn't support custom origins.
+   * 2. Google Maps checks for tiles which might not exist, for example tiles
+   *    above the world map. We need to filter out these to avoid invalid
+   *    requests.
    */
+  var tileGrid = source.getTileGrid();
   if (tileGrid) {
+    /* Google maps always draws the tiles from the top left corner. We need to
+     * adjust for that if our origin isn't at that location
+     * The default origin is at the top left corner, and the default tile size
+     * is 256.
+     */
+    var defaultOrigin = [-20037508.342789244, 20037508.342789244];
+    var defaultTileSize = 256;
+    var origin = tileGrid.getOrigin(0);
+
+    // Skip this step if the origin is at the top left corner
+    if (origin[0] != defaultOrigin[0] || origin[1] != defaultOrigin[1]) {
+      /* Tiles have a size equal to 2^n. Find the difference between the n for
+       * the current tileGrid versus the n for the expected tileGrid.
+       */
+      var tileGridTileSize = tileGrid.getTileSize(zoom);
+      goog.asserts.assertNumber(tileGridTileSize);
+
+      var defaultTileSizeExponent = Math.log2(defaultTileSize);
+      var tileSizeExponent = Math.log2(tileGridTileSize);
+      var exponentDifference = tileSizeExponent - defaultTileSizeExponent;
+
+      /* Calculate the offset to add to the tile coordinates, assuming the
+       * origin to fix is equal to [0, 0]. TODO: Support different origins
+       */
+      var nbTilesSide = Math.pow(2, zoom - exponentDifference);
+      var offset = nbTilesSide / 2;
+
+      // Add the offset. Move the tiles left (x--) and up (y++)
+      ol3Coords[1] = ol3Coords[1] - offset;
+      ol3Coords[2] = ol3Coords[2] + offset;
+    }
+
     /* Get the intersection area between the wanted tile's extent and the
      * layer's extent. If that intersection has an area smaller than 1, it
      * means it's not part of the map. We do this because a tile directly
