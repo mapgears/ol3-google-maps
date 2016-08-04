@@ -161,3 +161,12 @@ olgm.OLGoogleMaps.prototype.toggle = function() {
     this.activate();
   }
 };
+
+
+/**
+ * Refresh layers and features that might need it (only ImageWMS so far)
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.refresh = function() {
+  this.layersHerald_.refresh();
+};

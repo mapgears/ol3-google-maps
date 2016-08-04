@@ -442,6 +442,15 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
 
 
 /**
+ * For each layer type that support refreshing, tell them to refresh
+ * @api
+ */
+olgm.herald.Layers.prototype.refresh = function() {
+  this.imageWMSSourceHerald_.refresh();
+};
+
+
+/**
  * @typedef {{
  *   layer: (olgm.layer.Google),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>)

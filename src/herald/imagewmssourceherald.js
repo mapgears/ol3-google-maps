@@ -293,6 +293,15 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
 
 
 /**
+ * Refresh the image overlay for each cache item
+ * @api
+ */
+olgm.herald.ImageWMSSource.prototype.refresh = function() {
+  this.cache_.forEach(this.updateImageOverlay_, this);
+};
+
+
+/**
  * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
  * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
  * watched layer
