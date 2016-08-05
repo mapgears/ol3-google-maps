@@ -48,6 +48,7 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
   var opacity = tileLayer.getOpacity();
 
   var cacheItem = /** {@type olgm.herald.TileSource.LayerCache} */ ({
+    ignoreNextOpacityChange: true,
     layer: tileLayer,
     listenerKeys: [],
     opacity: opacity
@@ -82,6 +83,8 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(tileLayer.on('change:visible',
       this.handleVisibleChange_.bind(this, cacheItem), this));
+  cacheItem.listenerKeys.push(tileLayer.on('change:opacity',
+      this.handleOpacityChange_.bind(this, cacheItem), this));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
@@ -249,6 +252,7 @@ olgm.herald.TileSource.prototype.activateCacheItem_ = function(
   var layer = cacheItem.layer;
   var visible = layer.getVisible();
   if (visible && this.googleMapsIsActive) {
+    cacheItem.ignoreNextOpacityChange = true;
     cacheItem.layer.setOpacity(0);
   }
 };
@@ -271,9 +275,41 @@ olgm.herald.TileSource.prototype.deactivate = function() {
  */
 olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
     cacheItem) {
+  cacheItem.ignoreNextOpacityChange = true;
   cacheItem.layer.setOpacity(cacheItem.opacity);
 };
 
+
+/**
+ * Handle the opacity being changed on the tile layer
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
+ * @private
+ */
+olgm.herald.TileSource.prototype.handleOpacityChange_ = function(cacheItem) {
+  var layer = cacheItem.layer;
+  var newOpacity = cacheItem.layer.getOpacity();
+
+  /**
+   * Each time the opacity is set on the ol3 layer, we need to set it back to
+   * opacity 0, and apply the opacity to the layer rendered by Google Maps
+   * instead. However, setting the opacity back to 0 generates another opacity
+   * change event, so we need to ignore it
+   */
+  if (cacheItem.ignoreNextOpacityChange) {
+    cacheItem.ignoreNextOpacityChange = false;
+  } else {
+
+    cacheItem.googleTileLayer.setOpacity(newOpacity);
+    cacheItem.opacity = newOpacity;
+
+    var visible = layer.getVisible();
+    if (visible && this.googleMapsIsActive) {
+      cacheItem.ignoreNextOpacityChange = true;
+      cacheItem.layer.setOpacity(0);
+    }
+  }
+};
 
 /**
  * Deal with the google tile layer when we enable or disable the OL3 tile layer
@@ -281,8 +317,7 @@ olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
  * watched layer
  * @private
  */
-olgm.herald.TileSource.prototype.handleVisibleChange_ = function(
-    cacheItem) {
+olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
   var layer = cacheItem.layer;
   var visible = layer.getVisible();
 
@@ -311,6 +346,7 @@ olgm.herald.TileSource.prototype.handleVisibleChange_ = function(
 /**
  * @typedef {{
  *   googleTileLayer: (google.maps.ImageMapType),
+ *   ignoreNextOpacityChange: (boolean),
  *   layer: (ol.layer.Tile),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
  *   opacity: (number)
