@@ -103,3 +103,15 @@ function toggleLayer(index, value) {
     map.removeLayer(togglableLayers[index]);
   }
 }
+
+function changeOpacity(element) {
+  var value = element.value / 100;
+  var valueElement = document.getElementById('opacityValue');
+  opacityValue.innerHTML = value;
+
+  tileJSONLayer.setOpacity(value);
+  tmsLayer.setOpacity(value);
+  wmsLayer.setOpacity(value);
+  wmtsLayer.setOpacity(value);
+  xyzLayer.setOpacity(value);
+}

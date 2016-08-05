@@ -54,7 +54,39 @@
                   XYZ
                 </input>
               </td>
+            </tr>
+          </table>
+          <br/>
+          <p>
+            Whenever the opacity is changed on an OL3 layer, the same change
+            is applied to the layer rendered by Google Maps. However, while
+            Google Maps is active, all OL3 layers have their opacity set to 0.
+            This means whenever the opacity is changed, OL3-Google-Maps changes
+            it back to 0.
+          </p>
+          <p>
+            To do this, we listen to the opacity:change event. This event is
+            not fired if the value doesn't change. This means that setting the
+            value to 0 on the OL3 layer won't work, the value should be set to
+            something close to 0 instead. The slider below goes from 0.01 to 1,
+            although Number.MIN_VALUE could be used instead.
+          </p>
+          <table>
             <tr>
+              <td colspan="5">
+                Opacity: <span id="opacityValue"></span>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="5">
+                <input type="range"
+                       min="1"
+                       max="100"
+                       value="100"
+                       oninput="changeOpacity(this);"
+                       onchange="changeOpacity(this);">
+              </td>
+            </tr>
           </table>
         </div>
       </div>
