@@ -1,13 +1,15 @@
 var center = [-10997148, 6569099];
 
 var googleLayer = new olgm.layer.Google();
-googleLayer.name = "Google layer - Base layer";
+googleLayer.name = 'Google layer - Base layer';
+googleLayer.color = 'rgb(163, 204, 255)'
 
 var osmLayer = new ol.layer.Tile({
   source: new ol.source.OSM(),
   visible: false
 });
-osmLayer.name = "OSM layer - Base layer";
+osmLayer.name = 'OSM layer - Base layer';
+osmLayer.color = 'rgb(241, 238, 232)';
 
 var tileWMSLayer  =  new ol.layer.Tile({
   source: new ol.source.TileWMS({
@@ -17,7 +19,8 @@ var tileWMSLayer  =  new ol.layer.Tile({
   }),
   visible: true,
 });
-tileWMSLayer.name = "Tile WMS - Canadian provinces";
+tileWMSLayer.name = 'Tile WMS - Canadian provinces';
+tileWMSLayer.color = 'rgb(255, 251, 200)';
 
 var imageWMSLayer = new ol.layer.Image({
   source: new ol.source.ImageWMS({
@@ -27,7 +30,8 @@ var imageWMSLayer = new ol.layer.Image({
   }),
   visible: true,
 });
-imageWMSLayer.name = "Image WMS - Red/Green/Blue USA";
+imageWMSLayer.name = 'Image WMS - Red/Green/Blue USA';
+imageWMSLayer.color = 'rgb(126, 241, 109)';
 
 var imageWMSLayer2  =  new ol.layer.Image({
   extent: [-16884991, 2870341, -3455066, 12338219],
@@ -37,7 +41,8 @@ var imageWMSLayer2  =  new ol.layer.Image({
   }),
   visible: true,
 });
-imageWMSLayer2.name = "Image WMS - Canadian boundaries";
+imageWMSLayer2.name = 'Image WMS - Canadian boundaries';
+imageWMSLayer2.color = '#aaaaaa';
 
 // Setup tilegrid for wmts layer
 var projection = ol.proj.get('EPSG:3857');
@@ -72,7 +77,8 @@ var wmtsLayer = new ol.layer.Tile({
     wrapX: true
   }),
 });
-wmtsLayer.name = "Tile WMTS - Orange USA"
+wmtsLayer.name = 'Tile WMTS - Orange USA'
+wmtsLayer.color = 'rgb(241, 207, 185)';
 
 var map = new ol.Map({
   // use OL3-Google-Maps recommended default interactions
@@ -105,7 +111,8 @@ function createLayerTree() {
     var layer = layers.getArray()[i];
 
     var item = document.createElement('div');
-    var moreText = layer.getVisible() ? "" : "(invisible) ";
+    item.style.backgroundColor = layer.color;
+    var moreText = layer.getVisible() ? '' : '(invisible) ';
     var itemText = document.createTextNode(moreText + layer.name);
 
     item.appendChild(itemText);
