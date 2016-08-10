@@ -350,7 +350,7 @@ olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
  */
 olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(
     cacheItem) {
-  if (cacheItem.layer.getVisible()) {
+  if (cacheItem.layer.getVisible() && this.ol3map.getView().getCenter()) {
     this.updateImageOverlay_(cacheItem);
   }
 };
