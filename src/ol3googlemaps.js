@@ -164,6 +164,18 @@ olgm.OLGoogleMaps.prototype.toggle = function() {
 
 
 /**
+ * Trigger the layer ordering functions in the heralds. We listen for layers
+ * added and removed, which usually happens when we change the order of the
+ * layers in OL3, but this function allows refreshing it manually in case
+ * the order is being change in another way.
+ * @api
+ */
+olgm.OLGoogleMaps.prototype.orderLayers = function() {
+  this.layersHerald_.orderLayers();
+};
+
+
+/**
  * Refresh layers and features that might need it (only ImageWMS so far)
  * @api
  */
