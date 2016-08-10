@@ -52,7 +52,8 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
     lastUrl: null,
     layer: imageLayer,
     listenerKeys: [],
-    opacity: opacity
+    opacity: opacity,
+    zIndex: 0
   });
 
   // Hide the google layer when the ol3 layer is invisible
@@ -280,6 +281,7 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
       url,
       size,
       topLeftLatLng);
+  overlay.setZIndex(cacheItem.zIndex);
 
   // Set the new overlay right away to give it time to render
   overlay.setMap(this.gmap);
@@ -289,6 +291,26 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
 
   // Save new overlay
   cacheItem.imageOverlay = overlay;
+};
+
+
+/**
+ * Order the layers by index in the ol3 layers array
+ * @api
+ */
+olgm.herald.ImageWMSSource.prototype.orderLayers = function() {
+  for (var i = 0; i < this.cache_.length; i++) {
+    var cacheItem = this.cache_[i];
+
+    // There won't be an imageOverlay while Google Maps isn't visible
+    if (cacheItem.imageOverlay) {
+      var layer = cacheItem.layer;
+      var zIndex = this.findIndex(layer);
+
+      cacheItem.imageOverlay.setZIndex(zIndex);
+      cacheItem.zIndex = zIndex;
+    }
+  }
 };
 
 
@@ -340,7 +362,8 @@ olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(
  *   lastUrl: (string|null),
  *   layer: (ol.layer.Image),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
- *   opacity: (number)
+ *   opacity: (number),
+ *   zIndex: (number)
  * }}
  */
 olgm.herald.ImageWMSSource.LayerCache;

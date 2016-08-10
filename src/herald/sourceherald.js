@@ -53,3 +53,22 @@ olgm.herald.Source.prototype.unwatchLayer = goog.abstractMethod;
 olgm.herald.Source.prototype.setGoogleMapsActive = function(active) {
   this.googleMapsIsActive = active;
 };
+
+
+/**
+ * Find the index of a layer in the ol3 map's layers
+ * @param {ol.layer.Base} layer layer to find in ol3's layers array
+ * @returns {number} suggested zIndex for that layer
+ * @api
+ */
+olgm.herald.Source.prototype.findIndex = function(layer) {
+  var layers = this.ol3map.getLayers().getArray();
+  var layerIndex = layers.indexOf(layer);
+  var zIndex = layer.getZIndex();
+
+  if (zIndex != 0) {
+    layerIndex = zIndex;
+  }
+
+  return layerIndex;
+};

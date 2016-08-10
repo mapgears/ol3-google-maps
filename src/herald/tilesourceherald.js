@@ -1,5 +1,6 @@
 goog.provide('olgm.herald.TileSource');
 
+goog.require('olgm.gm.PanesOverlay');
 goog.require('olgm.herald.Source');
 
 
@@ -22,6 +23,22 @@ olgm.herald.TileSource = function(ol3map, gmap) {
   * @private
   */
   this.layers_ = [];
+
+  /**
+   * Panes accessor
+   * @type {olgm.gm.PanesOverlay}
+   * @private
+   */
+  this.panesOverlay_ = new olgm.gm.PanesOverlay(gmap);
+
+  /**
+   * We can only access the mapPane pane after google maps is done loading.
+   * Accessing that pane means we can reorder the div for each tile layer
+   * Google Maps is rendering.
+   */
+  google.maps.event.addListenerOnce(gmap, 'idle', goog.bind(function() {
+    this.orderLayers();
+  }, this));
 
   goog.base(this, ol3map, gmap);
 };
@@ -48,10 +65,12 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
   var opacity = tileLayer.getOpacity();
 
   var cacheItem = /** {@type olgm.herald.TileSource.LayerCache} */ ({
+    element: null,
     ignoreNextOpacityChange: true,
     layer: tileLayer,
     listenerKeys: [],
-    opacity: opacity
+    opacity: opacity,
+    zIndex: 0
   });
 
   var tileGrid = source.getTileGrid();
@@ -281,6 +300,60 @@ olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
 
 
 /**
+ * This function finds the div associated to each tile layer we watch, then
+ * it assigns them the correct z-index
+ * @api
+ */
+olgm.herald.TileSource.prototype.orderLayers = function() {
+  var panes = this.panesOverlay_.getMapPanes();
+
+  if (!panes) {
+    return;
+  }
+  var mapPane = panes.mapPane;
+  var overlayMapTypes = this.gmap.overlayMapTypes;
+
+  // For each tile layer we watch
+  for (var i = 0; i < this.cache_.length; i++) {
+    // Calculate the wanted index
+    var cacheItem = this.cache_[i];
+    var layer = cacheItem.layer;
+    cacheItem.zIndex = this.findIndex(layer);
+
+    // Get the google overlay layer, and its index
+    var googleTileLayer = cacheItem.googleTileLayer;
+    var overlayIndex = overlayMapTypes.getArray().indexOf(googleTileLayer);
+
+    // If the layer is currently rendered by Google Maps
+    if (overlayIndex != -1) {
+      /**
+       * We remove it, look at the divs in the mapPane, then add it back and
+       * compare. This allows us to find which div is associated to that layer.
+       */
+      overlayMapTypes.removeAt(overlayIndex);
+      var childNodes = Array.prototype.slice.call(mapPane.childNodes);
+      overlayMapTypes.push(googleTileLayer);
+      var childNodesWithLayer = mapPane.childNodes;
+
+      /**
+       * Find which layer is missing from the list we created after removing
+       * the appropriate overlay
+       */
+      for (var j = 0; j < childNodesWithLayer.length; j++) {
+        if (childNodes.indexOf(childNodesWithLayer[j]) == -1) {
+          // Set a timeout because otherwise it won't work
+          cacheItem.element = childNodesWithLayer[j];
+          setTimeout(function() {
+            this.element.style.zIndex = this.zIndex;
+          }.bind(cacheItem), 0);
+        }
+      }
+    }
+  }
+};
+
+
+/**
  * Handle the opacity being changed on the tile layer
  * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
  * watched layer
@@ -345,11 +418,13 @@ olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
 
 /**
  * @typedef {{
+ *   element: (Node|null),
  *   googleTileLayer: (google.maps.ImageMapType),
  *   ignoreNextOpacityChange: (boolean),
  *   layer: (ol.layer.Tile),
  *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
- *   opacity: (number)
+ *   opacity: (number),
+ *   zIndex: (number)
  * }}
  */
 olgm.herald.TileSource.LayerCache;

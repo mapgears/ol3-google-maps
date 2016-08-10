@@ -230,6 +230,7 @@ olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
   var layer = event.element;
   goog.asserts.assertInstanceof(layer, ol.layer.Base);
   this.watchLayer_(layer);
+  this.orderLayers();
 };
 
 
@@ -242,6 +243,7 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
   var layer = event.element;
   goog.asserts.assertInstanceof(layer, ol.layer.Base);
   this.unwatchLayer_(layer);
+  this.orderLayers();
 };
 
 
@@ -363,6 +365,8 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
   this.imageWMSSourceHerald_.activate();
   this.tileSourceHerald_.activate();
   this.vectorSourceHerald_.activate();
+
+  this.orderLayers();
 };
 
 
@@ -438,6 +442,16 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
     // deactivate
     this.deactivateGoogleMaps_();
   }
+};
+
+
+/**
+ * Order the layers for each herald that supports it
+ * @api
+ */
+olgm.herald.Layers.prototype.orderLayers = function() {
+  this.imageWMSSourceHerald_.orderLayers();
+  this.tileSourceHerald_.orderLayers();
 };
 
 

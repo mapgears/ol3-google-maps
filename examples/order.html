@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps order example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+    <style>
+      #layerTree {
+        border: solid black 2px;
+        margin: 5px;
+        width: 512px;
+      }
+      #layerTree div {
+        position: relative;
+        border: solid black 1px;
+        padding: 8px;
+      }
+      #layerTree button.up {
+        position: absolute;
+        right: 50px;
+      }
+      #layerTree button.down {
+        position: absolute;
+        right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Order example</h4>
+          <table>
+            <tr>
+              <td>
+                <input id="toggle" type="button" onclick="toggle();"
+                       value="Toggle between OL3 and GMAPS" />
+
+                <div id="layerTree">
+              </td>
+              <td>
+                <p>
+                  In this example, layers are displayed in the table on the
+                  left. They can be re-ordered by clicking the arrow buttons
+                  next to their names. The top-most layers will display in
+                  front of the layers placed below them in the table. The base
+                  Google layer is not affected by this, it will always display
+                  behind every layer. Vector layers will also always display in
+                  front of every layer while Google Maps is active.
+                </p>
+              </td>
+            </tr>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../node_modules/openlayers/build/ol.js"></script>
+
+    <!-- When loading Google Maps outside of localhost, replace the src with
+         https://maps.googleapis.com/maps/api/js?v=3&key=mykey
+         where mykey is your Google Maps API key -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3"></script>
+
+    <script src="/@loader"></script>
+    <script src="order.js"></script>
+  </body>
+</html>
