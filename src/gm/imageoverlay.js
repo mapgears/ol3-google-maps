@@ -34,6 +34,12 @@ olgm.gm.ImageOverlay = function(src, size, topLeft) {
    * @private
    */
   this.div_ = null;
+
+  /**
+   * @type {number}
+   * @private
+   */
+  this.zIndex_ = 0;
 };
 if (window.google && window.google.maps) {
   goog.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
@@ -49,6 +55,7 @@ olgm.gm.ImageOverlay.prototype.onAdd = function() {
   div.style.borderStyle = 'none';
   div.style.borderWidth = '0px';
   div.style.position = 'absolute';
+  div.style.zIndex = this.zIndex_;
 
   // Create the img element and attach it to the div.
   var img = document.createElement('img');
@@ -60,9 +67,13 @@ olgm.gm.ImageOverlay.prototype.onAdd = function() {
 
   this.div_ = div;
 
-  // Add the element to the "overlayLayer" pane.
+  /**
+   * Add the element to the "mapPane" pane. Normally we would put it in the
+   * "overlayLayer" pane, but we want to be able to show it behind tile layers,
+   * so we place them together in the same pane.
+   */
   var panes = this.getPanes();
-  panes.overlayLayer.appendChild(div);
+  panes.mapPane.appendChild(div);
 };
 
 
@@ -99,6 +110,19 @@ olgm.gm.ImageOverlay.prototype.draw = function() {
 
   div.style.top = offsetY + 'px';
   div.style.left = offsetX + 'px';
+};
+
+
+/**
+ * Set the zIndex for the div containing the image
+ * @param {number} zIndex zIndex to set
+ * @api
+ */
+olgm.gm.ImageOverlay.prototype.setZIndex = function(zIndex) {
+  this.zIndex_ = zIndex;
+  if (this.div_) {
+    this.div_.style.zIndex = zIndex;
+  }
 };
 
 
