@@ -210,7 +210,7 @@ olgm.herald.VectorSource.prototype.handleVisibleChange_ = function(
  *   data: (google.maps.Data),
  *   herald: (olgm.herald.VectorFeature),
  *   layer: (ol.layer.Vector),
- *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
+ *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>),
  *   opacity: (number)
  * }}
  */

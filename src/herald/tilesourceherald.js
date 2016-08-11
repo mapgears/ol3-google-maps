@@ -422,7 +422,7 @@ olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
  *   googleTileLayer: (google.maps.ImageMapType),
  *   ignoreNextOpacityChange: (boolean),
  *   layer: (ol.layer.Tile),
- *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
+ *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>),
  *   opacity: (number),
  *   zIndex: (number)
  * }}

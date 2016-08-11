@@ -113,7 +113,7 @@ olgm.getColorOpacity = function(color) {
 
 /**
  * Get the style from the specified object.
- * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
+ * @param {ol.style.Style|ol.StyleFunction|ol.layer.Vector|ol.Feature}
  object object from which we get the style
  * @return {?ol.style.Style} the style of the object
  */
@@ -191,7 +191,7 @@ olgm.stringStartsWith = function(string, needle) {
 
 
 /**
- * @param {Array.<ol.events.Key|Array.<ol.events.Key>>} listenerKeys listener
+ * @param {Array.<ol.EventsKey|Array.<ol.EventsKey>>} listenerKeys listener
  * keys
  * @param {Array.<goog.events.Key>=} opt_googListenerKeys closure listener keys
  */

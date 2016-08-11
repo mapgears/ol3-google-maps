@@ -361,7 +361,7 @@ olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(
  *   imageOverlay: (olgm.gm.ImageOverlay),
  *   lastUrl: (string|null),
  *   layer: (ol.layer.Image),
- *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>),
+ *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>),
  *   opacity: (number),
  *   zIndex: (number)
  * }}

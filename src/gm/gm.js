@@ -116,7 +116,7 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers object.
- * @param {ol.style.Style|ol.style.StyleFunction|ol.layer.Vector|ol.Feature}
+ * @param {ol.style.Style|ol.StyleFunction|ol.layer.Vector|ol.Feature}
  * object style object
  * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
