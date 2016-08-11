@@ -231,6 +231,9 @@ goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.gm.MapElement');
 goog.require('olgm.gm.MapIcon');
 goog.require('olgm.gm.MapLabel');
+goog.require('olgm.gm.PanesOverlay');
+goog.require('olgm.herald.ImageWMSSource');
+goog.require('olgm.herald.Layers');
 goog.require('olgm.herald.Source');
 goog.require('olgm.herald.TileSource');
 goog.require('olgm.herald.VectorSource');
@@ -4179,8 +4182,23 @@ goog.exportProperty(
 
 goog.exportProperty(
     olgm.OLGoogleMaps.prototype,
+    'setWatchOptions',
+    olgm.OLGoogleMaps.prototype.setWatchOptions);
+
+goog.exportProperty(
+    olgm.OLGoogleMaps.prototype,
     'toggle',
     olgm.OLGoogleMaps.prototype.toggle);
+
+goog.exportProperty(
+    olgm.OLGoogleMaps.prototype,
+    'orderLayers',
+    olgm.OLGoogleMaps.prototype.orderLayers);
+
+goog.exportProperty(
+    olgm.OLGoogleMaps.prototype,
+    'refresh',
+    olgm.OLGoogleMaps.prototype.refresh);
 
 goog.exportSymbol(
     'olgm.layer.Google',
@@ -4194,6 +4212,31 @@ goog.exportProperty(
 goog.exportSymbol(
     'olgm.interaction.defaults',
     olgm.interaction.defaults);
+
+goog.exportProperty(
+    olgm.herald.ImageWMSSource.prototype,
+    'orderLayers',
+    olgm.herald.ImageWMSSource.prototype.orderLayers);
+
+goog.exportProperty(
+    olgm.herald.ImageWMSSource.prototype,
+    'refresh',
+    olgm.herald.ImageWMSSource.prototype.refresh);
+
+goog.exportProperty(
+    olgm.herald.Layers.prototype,
+    'setWatchOptions',
+    olgm.herald.Layers.prototype.setWatchOptions);
+
+goog.exportProperty(
+    olgm.herald.Layers.prototype,
+    'orderLayers',
+    olgm.herald.Layers.prototype.orderLayers);
+
+goog.exportProperty(
+    olgm.herald.Layers.prototype,
+    'refresh',
+    olgm.herald.Layers.prototype.refresh);
 
 goog.exportProperty(
     olgm.herald.Source.prototype,
@@ -4211,6 +4254,11 @@ goog.exportProperty(
     olgm.herald.Source.prototype.setGoogleMapsActive);
 
 goog.exportProperty(
+    olgm.herald.Source.prototype,
+    'findIndex',
+    olgm.herald.Source.prototype.findIndex);
+
+goog.exportProperty(
     olgm.herald.TileSource.prototype,
     'activate',
     olgm.herald.TileSource.prototype.activate);
@@ -4219,6 +4267,11 @@ goog.exportProperty(
     olgm.herald.TileSource.prototype,
     'deactivate',
     olgm.herald.TileSource.prototype.deactivate);
+
+goog.exportProperty(
+    olgm.herald.TileSource.prototype,
+    'orderLayers',
+    olgm.herald.TileSource.prototype.orderLayers);
 
 goog.exportProperty(
     olgm.herald.VectorSource.prototype,
@@ -4243,6 +4296,11 @@ goog.exportProperty(
     olgm.gm.ImageOverlay.prototype,
     'draw',
     olgm.gm.ImageOverlay.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.ImageOverlay.prototype,
+    'setZIndex',
+    olgm.gm.ImageOverlay.prototype.setZIndex);
 
 goog.exportProperty(
     olgm.gm.ImageOverlay.prototype,
@@ -4290,6 +4348,30 @@ goog.exportProperty(
     olgm.gm.MapLabel.prototype,
     'onAdd',
     olgm.gm.MapLabel.prototype.onAdd);
+
+goog.exportSymbol(
+    'olgm.gm.PanesOverlay',
+    olgm.gm.PanesOverlay);
+
+goog.exportProperty(
+    olgm.gm.PanesOverlay.prototype,
+    'getMapPanes',
+    olgm.gm.PanesOverlay.prototype.getMapPanes);
+
+goog.exportProperty(
+    olgm.gm.PanesOverlay.prototype,
+    'onAdd',
+    olgm.gm.PanesOverlay.prototype.onAdd);
+
+goog.exportProperty(
+    olgm.gm.PanesOverlay.prototype,
+    'draw',
+    olgm.gm.PanesOverlay.prototype.draw);
+
+goog.exportProperty(
+    olgm.gm.PanesOverlay.prototype,
+    'onRemove',
+    olgm.gm.PanesOverlay.prototype.onRemove);
 
 goog.exportProperty(
     ol.CollectionEvent.prototype,
@@ -14927,6 +15009,11 @@ goog.exportProperty(
     olgm.herald.ImageWMSSource.prototype.setGoogleMapsActive);
 
 goog.exportProperty(
+    olgm.herald.ImageWMSSource.prototype,
+    'findIndex',
+    olgm.herald.ImageWMSSource.prototype.findIndex);
+
+goog.exportProperty(
     olgm.herald.TileSource.prototype,
     'watchLayer',
     olgm.herald.TileSource.prototype.watchLayer);
@@ -14942,6 +15029,11 @@ goog.exportProperty(
     olgm.herald.TileSource.prototype.setGoogleMapsActive);
 
 goog.exportProperty(
+    olgm.herald.TileSource.prototype,
+    'findIndex',
+    olgm.herald.TileSource.prototype.findIndex);
+
+goog.exportProperty(
     olgm.herald.VectorSource.prototype,
     'watchLayer',
     olgm.herald.VectorSource.prototype.watchLayer);
@@ -14955,6 +15047,11 @@ goog.exportProperty(
     olgm.herald.VectorSource.prototype,
     'setGoogleMapsActive',
     olgm.herald.VectorSource.prototype.setGoogleMapsActive);
+
+goog.exportProperty(
+    olgm.herald.VectorSource.prototype,
+    'findIndex',
+    olgm.herald.VectorSource.prototype.findIndex);
 
 goog.exportProperty(
     olgm.gm.MapIcon.prototype,
