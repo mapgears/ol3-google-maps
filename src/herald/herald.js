@@ -17,7 +17,7 @@ goog.require('olgm.Abstract');
 olgm.herald.Herald = function(ol3map, gmap) {
 
   /**
-   * @type {Array.<ol.events.Key|Array.<ol.events.Key>>}
+   * @type {Array.<ol.EventsKey|Array.<ol.EventsKey>>}
    * @protected
    */
   this.listenerKeys = [];

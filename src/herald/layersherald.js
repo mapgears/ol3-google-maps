@@ -467,7 +467,7 @@ olgm.herald.Layers.prototype.refresh = function() {
 /**
  * @typedef {{
  *   layer: (olgm.layer.Google),
- *   listenerKeys: (Array.<ol.events.Key|Array.<ol.events.Key>>)
+ *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>)
  * }}
  */
 olgm.herald.Layers.GoogleLayerCache;
