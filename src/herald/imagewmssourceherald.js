@@ -235,11 +235,20 @@ olgm.herald.ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
  * Refresh the custom image overlay on google maps
  * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
  * layer to update
+ * @param {boolean=} opt_force whether we should refresh even if the
+ * url for the request hasn't changed. Defaults to false.
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(cacheItem) {
+olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
+    cacheItem, opt_force) {
   var layer = cacheItem.layer;
   var url = this.generateImageWMSFunction_(layer);
+  var forceRefresh = opt_force == true;
+
+  // Force a refresh by setting a new url
+  if (forceRefresh) {
+    url += '&timestamp=' + new Date().getTime();
+  }
 
   // Check if we're within the accepted resolutions
   var minResolution = layer.getMinResolution();
@@ -319,7 +328,9 @@ olgm.herald.ImageWMSSource.prototype.orderLayers = function() {
  * @api
  */
 olgm.herald.ImageWMSSource.prototype.refresh = function() {
-  this.cache_.forEach(this.updateImageOverlay_, this);
+  for (var i = 0; i < this.cache_.length; i++) {
+    this.updateImageOverlay_(this.cache_[i], true);
+  }
 };
 
 
