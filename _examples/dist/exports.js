@@ -9,11 +9,9 @@ goog.require('ol.Collection');
 goog.require('ol.CollectionEvent');
 goog.require('ol.CollectionEventType');
 goog.require('ol.DeviceOrientation');
-goog.require('ol.DeviceOrientationProperty');
 goog.require('ol.DragBoxEvent');
 goog.require('ol.Feature');
 goog.require('ol.Geolocation');
-goog.require('ol.GeolocationProperty');
 goog.require('ol.Graticule');
 goog.require('ol.Image');
 goog.require('ol.ImageTile');
@@ -32,7 +30,7 @@ goog.require('ol.ObjectEventType');
 goog.require('ol.Observable');
 goog.require('ol.Overlay');
 goog.require('ol.OverlayPositioning');
-goog.require('ol.OverlayProperty');
+goog.require('ol.RasterOperationType');
 goog.require('ol.Sphere');
 goog.require('ol.Tile');
 goog.require('ol.TileState');
@@ -51,8 +49,6 @@ goog.require('ol.control.MousePosition');
 goog.require('ol.control.OverviewMap');
 goog.require('ol.control.Rotate');
 goog.require('ol.control.ScaleLine');
-goog.require('ol.control.ScaleLineProperty');
-goog.require('ol.control.ScaleLineUnits');
 goog.require('ol.control.Zoom');
 goog.require('ol.control.ZoomSlider');
 goog.require('ol.control.ZoomToExtent');
@@ -73,7 +69,6 @@ goog.require('ol.format.GMLBase');
 goog.require('ol.format.GPX');
 goog.require('ol.format.GeoJSON');
 goog.require('ol.format.IGC');
-goog.require('ol.format.IGCZ');
 goog.require('ol.format.KML');
 goog.require('ol.format.MVT');
 goog.require('ol.format.OSMXML');
@@ -181,7 +176,6 @@ goog.require('ol.source.ImageMapGuide');
 goog.require('ol.source.ImageStatic');
 goog.require('ol.source.ImageVector');
 goog.require('ol.source.ImageWMS');
-goog.require('ol.source.MapQuest');
 goog.require('ol.source.OSM');
 goog.require('ol.source.Raster');
 goog.require('ol.source.RasterEvent');
@@ -203,7 +197,6 @@ goog.require('ol.source.VectorEvent');
 goog.require('ol.source.VectorEventType');
 goog.require('ol.source.VectorTile');
 goog.require('ol.source.WMTS');
-goog.require('ol.source.WMTSRequestEncoding');
 goog.require('ol.source.XYZ');
 goog.require('ol.source.Zoomify');
 goog.require('ol.style.Atlas');
@@ -682,9 +675,19 @@ goog.exportProperty(
     ol.Image.prototype.getImage);
 
 goog.exportProperty(
+    ol.Image.prototype,
+    'load',
+    ol.Image.prototype.load);
+
+goog.exportProperty(
     ol.ImageTile.prototype,
     'getImage',
     ol.ImageTile.prototype.getImage);
+
+goog.exportProperty(
+    ol.ImageTile.prototype,
+    'load',
+    ol.ImageTile.prototype.load);
 
 goog.exportSymbol(
     'ol.Kinetic',
@@ -1080,6 +1083,11 @@ goog.exportProperty(
     ol.Tile.prototype.getTileCoord);
 
 goog.exportProperty(
+    ol.Tile.prototype,
+    'load',
+    ol.Tile.prototype.load);
+
+goog.exportProperty(
     ol.VectorTile.prototype,
     'getFormat',
     ol.VectorTile.prototype.getFormat);
@@ -1127,6 +1135,16 @@ goog.exportProperty(
     ol.View.prototype,
     'calculateExtent',
     ol.View.prototype.calculateExtent);
+
+goog.exportProperty(
+    ol.View.prototype,
+    'getMaxResolution',
+    ol.View.prototype.getMaxResolution);
+
+goog.exportProperty(
+    ol.View.prototype,
+    'getMinResolution',
+    ol.View.prototype.getMinResolution);
 
 goog.exportProperty(
     ol.View.prototype,
@@ -1212,6 +1230,11 @@ goog.exportSymbol(
 
 goog.exportProperty(
     ol.tilegrid.TileGrid.prototype,
+    'forEachTileCoord',
+    ol.tilegrid.TileGrid.prototype.forEachTileCoord);
+
+goog.exportProperty(
+    ol.tilegrid.TileGrid.prototype,
     'getMaxZoom',
     ol.tilegrid.TileGrid.prototype.getMaxZoom);
 
@@ -1254,6 +1277,11 @@ goog.exportProperty(
     ol.tilegrid.TileGrid.prototype,
     'getTileSize',
     ol.tilegrid.TileGrid.prototype.getTileSize);
+
+goog.exportProperty(
+    ol.tilegrid.TileGrid.prototype,
+    'getZForResolution',
+    ol.tilegrid.TileGrid.prototype.getZForResolution);
 
 goog.exportSymbol(
     'ol.tilegrid.createXYZ',
@@ -1850,15 +1878,6 @@ goog.exportProperty(
     ol.source.ImageWMS.prototype,
     'updateParams',
     ol.source.ImageWMS.prototype.updateParams);
-
-goog.exportSymbol(
-    'ol.source.MapQuest',
-    ol.source.MapQuest);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getLayer',
-    ol.source.MapQuest.prototype.getLayer);
 
 goog.exportSymbol(
     'ol.source.OSM',
@@ -2758,8 +2777,8 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.interaction.ModifyEvent.prototype,
-    'mapBrowserPointerEvent',
-    ol.interaction.ModifyEvent.prototype.mapBrowserPointerEvent);
+    'mapBrowserEvent',
+    ol.interaction.ModifyEvent.prototype.mapBrowserEvent);
 
 goog.exportSymbol(
     'ol.interaction.Modify',
@@ -5015,6 +5034,11 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.tilegrid.WMTS.prototype,
+    'forEachTileCoord',
+    ol.tilegrid.WMTS.prototype.forEachTileCoord);
+
+goog.exportProperty(
+    ol.tilegrid.WMTS.prototype,
     'getMaxZoom',
     ol.tilegrid.WMTS.prototype.getMaxZoom);
 
@@ -5057,6 +5081,11 @@ goog.exportProperty(
     ol.tilegrid.WMTS.prototype,
     'getTileSize',
     ol.tilegrid.WMTS.prototype.getTileSize);
+
+goog.exportProperty(
+    ol.tilegrid.WMTS.prototype,
+    'getZForResolution',
+    ol.tilegrid.WMTS.prototype.getZForResolution);
 
 goog.exportProperty(
     ol.style.Circle.prototype,
@@ -6964,151 +6993,6 @@ goog.exportProperty(
     ol.source.ImageWMS.prototype.unByKey);
 
 goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setRenderReprojectionEdges',
-    ol.source.MapQuest.prototype.setRenderReprojectionEdges);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setTileGridForProjection',
-    ol.source.MapQuest.prototype.setTileGridForProjection);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getTileLoadFunction',
-    ol.source.MapQuest.prototype.getTileLoadFunction);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getTileUrlFunction',
-    ol.source.MapQuest.prototype.getTileUrlFunction);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getUrls',
-    ol.source.MapQuest.prototype.getUrls);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setTileLoadFunction',
-    ol.source.MapQuest.prototype.setTileLoadFunction);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setTileUrlFunction',
-    ol.source.MapQuest.prototype.setTileUrlFunction);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setUrl',
-    ol.source.MapQuest.prototype.setUrl);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setUrls',
-    ol.source.MapQuest.prototype.setUrls);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getTileGrid',
-    ol.source.MapQuest.prototype.getTileGrid);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'refresh',
-    ol.source.MapQuest.prototype.refresh);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getAttributions',
-    ol.source.MapQuest.prototype.getAttributions);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getLogo',
-    ol.source.MapQuest.prototype.getLogo);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getProjection',
-    ol.source.MapQuest.prototype.getProjection);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getState',
-    ol.source.MapQuest.prototype.getState);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setAttributions',
-    ol.source.MapQuest.prototype.setAttributions);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'get',
-    ol.source.MapQuest.prototype.get);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getKeys',
-    ol.source.MapQuest.prototype.getKeys);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getProperties',
-    ol.source.MapQuest.prototype.getProperties);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'set',
-    ol.source.MapQuest.prototype.set);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'setProperties',
-    ol.source.MapQuest.prototype.setProperties);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'unset',
-    ol.source.MapQuest.prototype.unset);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'changed',
-    ol.source.MapQuest.prototype.changed);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'dispatchEvent',
-    ol.source.MapQuest.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'getRevision',
-    ol.source.MapQuest.prototype.getRevision);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'on',
-    ol.source.MapQuest.prototype.on);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'once',
-    ol.source.MapQuest.prototype.once);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'un',
-    ol.source.MapQuest.prototype.un);
-
-goog.exportProperty(
-    ol.source.MapQuest.prototype,
-    'unByKey',
-    ol.source.MapQuest.prototype.unByKey);
-
-goog.exportProperty(
     ol.source.OSM.prototype,
     'setRenderReprojectionEdges',
     ol.source.OSM.prototype.setRenderReprojectionEdges);
@@ -8617,6 +8501,11 @@ goog.exportProperty(
     ol.reproj.Tile.prototype,
     'getTileCoord',
     ol.reproj.Tile.prototype.getTileCoord);
+
+goog.exportProperty(
+    ol.reproj.Tile.prototype,
+    'load',
+    ol.reproj.Tile.prototype.load);
 
 goog.exportProperty(
     ol.renderer.Layer.prototype,
@@ -12887,1176 +12776,6 @@ goog.exportProperty(
     ol.geom.Polygon.prototype,
     'unByKey',
     ol.geom.Polygon.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'get',
-    ol.format.ogc.filter.Filter.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'getKeys',
-    ol.format.ogc.filter.Filter.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'getProperties',
-    ol.format.ogc.filter.Filter.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'set',
-    ol.format.ogc.filter.Filter.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'setProperties',
-    ol.format.ogc.filter.Filter.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'unset',
-    ol.format.ogc.filter.Filter.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'changed',
-    ol.format.ogc.filter.Filter.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.Filter.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'getRevision',
-    ol.format.ogc.filter.Filter.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'on',
-    ol.format.ogc.filter.Filter.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'once',
-    ol.format.ogc.filter.Filter.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'un',
-    ol.format.ogc.filter.Filter.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Filter.prototype,
-    'unByKey',
-    ol.format.ogc.filter.Filter.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'get',
-    ol.format.ogc.filter.Logical.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'getKeys',
-    ol.format.ogc.filter.Logical.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'getProperties',
-    ol.format.ogc.filter.Logical.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'set',
-    ol.format.ogc.filter.Logical.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'setProperties',
-    ol.format.ogc.filter.Logical.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'unset',
-    ol.format.ogc.filter.Logical.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'changed',
-    ol.format.ogc.filter.Logical.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.Logical.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'getRevision',
-    ol.format.ogc.filter.Logical.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'on',
-    ol.format.ogc.filter.Logical.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'once',
-    ol.format.ogc.filter.Logical.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'un',
-    ol.format.ogc.filter.Logical.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Logical.prototype,
-    'unByKey',
-    ol.format.ogc.filter.Logical.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'get',
-    ol.format.ogc.filter.LogicalBinary.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'getKeys',
-    ol.format.ogc.filter.LogicalBinary.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'getProperties',
-    ol.format.ogc.filter.LogicalBinary.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'set',
-    ol.format.ogc.filter.LogicalBinary.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'setProperties',
-    ol.format.ogc.filter.LogicalBinary.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'unset',
-    ol.format.ogc.filter.LogicalBinary.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'changed',
-    ol.format.ogc.filter.LogicalBinary.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.LogicalBinary.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'getRevision',
-    ol.format.ogc.filter.LogicalBinary.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'on',
-    ol.format.ogc.filter.LogicalBinary.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'once',
-    ol.format.ogc.filter.LogicalBinary.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'un',
-    ol.format.ogc.filter.LogicalBinary.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LogicalBinary.prototype,
-    'unByKey',
-    ol.format.ogc.filter.LogicalBinary.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'get',
-    ol.format.ogc.filter.And.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'getKeys',
-    ol.format.ogc.filter.And.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'getProperties',
-    ol.format.ogc.filter.And.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'set',
-    ol.format.ogc.filter.And.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'setProperties',
-    ol.format.ogc.filter.And.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'unset',
-    ol.format.ogc.filter.And.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'changed',
-    ol.format.ogc.filter.And.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.And.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'getRevision',
-    ol.format.ogc.filter.And.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'on',
-    ol.format.ogc.filter.And.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'once',
-    ol.format.ogc.filter.And.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'un',
-    ol.format.ogc.filter.And.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.And.prototype,
-    'unByKey',
-    ol.format.ogc.filter.And.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'get',
-    ol.format.ogc.filter.Or.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'getKeys',
-    ol.format.ogc.filter.Or.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'getProperties',
-    ol.format.ogc.filter.Or.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'set',
-    ol.format.ogc.filter.Or.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'setProperties',
-    ol.format.ogc.filter.Or.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'unset',
-    ol.format.ogc.filter.Or.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'changed',
-    ol.format.ogc.filter.Or.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.Or.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'getRevision',
-    ol.format.ogc.filter.Or.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'on',
-    ol.format.ogc.filter.Or.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'once',
-    ol.format.ogc.filter.Or.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'un',
-    ol.format.ogc.filter.Or.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Or.prototype,
-    'unByKey',
-    ol.format.ogc.filter.Or.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'get',
-    ol.format.ogc.filter.Not.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'getKeys',
-    ol.format.ogc.filter.Not.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'getProperties',
-    ol.format.ogc.filter.Not.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'set',
-    ol.format.ogc.filter.Not.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'setProperties',
-    ol.format.ogc.filter.Not.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'unset',
-    ol.format.ogc.filter.Not.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'changed',
-    ol.format.ogc.filter.Not.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.Not.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'getRevision',
-    ol.format.ogc.filter.Not.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'on',
-    ol.format.ogc.filter.Not.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'once',
-    ol.format.ogc.filter.Not.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'un',
-    ol.format.ogc.filter.Not.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Not.prototype,
-    'unByKey',
-    ol.format.ogc.filter.Not.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'get',
-    ol.format.ogc.filter.Bbox.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'getKeys',
-    ol.format.ogc.filter.Bbox.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'getProperties',
-    ol.format.ogc.filter.Bbox.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'set',
-    ol.format.ogc.filter.Bbox.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'setProperties',
-    ol.format.ogc.filter.Bbox.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'unset',
-    ol.format.ogc.filter.Bbox.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'changed',
-    ol.format.ogc.filter.Bbox.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.Bbox.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'getRevision',
-    ol.format.ogc.filter.Bbox.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'on',
-    ol.format.ogc.filter.Bbox.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'once',
-    ol.format.ogc.filter.Bbox.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'un',
-    ol.format.ogc.filter.Bbox.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Bbox.prototype,
-    'unByKey',
-    ol.format.ogc.filter.Bbox.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'get',
-    ol.format.ogc.filter.Comparison.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'getKeys',
-    ol.format.ogc.filter.Comparison.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'getProperties',
-    ol.format.ogc.filter.Comparison.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'set',
-    ol.format.ogc.filter.Comparison.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'setProperties',
-    ol.format.ogc.filter.Comparison.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'unset',
-    ol.format.ogc.filter.Comparison.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'changed',
-    ol.format.ogc.filter.Comparison.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.Comparison.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'getRevision',
-    ol.format.ogc.filter.Comparison.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'on',
-    ol.format.ogc.filter.Comparison.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'once',
-    ol.format.ogc.filter.Comparison.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'un',
-    ol.format.ogc.filter.Comparison.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.Comparison.prototype,
-    'unByKey',
-    ol.format.ogc.filter.Comparison.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'get',
-    ol.format.ogc.filter.ComparisonBinary.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'getKeys',
-    ol.format.ogc.filter.ComparisonBinary.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'getProperties',
-    ol.format.ogc.filter.ComparisonBinary.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'set',
-    ol.format.ogc.filter.ComparisonBinary.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'setProperties',
-    ol.format.ogc.filter.ComparisonBinary.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'unset',
-    ol.format.ogc.filter.ComparisonBinary.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'changed',
-    ol.format.ogc.filter.ComparisonBinary.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.ComparisonBinary.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'getRevision',
-    ol.format.ogc.filter.ComparisonBinary.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'on',
-    ol.format.ogc.filter.ComparisonBinary.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'once',
-    ol.format.ogc.filter.ComparisonBinary.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'un',
-    ol.format.ogc.filter.ComparisonBinary.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.ComparisonBinary.prototype,
-    'unByKey',
-    ol.format.ogc.filter.ComparisonBinary.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'get',
-    ol.format.ogc.filter.EqualTo.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'getKeys',
-    ol.format.ogc.filter.EqualTo.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'getProperties',
-    ol.format.ogc.filter.EqualTo.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'set',
-    ol.format.ogc.filter.EqualTo.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'setProperties',
-    ol.format.ogc.filter.EqualTo.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'unset',
-    ol.format.ogc.filter.EqualTo.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'changed',
-    ol.format.ogc.filter.EqualTo.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.EqualTo.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'getRevision',
-    ol.format.ogc.filter.EqualTo.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'on',
-    ol.format.ogc.filter.EqualTo.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'once',
-    ol.format.ogc.filter.EqualTo.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'un',
-    ol.format.ogc.filter.EqualTo.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.EqualTo.prototype,
-    'unByKey',
-    ol.format.ogc.filter.EqualTo.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'get',
-    ol.format.ogc.filter.NotEqualTo.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'getKeys',
-    ol.format.ogc.filter.NotEqualTo.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'getProperties',
-    ol.format.ogc.filter.NotEqualTo.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'set',
-    ol.format.ogc.filter.NotEqualTo.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'setProperties',
-    ol.format.ogc.filter.NotEqualTo.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'unset',
-    ol.format.ogc.filter.NotEqualTo.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'changed',
-    ol.format.ogc.filter.NotEqualTo.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.NotEqualTo.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'getRevision',
-    ol.format.ogc.filter.NotEqualTo.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'on',
-    ol.format.ogc.filter.NotEqualTo.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'once',
-    ol.format.ogc.filter.NotEqualTo.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'un',
-    ol.format.ogc.filter.NotEqualTo.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.NotEqualTo.prototype,
-    'unByKey',
-    ol.format.ogc.filter.NotEqualTo.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'get',
-    ol.format.ogc.filter.LessThan.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'getKeys',
-    ol.format.ogc.filter.LessThan.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'getProperties',
-    ol.format.ogc.filter.LessThan.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'set',
-    ol.format.ogc.filter.LessThan.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'setProperties',
-    ol.format.ogc.filter.LessThan.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'unset',
-    ol.format.ogc.filter.LessThan.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'changed',
-    ol.format.ogc.filter.LessThan.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.LessThan.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'getRevision',
-    ol.format.ogc.filter.LessThan.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'on',
-    ol.format.ogc.filter.LessThan.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'once',
-    ol.format.ogc.filter.LessThan.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'un',
-    ol.format.ogc.filter.LessThan.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThan.prototype,
-    'unByKey',
-    ol.format.ogc.filter.LessThan.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'get',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'getKeys',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'getProperties',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'set',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'setProperties',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'unset',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'changed',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'getRevision',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'on',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'once',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'un',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype,
-    'unByKey',
-    ol.format.ogc.filter.LessThanOrEqualTo.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'get',
-    ol.format.ogc.filter.GreaterThan.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'getKeys',
-    ol.format.ogc.filter.GreaterThan.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'getProperties',
-    ol.format.ogc.filter.GreaterThan.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'set',
-    ol.format.ogc.filter.GreaterThan.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'setProperties',
-    ol.format.ogc.filter.GreaterThan.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'unset',
-    ol.format.ogc.filter.GreaterThan.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'changed',
-    ol.format.ogc.filter.GreaterThan.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.GreaterThan.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'getRevision',
-    ol.format.ogc.filter.GreaterThan.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'on',
-    ol.format.ogc.filter.GreaterThan.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'once',
-    ol.format.ogc.filter.GreaterThan.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'un',
-    ol.format.ogc.filter.GreaterThan.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThan.prototype,
-    'unByKey',
-    ol.format.ogc.filter.GreaterThan.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'get',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'getKeys',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'getProperties',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'set',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'setProperties',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'unset',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'changed',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'getRevision',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'on',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'once',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'un',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype,
-    'unByKey',
-    ol.format.ogc.filter.GreaterThanOrEqualTo.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'get',
-    ol.format.ogc.filter.IsNull.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'getKeys',
-    ol.format.ogc.filter.IsNull.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'getProperties',
-    ol.format.ogc.filter.IsNull.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'set',
-    ol.format.ogc.filter.IsNull.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'setProperties',
-    ol.format.ogc.filter.IsNull.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'unset',
-    ol.format.ogc.filter.IsNull.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'changed',
-    ol.format.ogc.filter.IsNull.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.IsNull.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'getRevision',
-    ol.format.ogc.filter.IsNull.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'on',
-    ol.format.ogc.filter.IsNull.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'once',
-    ol.format.ogc.filter.IsNull.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'un',
-    ol.format.ogc.filter.IsNull.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsNull.prototype,
-    'unByKey',
-    ol.format.ogc.filter.IsNull.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'get',
-    ol.format.ogc.filter.IsBetween.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'getKeys',
-    ol.format.ogc.filter.IsBetween.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'getProperties',
-    ol.format.ogc.filter.IsBetween.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'set',
-    ol.format.ogc.filter.IsBetween.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'setProperties',
-    ol.format.ogc.filter.IsBetween.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'unset',
-    ol.format.ogc.filter.IsBetween.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'changed',
-    ol.format.ogc.filter.IsBetween.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.IsBetween.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'getRevision',
-    ol.format.ogc.filter.IsBetween.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'on',
-    ol.format.ogc.filter.IsBetween.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'once',
-    ol.format.ogc.filter.IsBetween.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'un',
-    ol.format.ogc.filter.IsBetween.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsBetween.prototype,
-    'unByKey',
-    ol.format.ogc.filter.IsBetween.prototype.unByKey);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'get',
-    ol.format.ogc.filter.IsLike.prototype.get);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'getKeys',
-    ol.format.ogc.filter.IsLike.prototype.getKeys);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'getProperties',
-    ol.format.ogc.filter.IsLike.prototype.getProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'set',
-    ol.format.ogc.filter.IsLike.prototype.set);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'setProperties',
-    ol.format.ogc.filter.IsLike.prototype.setProperties);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'unset',
-    ol.format.ogc.filter.IsLike.prototype.unset);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'changed',
-    ol.format.ogc.filter.IsLike.prototype.changed);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'dispatchEvent',
-    ol.format.ogc.filter.IsLike.prototype.dispatchEvent);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'getRevision',
-    ol.format.ogc.filter.IsLike.prototype.getRevision);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'on',
-    ol.format.ogc.filter.IsLike.prototype.on);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'once',
-    ol.format.ogc.filter.IsLike.prototype.once);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'un',
-    ol.format.ogc.filter.IsLike.prototype.un);
-
-goog.exportProperty(
-    ol.format.ogc.filter.IsLike.prototype,
-    'unByKey',
-    ol.format.ogc.filter.IsLike.prototype.unByKey);
 
 goog.exportProperty(
     ol.format.GML2.prototype,
