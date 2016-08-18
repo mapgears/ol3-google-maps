@@ -17,7 +17,7 @@ olgm.layer.Google = function(opt_options) {
 
   var options = opt_options !== undefined ? opt_options : {};
 
-  goog.base(this, /** @type {olx.layer.GroupOptions} */ (options));
+  ol.layer.Group.call(this, /** @type {olx.layer.GroupOptions} */ (options));
 
   /**
    * @type {google.maps.MapTypeId.<(number|string)>|string}
@@ -33,7 +33,7 @@ olgm.layer.Google = function(opt_options) {
   this.styles_ = options.styles ? options.styles : null;
 
 };
-goog.inherits(olgm.layer.Google, ol.layer.Group);
+ol.inherits(olgm.layer.Google, ol.layer.Group);
 
 
 /**

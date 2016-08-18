@@ -3,6 +3,8 @@ goog.provide('olgm.herald.View');
 goog.require('goog.asserts');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 
@@ -20,9 +22,9 @@ goog.require('olgm.herald.Herald');
  * @extends {olgm.herald.Herald}
  */
 olgm.herald.View = function(ol3map, gmap) {
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.View, olgm.herald.Herald);
+ol.inherits(olgm.herald.View, olgm.herald.Herald);
 
 
 /**
@@ -38,7 +40,8 @@ olgm.herald.View.prototype.windowResizeTimerId_ = null;
  * @inheritDoc
  */
 olgm.herald.View.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   var view = this.ol3map.getView();
   var keys = this.listenerKeys;
@@ -73,7 +76,7 @@ olgm.herald.View.prototype.activate = function() {
  * @inheritDoc
  */
 olgm.herald.View.prototype.deactivate = function() {
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 

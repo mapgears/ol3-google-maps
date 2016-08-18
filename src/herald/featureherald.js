@@ -1,6 +1,8 @@
 goog.provide('olgm.herald.Feature');
 
 goog.require('goog.asserts');
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
@@ -51,10 +53,10 @@ olgm.herald.Feature = function(ol3map, gmap, options) {
    */
   this.visible_ = options.visible !== undefined ? options.visible : true;
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 
 };
-goog.inherits(olgm.herald.Feature, olgm.herald.Herald);
+ol.inherits(olgm.herald.Feature, olgm.herald.Herald);
 
 
 /**
@@ -84,7 +86,8 @@ olgm.herald.Feature.prototype.marker_ = null;
  * @inheritDoc
  */
 olgm.herald.Feature.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   var geometry = this.feature_.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
@@ -164,7 +167,7 @@ olgm.herald.Feature.prototype.deactivate = function() {
     this.label_ = null;
   }
 
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 

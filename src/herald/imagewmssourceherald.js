@@ -1,5 +1,7 @@
 goog.provide('olgm.herald.ImageWMSSource');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
 
@@ -24,9 +26,9 @@ olgm.herald.ImageWMSSource = function(ol3map, gmap) {
   */
   this.layers_ = [];
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Source.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
+ol.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
 
 
 /**
@@ -102,7 +104,7 @@ olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.activate = function() {
-  olgm.herald.ImageWMSSource.base(this, 'activate'); // Call parent function
+  olgm.herald.Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -130,7 +132,7 @@ olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.deactivate = function() {
-  olgm.herald.ImageWMSSource.base(this, 'deactivate'); //Call parent function
+  olgm.herald.Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 

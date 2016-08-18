@@ -1,5 +1,7 @@
 goog.provide('olgm.herald.TileSource');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.PanesOverlay');
 goog.require('olgm.herald.Source');
 
@@ -40,9 +42,9 @@ olgm.herald.TileSource = function(ol3map, gmap) {
     this.orderLayers();
   }, this));
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Source.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.TileSource, olgm.herald.Source);
+ol.inherits(olgm.herald.TileSource, olgm.herald.Source);
 
 
 /**
@@ -256,7 +258,7 @@ olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
  * @api
  */
 olgm.herald.TileSource.prototype.activate = function() {
-  olgm.herald.TileSource.base(this, 'activate'); // Call parent function
+  olgm.herald.Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -282,7 +284,7 @@ olgm.herald.TileSource.prototype.activateCacheItem_ = function(
  * @api
  */
 olgm.herald.TileSource.prototype.deactivate = function() {
-  olgm.herald.TileSource.base(this, 'deactivate'); //Call parent function
+  olgm.herald.Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 

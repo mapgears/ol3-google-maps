@@ -1,5 +1,8 @@
 goog.provide('olgm.gm.PanesOverlay');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
+
 
 /**
  * This overlay doesn't actually do anything, it's only a way to get the map's
@@ -13,7 +16,7 @@ olgm.gm.PanesOverlay = function(gmap) {
   this.setMap(gmap);
 };
 if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.PanesOverlay, google.maps.OverlayView);
+  ol.inherits(olgm.gm.PanesOverlay, google.maps.OverlayView);
 }
 
 

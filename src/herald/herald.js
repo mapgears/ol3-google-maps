@@ -1,5 +1,7 @@
 goog.provide('olgm.herald.Herald');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm');
 goog.require('olgm.Abstract');
 
@@ -28,9 +30,9 @@ olgm.herald.Herald = function(ol3map, gmap) {
    */
   this.googListenerKeys = [];
 
-  goog.base(this, ol3map, gmap);
+  olgm.Abstract.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.Herald, olgm.Abstract);
+ol.inherits(olgm.herald.Herald, olgm.Abstract);
 
 
 /**
