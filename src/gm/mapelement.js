@@ -1,5 +1,9 @@
 goog.provide('olgm.gm.MapElement');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
+
+
 /**
  * This class is a parent for all elements that are drawn manually onto Google
  * Maps. This means drawing elements on a canvas attached to the Google Maps
@@ -21,7 +25,7 @@ olgm.gm.MapElement = function() {
 
 };
 if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.MapElement, google.maps.OverlayView);
+  ol.inherits(olgm.gm.MapElement, google.maps.OverlayView);
 }
 
 

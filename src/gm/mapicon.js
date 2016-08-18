@@ -1,5 +1,7 @@
 goog.provide('olgm.gm.MapIcon');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.MapElement');
 
 
@@ -12,7 +14,8 @@ goog.require('olgm.gm.MapElement');
  * @api
  */
 olgm.gm.MapIcon = function(imageStyle, opt_options) {
-  goog.base(this);
+
+  olgm.gm.MapElement.call(this);
 
   /**
    * This object contains the ol3 style properties for the icon. We keep
@@ -25,7 +28,7 @@ olgm.gm.MapIcon = function(imageStyle, opt_options) {
 
   this.setValues(opt_options);
 };
-goog.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
+ol.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
 
 
 /**

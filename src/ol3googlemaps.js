@@ -59,7 +59,7 @@ olgm.OLGoogleMaps = function(options) {
     streetViewControl: false
   });
 
-  goog.base(this, options.map, gmap);
+  olgm.Abstract.call(this, options.map, gmap);
 
   var watchOptions = options.watch !== undefined ?
       options.watch : {};
@@ -75,7 +75,7 @@ olgm.OLGoogleMaps = function(options) {
       this.ol3map, this.gmap, mapIconOptions, watchOptions);
   this.heralds_.push(this.layersHerald_);
 };
-goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
+ol.inherits(olgm.OLGoogleMaps, olgm.Abstract);
 
 
 /**

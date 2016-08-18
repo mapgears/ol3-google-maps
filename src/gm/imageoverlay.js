@@ -1,5 +1,8 @@
 goog.provide('olgm.gm.ImageOverlay');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
+
 
 /**
  * Creates a new image overlay.
@@ -42,7 +45,7 @@ olgm.gm.ImageOverlay = function(src, size, topLeft) {
   this.zIndex_ = 0;
 };
 if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
+  ol.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
 }
 
 

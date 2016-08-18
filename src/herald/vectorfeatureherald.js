@@ -1,6 +1,8 @@
 goog.provide('olgm.herald.VectorFeature');
 
 goog.require('goog.asserts');
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');
 
@@ -58,16 +60,17 @@ olgm.herald.VectorFeature = function(
    */
   this.visible_ = true;
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
+ol.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
 
 
 /**
  * @inheritDoc
  */
 olgm.herald.VectorFeature.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   // watch existing features...
   this.source_.getFeatures().forEach(this.watchFeature_, this);
@@ -86,7 +89,7 @@ olgm.herald.VectorFeature.prototype.deactivate = function() {
   // unwatch existing features...
   this.source_.getFeatures().forEach(this.unwatchFeature_, this);
 
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 

@@ -33,6 +33,8 @@
 
 goog.provide('olgm.gm.MapLabel');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.MapElement');
 
 
@@ -44,7 +46,8 @@ goog.require('olgm.gm.MapElement');
  * @api
  */
 olgm.gm.MapLabel = function(opt_options) {
-  goog.base(this);
+
+  olgm.gm.MapElement.call(this);
 
   this.set('font', 'normal 10px sans-serif');
   this.set('textAlign', 'center');
@@ -54,7 +57,7 @@ olgm.gm.MapLabel = function(opt_options) {
 
   this.setValues(opt_options);
 };
-goog.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
+ol.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
 
 
 /**

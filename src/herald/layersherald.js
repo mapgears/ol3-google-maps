@@ -115,7 +115,7 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
   this.targetEl_ = ol3map.getTargetElement();
 
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 
 
   // some controls, like the ol.control.ZoomSlider, require the map div
@@ -137,7 +137,7 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
     }, this);
   }
 };
-goog.inherits(olgm.herald.Layers, olgm.herald.Herald);
+ol.inherits(olgm.herald.Layers, olgm.herald.Herald);
 
 
 /**
@@ -160,7 +160,8 @@ olgm.herald.Layers.prototype.ol3mapIsRenderered_ = false;
  * @inheritDoc
  */
 olgm.herald.Layers.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   var layers = this.ol3map.getLayers();
 
@@ -181,7 +182,7 @@ olgm.herald.Layers.prototype.deactivate = function() {
   // unwatch existing layers
   this.ol3map.getLayers().forEach(this.unwatchLayer_, this);
 
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 

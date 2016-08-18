@@ -1,5 +1,7 @@
 goog.provide('olgm.herald.Source');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.herald.Herald');
 
 
@@ -13,7 +15,8 @@ goog.require('olgm.herald.Herald');
  * @extends {olgm.herald.Herald}
  */
 olgm.herald.Source = function(ol3map, gmap) {
-  goog.base(this, ol3map, gmap);
+
+  olgm.herald.Herald.call(this, ol3map, gmap);
 
   /**
    * Flag that determines whether the GoogleMaps map is currently active, i.e.
@@ -23,7 +26,7 @@ olgm.herald.Source = function(ol3map, gmap) {
    */
   olgm.herald.Source.prototype.googleMapsIsActive_ = false;
 };
-goog.inherits(olgm.herald.Source, olgm.herald.Herald);
+ol.inherits(olgm.herald.Source, olgm.herald.Herald);
 
 
 /**

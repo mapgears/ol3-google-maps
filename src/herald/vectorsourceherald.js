@@ -1,5 +1,7 @@
 goog.provide('olgm.herald.VectorSource');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.herald.Source');
 goog.require('olgm.herald.VectorFeature');
 
@@ -31,9 +33,9 @@ olgm.herald.VectorSource = function(ol3map, gmap, mapIconOptions) {
    */
   this.mapIconOptions_ = mapIconOptions;
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Source.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorSource, olgm.herald.Source);
+ol.inherits(olgm.herald.VectorSource, olgm.herald.Source);
 
 
 /**
@@ -128,7 +130,7 @@ olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
  * @api
  */
 olgm.herald.VectorSource.prototype.activate = function() {
-  olgm.herald.VectorSource.base(this, 'activate'); // Call parent function
+  olgm.herald.Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -154,7 +156,7 @@ olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
  * @api
  */
 olgm.herald.VectorSource.prototype.deactivate = function() {
-  olgm.herald.VectorSource.base(this, 'deactivate'); //Call parent function
+  olgm.herald.Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
