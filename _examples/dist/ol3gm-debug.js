@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.10.0
+// Version: v0.10.0-3-gb3edfd4
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -94122,6 +94122,10 @@ olgm.unlistenAllByKey = function(listenerKeys, opt_googListenerKeys) {
 
 goog.provide('olgm.gm.MapElement');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
+
+
 /**
  * This class is a parent for all elements that are drawn manually onto Google
  * Maps. This means drawing elements on a canvas attached to the Google Maps
@@ -94143,7 +94147,7 @@ olgm.gm.MapElement = function() {
 
 };
 if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.MapElement, google.maps.OverlayView);
+  ol.inherits(olgm.gm.MapElement, google.maps.OverlayView);
 }
 
 
@@ -94305,6 +94309,8 @@ olgm.gm.MapElement.prototype.onRemove = function() {
 
 goog.provide('olgm.gm.MapLabel');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.MapElement');
 
 
@@ -94316,7 +94322,8 @@ goog.require('olgm.gm.MapElement');
  * @api
  */
 olgm.gm.MapLabel = function(opt_options) {
-  goog.base(this);
+
+  olgm.gm.MapElement.call(this);
 
   this.set('font', 'normal 10px sans-serif');
   this.set('textAlign', 'center');
@@ -94326,7 +94333,7 @@ olgm.gm.MapLabel = function(opt_options) {
 
   this.setValues(opt_options);
 };
-goog.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
+ol.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
 
 
 /**
@@ -94423,6 +94430,8 @@ olgm.gm.MapLabel.prototype.onAdd = function() {
 
 goog.provide('olgm.gm.MapIcon');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.MapElement');
 
 
@@ -94435,7 +94444,8 @@ goog.require('olgm.gm.MapElement');
  * @api
  */
 olgm.gm.MapIcon = function(imageStyle, opt_options) {
-  goog.base(this);
+
+  olgm.gm.MapElement.call(this);
 
   /**
    * This object contains the ol3 style properties for the icon. We keep
@@ -94448,7 +94458,7 @@ olgm.gm.MapIcon = function(imageStyle, opt_options) {
 
   this.setValues(opt_options);
 };
-goog.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
+ol.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
 
 
 /**
@@ -94938,6 +94948,9 @@ olgm.gm.createMapIcon = function(iconStyle, latLng, index) {
 
 goog.provide('olgm.gm.ImageOverlay');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
+
 
 /**
  * Creates a new image overlay.
@@ -94980,7 +94993,7 @@ olgm.gm.ImageOverlay = function(src, size, topLeft) {
   this.zIndex_ = 0;
 };
 if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
+  ol.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
 }
 
 
@@ -95075,6 +95088,9 @@ olgm.gm.ImageOverlay.prototype.onRemove = function() {
 
 goog.provide('olgm.gm.PanesOverlay');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
+
 
 /**
  * This overlay doesn't actually do anything, it's only a way to get the map's
@@ -95088,7 +95104,7 @@ olgm.gm.PanesOverlay = function(gmap) {
   this.setMap(gmap);
 };
 if (window.google && window.google.maps) {
-  goog.inherits(olgm.gm.PanesOverlay, google.maps.OverlayView);
+  ol.inherits(olgm.gm.PanesOverlay, google.maps.OverlayView);
 }
 
 
@@ -95130,6 +95146,8 @@ olgm.gm.PanesOverlay.prototype.onRemove = function() {
 
 goog.provide('olgm.herald.Herald');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm');
 goog.require('olgm.Abstract');
 
@@ -95158,9 +95176,9 @@ olgm.herald.Herald = function(ol3map, gmap) {
    */
   this.googListenerKeys = [];
 
-  goog.base(this, ol3map, gmap);
+  olgm.Abstract.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.Herald, olgm.Abstract);
+ol.inherits(olgm.herald.Herald, olgm.Abstract);
 
 
 /**
@@ -95179,6 +95197,8 @@ olgm.herald.Herald.prototype.deactivate = function() {
 goog.provide('olgm.herald.Feature');
 
 goog.require('goog.asserts');
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
@@ -95229,10 +95249,10 @@ olgm.herald.Feature = function(ol3map, gmap, options) {
    */
   this.visible_ = options.visible !== undefined ? options.visible : true;
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 
 };
-goog.inherits(olgm.herald.Feature, olgm.herald.Herald);
+ol.inherits(olgm.herald.Feature, olgm.herald.Herald);
 
 
 /**
@@ -95262,7 +95282,8 @@ olgm.herald.Feature.prototype.marker_ = null;
  * @inheritDoc
  */
 olgm.herald.Feature.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   var geometry = this.feature_.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
@@ -95342,7 +95363,7 @@ olgm.herald.Feature.prototype.deactivate = function() {
     this.label_ = null;
   }
 
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 
@@ -95420,6 +95441,8 @@ olgm.herald.Feature.prototype.handleGeometryReplace_ = function() {
 
 goog.provide('olgm.herald.Source');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.herald.Herald');
 
 
@@ -95433,7 +95456,8 @@ goog.require('olgm.herald.Herald');
  * @extends {olgm.herald.Herald}
  */
 olgm.herald.Source = function(ol3map, gmap) {
-  goog.base(this, ol3map, gmap);
+
+  olgm.herald.Herald.call(this, ol3map, gmap);
 
   /**
    * Flag that determines whether the GoogleMaps map is currently active, i.e.
@@ -95443,7 +95467,7 @@ olgm.herald.Source = function(ol3map, gmap) {
    */
   olgm.herald.Source.prototype.googleMapsIsActive_ = false;
 };
-goog.inherits(olgm.herald.Source, olgm.herald.Herald);
+ol.inherits(olgm.herald.Source, olgm.herald.Herald);
 
 
 /**
@@ -95495,6 +95519,8 @@ olgm.herald.Source.prototype.findIndex = function(layer) {
 
 goog.provide('olgm.herald.ImageWMSSource');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
 
@@ -95519,9 +95545,9 @@ olgm.herald.ImageWMSSource = function(ol3map, gmap) {
   */
   this.layers_ = [];
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Source.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
+ol.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
 
 
 /**
@@ -95597,7 +95623,7 @@ olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.activate = function() {
-  olgm.herald.ImageWMSSource.base(this, 'activate'); // Call parent function
+  olgm.herald.Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -95625,7 +95651,7 @@ olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.deactivate = function() {
-  olgm.herald.ImageWMSSource.base(this, 'deactivate'); //Call parent function
+  olgm.herald.Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
@@ -95876,6 +95902,8 @@ olgm.herald.ImageWMSSource.LayerCache;
 
 goog.provide('olgm.herald.TileSource');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.gm.PanesOverlay');
 goog.require('olgm.herald.Source');
 
@@ -95916,9 +95944,9 @@ olgm.herald.TileSource = function(ol3map, gmap) {
     this.orderLayers();
   }, this));
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Source.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.TileSource, olgm.herald.Source);
+ol.inherits(olgm.herald.TileSource, olgm.herald.Source);
 
 
 /**
@@ -96132,7 +96160,7 @@ olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
  * @api
  */
 olgm.herald.TileSource.prototype.activate = function() {
-  olgm.herald.TileSource.base(this, 'activate'); // Call parent function
+  olgm.herald.Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -96158,7 +96186,7 @@ olgm.herald.TileSource.prototype.activateCacheItem_ = function(
  * @api
  */
 olgm.herald.TileSource.prototype.deactivate = function() {
-  olgm.herald.TileSource.base(this, 'deactivate'); //Call parent function
+  olgm.herald.Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
@@ -96308,6 +96336,8 @@ olgm.herald.TileSource.LayerCache;
 goog.provide('olgm.herald.VectorFeature');
 
 goog.require('goog.asserts');
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');
 
@@ -96365,16 +96395,17 @@ olgm.herald.VectorFeature = function(
    */
   this.visible_ = true;
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
+ol.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
 
 
 /**
  * @inheritDoc
  */
 olgm.herald.VectorFeature.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   // watch existing features...
   this.source_.getFeatures().forEach(this.watchFeature_, this);
@@ -96393,7 +96424,7 @@ olgm.herald.VectorFeature.prototype.deactivate = function() {
   // unwatch existing features...
   this.source_.getFeatures().forEach(this.unwatchFeature_, this);
 
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 
@@ -96492,6 +96523,8 @@ olgm.herald.VectorFeature.Cache;
 
 goog.provide('olgm.herald.VectorSource');
 
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm.herald.Source');
 goog.require('olgm.herald.VectorFeature');
 
@@ -96523,9 +96556,9 @@ olgm.herald.VectorSource = function(ol3map, gmap, mapIconOptions) {
    */
   this.mapIconOptions_ = mapIconOptions;
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Source.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.VectorSource, olgm.herald.Source);
+ol.inherits(olgm.herald.VectorSource, olgm.herald.Source);
 
 
 /**
@@ -96620,7 +96653,7 @@ olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
  * @api
  */
 olgm.herald.VectorSource.prototype.activate = function() {
-  olgm.herald.VectorSource.base(this, 'activate'); // Call parent function
+  olgm.herald.Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -96646,7 +96679,7 @@ olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
  * @api
  */
 olgm.herald.VectorSource.prototype.deactivate = function() {
-  olgm.herald.VectorSource.base(this, 'deactivate'); //Call parent function
+  olgm.herald.Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
@@ -99877,6 +99910,8 @@ goog.provide('olgm.herald.View');
 goog.require('goog.asserts');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
+/** @suppress {extraRequire} */
+goog.require('ol.has');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 
@@ -99894,9 +99929,9 @@ goog.require('olgm.herald.Herald');
  * @extends {olgm.herald.Herald}
  */
 olgm.herald.View = function(ol3map, gmap) {
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 };
-goog.inherits(olgm.herald.View, olgm.herald.Herald);
+ol.inherits(olgm.herald.View, olgm.herald.Herald);
 
 
 /**
@@ -99912,7 +99947,8 @@ olgm.herald.View.prototype.windowResizeTimerId_ = null;
  * @inheritDoc
  */
 olgm.herald.View.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   var view = this.ol3map.getView();
   var keys = this.listenerKeys;
@@ -99947,7 +99983,7 @@ olgm.herald.View.prototype.activate = function() {
  * @inheritDoc
  */
 olgm.herald.View.prototype.deactivate = function() {
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 
@@ -100089,7 +100125,7 @@ olgm.layer.Google = function(opt_options) {
 
   var options = opt_options !== undefined ? opt_options : {};
 
-  goog.base(this, /** @type {olx.layer.GroupOptions} */ (options));
+  ol.layer.Group.call(this, /** @type {olx.layer.GroupOptions} */ (options));
 
   /**
    * @type {google.maps.MapTypeId.<(number|string)>|string}
@@ -100105,7 +100141,7 @@ olgm.layer.Google = function(opt_options) {
   this.styles_ = options.styles ? options.styles : null;
 
 };
-goog.inherits(olgm.layer.Google, ol.layer.Group);
+ol.inherits(olgm.layer.Google, ol.layer.Group);
 
 
 /**
@@ -100241,7 +100277,7 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
   this.targetEl_ = ol3map.getTargetElement();
 
 
-  goog.base(this, ol3map, gmap);
+  olgm.herald.Herald.call(this, ol3map, gmap);
 
 
   // some controls, like the ol.control.ZoomSlider, require the map div
@@ -100263,7 +100299,7 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
     }, this);
   }
 };
-goog.inherits(olgm.herald.Layers, olgm.herald.Herald);
+ol.inherits(olgm.herald.Layers, olgm.herald.Herald);
 
 
 /**
@@ -100286,7 +100322,8 @@ olgm.herald.Layers.prototype.ol3mapIsRenderered_ = false;
  * @inheritDoc
  */
 olgm.herald.Layers.prototype.activate = function() {
-  goog.base(this, 'activate');
+
+  olgm.herald.Herald.prototype.activate.call(this);
 
   var layers = this.ol3map.getLayers();
 
@@ -100307,7 +100344,7 @@ olgm.herald.Layers.prototype.deactivate = function() {
   // unwatch existing layers
   this.ol3map.getLayers().forEach(this.unwatchLayer_, this);
 
-  goog.base(this, 'deactivate');
+  olgm.herald.Herald.prototype.deactivate.call(this);
 };
 
 
@@ -100699,7 +100736,7 @@ olgm.OLGoogleMaps = function(options) {
     streetViewControl: false
   });
 
-  goog.base(this, options.map, gmap);
+  olgm.Abstract.call(this, options.map, gmap);
 
   var watchOptions = options.watch !== undefined ?
       options.watch : {};
@@ -100715,7 +100752,7 @@ olgm.OLGoogleMaps = function(options) {
       this.ol3map, this.gmap, mapIconOptions, watchOptions);
   this.heralds_.push(this.layersHerald_);
 };
-goog.inherits(olgm.OLGoogleMaps, olgm.Abstract);
+ol.inherits(olgm.OLGoogleMaps, olgm.Abstract);
 
 
 /**
