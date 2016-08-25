@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.10.0-3-gb3edfd4
+// Version: v0.10.0-6-ge147578
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -94503,7 +94503,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width, canvas.height);
 
-  var anchor = this.imageStyle_.getAnchor();
+  var anchor = this.imageStyle_.getAnchor() || [0, 0];
   var scale = this.imageStyle_.getScale() || 1;
   var rotation = this.imageStyle_.getRotation() || 0;
   var opacity = this.imageStyle_.getOpacity() || 1;
