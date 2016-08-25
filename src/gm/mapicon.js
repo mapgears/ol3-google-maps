@@ -73,7 +73,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width, canvas.height);
 
-  var anchor = this.imageStyle_.getAnchor();
+  var anchor = this.imageStyle_.getAnchor() || [0, 0];
   var scale = this.imageStyle_.getScale() || 1;
   var rotation = this.imageStyle_.getRotation() || 0;
   var opacity = this.imageStyle_.getOpacity() || 1;
