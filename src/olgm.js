@@ -52,7 +52,7 @@ olgm.getCenterOf = function(geometry) {
 
 
 /**
- * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color the color
+ * @param {ol.Color|ol.ColorLike} color the color
  * to parse
  * @return {string} the parsed color
  */
@@ -72,8 +72,6 @@ olgm.getColor = function(color) {
     rgba = color;
   }
 
-  // Todo - support CanvasGradient and CanvasPattern
-
   if (rgba !== null) {
     out = ['rgb(', rgba[0], ',', rgba[1], ',', rgba[2], ')'].join('');
   }
@@ -83,7 +81,7 @@ olgm.getColor = function(color) {
 
 
 /**
- * @param {string|Array.<number>|CanvasGradient|CanvasPattern} color the color
+ * @param {ol.Color|ol.ColorLike} color the color
  * to check
  * @return {?number} the color's opacity
  */
@@ -100,8 +98,6 @@ olgm.getColorOpacity = function(color) {
   } else if (Array.isArray(color)) {
     rgba = color;
   }
-
-  // Todo - support CanvasGradient and CanvasPattern
 
   if (rgba && rgba[3] !== undefined) {
     opacity = +rgba[3];
