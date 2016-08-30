@@ -224,7 +224,7 @@ olgm.herald.Layers.prototype.setWatchOptions = function(watchOptions) {
 
 /**
  * Callback method fired when a new layer is added to the map.
- * @param {ol.CollectionEvent} event Collection event.
+ * @param {ol.Collection.Event} event Collection event.
  * @private
  */
 olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
@@ -237,7 +237,7 @@ olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
 
 /**
  * Callback method fired when a layer is removed from the map.
- * @param {ol.CollectionEvent} event Collection event.
+ * @param {ol.Collection.Event} event Collection event.
  * @private
  */
 olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
