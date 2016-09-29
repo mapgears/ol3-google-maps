@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.10.0-9-gdecf1d9
+// Version: v0.11.2
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -84678,6 +84678,11 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
   cacheItem.listenerKeys.push(this.ol3map.getView().on('change:resolution',
       this.handleMoveEnd_.bind(this, cacheItem), this));
 
+  // Make sure that any change to the layer source itself also updates the
+  // google maps layer
+  cacheItem.listenerKeys.push(imageLayer.getSource().on('change',
+      this.handleMoveEnd_.bind(this, cacheItem), this));
+
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
   this.cache_.push(cacheItem);
@@ -84771,6 +84776,7 @@ olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
  */
 olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
     layer) {
+  var key;
   var source = layer.getSource();
   goog.asserts.assertInstanceof(source, ol.source.ImageWMS);
 
@@ -84786,21 +84792,43 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var view = ol3map.getView();
   var bbox = view.calculateExtent(size);
 
-  // Set all keys in params to uppercase
-  for (var key in params) {
+  // Separate original WMS params and custom ones
+  var wmsParamsList = [
+    'CRS',
+    'BBOX',
+    'FORMAT',
+    'HEIGHT',
+    'LAYERS',
+    'REQUEST',
+    'SERVICE',
+    'SRS',
+    'STYLES',
+    'TILED',
+    'TRANSPARENT',
+    'VERSION',
+    'WIDTH'
+  ];
+  var customParams = {};
+  var wmsParams = {};
+  for (key in params) {
     var upperCaseKey = key.toUpperCase();
-    if (key != upperCaseKey && !params[upperCaseKey]) {
-      params[upperCaseKey] = params[key];
+    if (wmsParamsList.indexOf(upperCaseKey) === -1) {
+      if (params[key] !== undefined && params[key] !== null) {
+        customParams[key] = params[key];
+      }
+    } else {
+      wmsParams[upperCaseKey] = params[key];
     }
   }
 
-  // Get params
-  var version = params['VERSION'] ? params['VERSION'] : '1.3.0';
-  var layers = params['LAYERS'] ? params['LAYERS'] : '';
-  var styles = params['STYLES'] ? params['STYLES'] : '';
-  var format = params['FORMAT'] ? params['FORMAT'] : 'image/png';
-  var transparent = params['TRANSPARENT'] ? params['TRANSPARENT'] : 'TRUE';
-  var tiled = params['TILED'] ? params['TILED'] : 'FALSE';
+  // Set WMS params
+  var version = wmsParams['VERSION'] ? wmsParams['VERSION'] : '1.3.0';
+  var layers = wmsParams['LAYERS'] ? wmsParams['LAYERS'] : '';
+  var styles = wmsParams['STYLES'] ? wmsParams['STYLES'] : '';
+  var format = wmsParams['FORMAT'] ? wmsParams['FORMAT'] : 'image/png';
+  var transparent = wmsParams['TRANSPARENT'] ?
+      wmsParams['TRANSPARENT'] : 'TRUE';
+  var tiled = wmsParams['TILED'] ? wmsParams['TILED'] : 'FALSE';
 
   // Check whether or not we're using WMS 1.3.0
   var versionNumbers = version.split('.');
@@ -84821,6 +84849,11 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   url += '&WIDTH=' + size[0];
   url += '&HEIGHT=' + size[1];
   url += '&TILED=' + tiled;
+
+  // Set Custom params
+  for (key in customParams) {
+    url += '&' + key + '=' + customParams[key];
+  }
 
   return url;
 };
@@ -85099,6 +85132,8 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
       this.handleVisibleChange_.bind(this, cacheItem), this));
   cacheItem.listenerKeys.push(tileLayer.on('change:opacity',
       this.handleOpacityChange_.bind(this, cacheItem), this));
+  cacheItem.listenerKeys.push(tileLayer.getSource().on('change',
+      this.handleSourceChange_.bind(this, cacheItem), this));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
@@ -85408,6 +85443,21 @@ olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
     }
     this.deactivateCacheItem_(cacheItem);
   }
+};
+
+
+/**
+ * Called the source of layer fires the 'change' event. Reload the google tile
+ * layer.
+ *
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
+ * @private
+ */
+olgm.herald.TileSource.prototype.handleSourceChange_ = function(cacheItem) {
+  // Note: The 'changed' method of google.maps.MVCObject requires a param,
+  //       but it's not acutally used here.  It's just to satisfy the compiler.
+  cacheItem.googleTileLayer.changed('foo');
 };
 
 
