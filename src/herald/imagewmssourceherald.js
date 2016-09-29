@@ -203,7 +203,9 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   for (key in params) {
     var upperCaseKey = key.toUpperCase();
     if (wmsParamsList.indexOf(upperCaseKey) === -1) {
-      customParams[key] = params[key];
+      if (params[key] !== undefined && params[key] !== null) {
+        customParams[key] = params[key];
+      }
     } else {
       wmsParams[upperCaseKey] = params[key];
     }
