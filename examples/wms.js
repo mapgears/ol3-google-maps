@@ -81,3 +81,13 @@ function toggleWMS() {
   var spanText = tileWMSLayer.getVisible() ? 'tiled' : 'image';
   document.getElementById('currentMode').innerHTML = spanText;
 }
+
+function setRandomParam() {
+  var params = {
+    'random': Math.random()
+  };
+  tileWMSLayer.getSource().updateParams(params);
+  tileWMSLayer2.getSource().updateParams(params);
+  imageWMSLayer.getSource().updateParams(params);
+  imageWMSLayer2.getSource().updateParams(params);
+};

@@ -106,6 +106,8 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
       this.handleVisibleChange_.bind(this, cacheItem), this));
   cacheItem.listenerKeys.push(tileLayer.on('change:opacity',
       this.handleOpacityChange_.bind(this, cacheItem), this));
+  cacheItem.listenerKeys.push(tileLayer.getSource().on('change',
+      this.handleSourceChange_.bind(this, cacheItem), this));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
@@ -415,6 +417,21 @@ olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
     }
     this.deactivateCacheItem_(cacheItem);
   }
+};
+
+
+/**
+ * Called the source of layer fires the 'change' event. Reload the google tile
+ * layer.
+ *
+ * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+ * watched layer
+ * @private
+ */
+olgm.herald.TileSource.prototype.handleSourceChange_ = function(cacheItem) {
+  // Note: The 'changed' method of google.maps.MVCObject requires a param,
+  //       but it's not acutally used here.  It's just to satisfy the compiler.
+  cacheItem.googleTileLayer.changed('foo');
 };
 
 
