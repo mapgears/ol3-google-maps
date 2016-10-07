@@ -33,7 +33,7 @@ Then, load the OL3-Google-Maps script included in the tarball of the version you
 
 It is recommended to load the CSS file included in there as well.
 
-    <link rel="stylesheet" href="resources/ol3gm.css" type="text/css" />
+    <link rel="stylesheet" href="ol3gm.css" type="text/css" />
 
 Then, in your existing OpenLayers application, activate OL3-Google-Maps. Here's a simple example:
 
