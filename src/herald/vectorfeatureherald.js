@@ -106,7 +106,7 @@ olgm.herald.VectorFeature.prototype.setVisible = function(value) {
 
 
 /**
- * @param {ol.source.VectorEvent} event addFeature event
+ * @param {ol.source.Vector.Event} event addFeature event
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
@@ -117,7 +117,7 @@ olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
 
 
 /**
- * @param {ol.source.VectorEvent} event removeFeature event
+ * @param {ol.source.Vector.Event} event removeFeature event
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
