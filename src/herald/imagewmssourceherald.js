@@ -345,14 +345,13 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
 olgm.herald.ImageWMSSource.prototype.orderLayers = function() {
   for (var i = 0; i < this.cache_.length; i++) {
     var cacheItem = this.cache_[i];
+    var layer = cacheItem.layer;
+    var zIndex = this.findIndex(layer);
+    cacheItem.zIndex = zIndex;
 
     // There won't be an imageOverlay while Google Maps isn't visible
     if (cacheItem.imageOverlay) {
-      var layer = cacheItem.layer;
-      var zIndex = this.findIndex(layer);
-
       cacheItem.imageOverlay.setZIndex(zIndex);
-      cacheItem.zIndex = zIndex;
     }
   }
 };
