@@ -82,3 +82,8 @@ When creating a commit for this project, do not include the modifications in
 the examples that involve changing the API key for your own. To revert these
 changes, you can run the script located in `tasks/resetkey.sh`. You can also
 choose which lines to add to a commit with the `git add -p <file>` command.
+
+
+## Google Maps externs file
+
+See: https://github.com/google/closure-compiler/tree/master/contrib/externs/maps
