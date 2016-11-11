@@ -277,6 +277,11 @@ olgm.herald.ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
 olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
     cacheItem, opt_force) {
   var layer = cacheItem.layer;
+
+  if (!layer.getVisible()) {
+    return;
+  }
+
   var url = this.generateImageWMSFunction_(layer);
   var forceRefresh = opt_force == true;
 
