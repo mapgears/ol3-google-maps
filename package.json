@@ -1,6 +1,6 @@
 {
   "name": "ol3-google-maps",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "OpenLayers 3 Google Maps integration library",
   "keywords": [
     "map",
