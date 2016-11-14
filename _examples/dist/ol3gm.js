@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.12.2
+// Version: v0.12.3
 
 (function(){var k,aa=this;
 function ca(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";else if("function"==
