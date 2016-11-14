@@ -97,7 +97,9 @@ olgm.gm.MapLabel.prototype.changed = function(prop) {
  */
 olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
   var canvas = this.canvas_;
-  if (!canvas) return;
+  if (!canvas) {
+    return;
+  }
 
   var style = canvas.style;
 
