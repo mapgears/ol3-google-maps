@@ -14,6 +14,15 @@ is enough to fit the requirements of the application you want to develop, then
 it is strongly recommended to just pick one and build it on top of it.
 
 
+Circle Geometry
+---------------
+
+Styling of circle geometries, i.e. `ol.geom.Circle` is currently not supported
+in OL3-Google-Maps.
+
+Recommendation: avoid using such geometry type.
+
+
 Clusters
 --------
 
