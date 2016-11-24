@@ -51,8 +51,9 @@ upstream):
 
 ### Create a distributable package ###
 
-Create a zip containing the compiled code using the following command:
+Create a zip containing the compiled code using the following commands:
 
+    make dist
     ./tasks/package.sh v0.8.0
 
 It will appear in the directory where you ran the command
@@ -80,6 +81,7 @@ the packaged library.
 
 First, on master, run the following command:
 
+    git checkout master
     make API_KEY=AIzaSyDIDCAbY9acmoT5c4ZbDFRlUBc-RHK2rTw dist-examples
 
 This will generate the examples with the appropriate api key for our website.
