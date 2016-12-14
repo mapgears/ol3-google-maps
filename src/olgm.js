@@ -135,22 +135,38 @@ olgm.getStyleOf = function(object) {
 
 /**
  * @param {number} resolution the resolution to get the zoom from
- * @return {?number} the zoom from the resolution, if found
+ * @return {number} the zoom from the resolution, which can be fractionnal
  */
 olgm.getZoomFromResolution = function(resolution) {
 
-  var found = null;
-  var precision = 1000;
-  var res = Math.round(resolution * precision) / precision;
+  var resolutions = olgm.RESOLUTIONS;
+  var zoom;
 
-  for (var z = 0, len = olgm.RESOLUTIONS.length; z < len; z++) {
-    if (res == Math.round(olgm.RESOLUTIONS[z] * precision) / precision) {
-      found = z;
+  var lowZoom = 0;
+  var highZoom = resolutions.length - 1;
+  var highRes = resolutions[lowZoom];
+  var lowRes = resolutions[highZoom];
+  var res;
+  for (var i = 0, len = resolutions.length; i < len; ++i) {
+    res = resolutions[i];
+    if (res >= resolution) {
+      highRes = res;
+      lowZoom = i;
+    }
+    if (res <= resolution) {
+      lowRes = res;
+      highZoom = i;
       break;
     }
   }
+  var dRes = highRes - lowRes;
+  if (dRes > 0) {
+    zoom = lowZoom + ((highRes - resolution) / dRes);
+  } else {
+    zoom = lowZoom;
+  }
 
-  return found;
+  return Math.round(zoom * 1000) / 1000;
 };
 
 
