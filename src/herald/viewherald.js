@@ -167,9 +167,7 @@ olgm.herald.View.prototype.setZoom = function() {
   var resolution = this.ol3map.getView().getResolution();
   if (goog.isNumber(resolution)) {
     var zoom = olgm.getZoomFromResolution(resolution);
-    if (zoom !== null) {
-      this.gmap.setZoom(zoom);
-    }
+    this.gmap.setZoom(zoom);
   }
 };
 
