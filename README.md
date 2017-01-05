@@ -27,7 +27,7 @@ To use OL3-Google-Maps, first you need to load Google Maps API. It's important t
       src="https://maps.googleapis.com/maps/api/js?v=3&key=<YOUR_KEY>">
     </script>
 
-Then, load the OL3-Google-Maps script included in the tarball of the version you downloaded, which already includes OpenLayers so you don't need to load OpenLayers too.
+Then, load the OL3-Google-Maps script included in the tarball of the version you downloaded, which already includes OpenLayers so you don't need to load OpenLayers too. See the [Releases](https://github.com/mapgears/ol3-google-maps/releases) section to download the latest version.
 
     <script type="text/javascript" src="ol3gm.js"></script>
 
