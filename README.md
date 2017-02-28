@@ -79,6 +79,10 @@ Developing
 See the [developing](DEVELOPING.md) instructions if you want to contribute
 new features or patches to OL3-Google-Maps.
 
+Note that contributions have to meet some minimum quality requirements
+in order to be included in the official package, but that's the same
+as with any mature open source project.
+
 
 Known Limitations
 -----------------
@@ -94,3 +98,19 @@ For bugs or feature requests, use the
 
 If you need help with the library, use
 [StackOverflow under the ol3-google-maps tag](http://stackoverflow.com/questions/tagged/ol3-google-maps)
+
+
+Our commitment
+--------------
+
+We, at Mapgears, are definitely committed to continuing to support
+this project as long as it will make sense to do so. We use it for our
+own products and for projects with our customers, and will continue to
+make it evolve and address issues as we go as part of that work.
+
+However, just like with any open source project, its development is
+driven by the funding we can get through customer projects, so if
+there are some limitations or issues that are important to you and
+your organization, we'd be happy to provide you a quote for a support
+package or for working on those specific limitations, and of course
+you are also welcome to work on them yourself and contribute the fix.
