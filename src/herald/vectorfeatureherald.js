@@ -173,10 +173,12 @@ olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {
     // deactivate feature herald
     if(this.cache_.length>0)
     {
-        this.cache_[index].herald.deactivate();
-    }
+    this.cache_[index].herald.deactivate();
+
     // remove from cache
     this.cache_.splice(index, 1);
+    
+    }
   }
 };
 
