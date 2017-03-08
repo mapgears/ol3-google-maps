@@ -170,7 +170,6 @@ olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {
   if (index !== -1) {
     // remove from features (internal)
     this.features_.splice(index, 1);
-
     if(this.cache_.length>0){
         // deactivate feature herald
         this.cache_[index].herald.deactivate();
