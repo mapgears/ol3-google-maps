@@ -64,6 +64,7 @@ ol.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
  * Note: mark as `@api` to make the minimized version include this method.
  * @param {string} prop property
  * @api
+ * @override
  */
 olgm.gm.MapLabel.prototype.changed = function(prop) {
   switch (prop) {
@@ -137,6 +138,7 @@ olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
 /**
  * Note: mark as `@api` to make the minimized version include this method.
  * @api
+ * @override
  */
 olgm.gm.MapLabel.prototype.onAdd = function() {
   var canvas = this.canvas_ = document.createElement('canvas');

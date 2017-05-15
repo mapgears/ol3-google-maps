@@ -35,6 +35,7 @@ ol.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
  * Listen to property changes and react accordingly
  * @param {string} prop property
  * @api
+ * @override
  */
 olgm.gm.MapIcon.prototype.changed = function(prop) {
   switch (prop) {
@@ -97,6 +98,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
 /**
  * Manage feature being added to the map
  * @api
+ * @override
  */
 olgm.gm.MapIcon.prototype.onAdd = function() {
   var canvas = this.canvas_ = document.createElement('canvas');

@@ -53,6 +53,7 @@ olgm.gm.MapElement.prototype.width_ = 0;
  * Draw features to the map (call redraw) and setup canvas if it's the first
  * time we draw
  * @api
+ * @override
  */
 olgm.gm.MapElement.prototype.draw = function() {
   if (this.drawn_) {
@@ -143,6 +144,7 @@ olgm.gm.MapElement.prototype.getVisible_ = function() {
 /**
  * Delete canvas when removing the element
  * @api
+ * @override
  */
 olgm.gm.MapElement.prototype.onRemove = function() {
   var canvas = this.canvas_;

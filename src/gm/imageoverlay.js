@@ -51,6 +51,7 @@ if (window.google && window.google.maps) {
 /**
  * Note: mark as `@api` to make the minimized version include this method.
  * @api
+ * @override
  */
 olgm.gm.ImageOverlay.prototype.onAdd = function() {
   var div = document.createElement('div');
@@ -82,6 +83,7 @@ olgm.gm.ImageOverlay.prototype.onAdd = function() {
 /**
  * Note: mark as `@api` to make the minimized version include this method.
  * @api
+ * @override
  */
 olgm.gm.ImageOverlay.prototype.draw = function() {
   var div = this.div_;
@@ -131,6 +133,7 @@ olgm.gm.ImageOverlay.prototype.setZIndex = function(zIndex) {
 /**
  * Note: mark as `@api` to make the minimized version include this method.
  * @api
+ * @override
  */
 olgm.gm.ImageOverlay.prototype.onRemove = function() {
   this.div_.parentNode.removeChild(this.div_);

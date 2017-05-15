@@ -263,6 +263,7 @@ olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
 /**
  * Activate all cache items
  * @api
+ * @override
  */
 olgm.herald.TileSource.prototype.activate = function() {
   olgm.herald.Source.prototype.activate.call(this);
@@ -289,6 +290,7 @@ olgm.herald.TileSource.prototype.activateCacheItem_ = function(
 /**
  * Deactivate all cache items
  * @api
+ * @override
  */
 olgm.herald.TileSource.prototype.deactivate = function() {
   olgm.herald.Source.prototype.deactivate.call(this);

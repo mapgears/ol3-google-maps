@@ -131,6 +131,7 @@ olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
 /**
  * Activate all cache items
  * @api
+ * @override
  */
 olgm.herald.VectorSource.prototype.activate = function() {
   olgm.herald.Source.prototype.activate.call(this);
@@ -157,6 +158,7 @@ olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
 /**
  * Deactivate all cache items
  * @api
+ * @override
  */
 olgm.herald.VectorSource.prototype.deactivate = function() {
   olgm.herald.Source.prototype.deactivate.call(this);
