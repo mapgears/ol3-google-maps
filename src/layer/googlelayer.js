@@ -1,5 +1,6 @@
 goog.provide('olgm.layer.Google');
 
+goog.require('ol');
 goog.require('ol.layer.Group');
 
 

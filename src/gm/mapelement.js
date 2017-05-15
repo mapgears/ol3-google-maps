@@ -1,8 +1,7 @@
 goog.provide('olgm.gm.MapElement');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
-
+goog.require('ol');
 
 /**
  * This class is a parent for all elements that are drawn manually onto Google

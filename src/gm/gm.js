@@ -1,6 +1,7 @@
 goog.provide('olgm.gm');
 
 goog.require('goog.asserts');
+goog.require('ol.proj');
 goog.require('olgm');
 goog.require('olgm.gm.MapLabel');
 goog.require('olgm.gm.MapIcon');

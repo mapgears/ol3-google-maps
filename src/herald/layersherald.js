@@ -1,6 +1,7 @@
 goog.provide('olgm.herald.Layers');
 
 goog.require('goog.asserts');
+goog.require('ol');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.ImageWMSSource');

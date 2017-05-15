@@ -2,7 +2,8 @@ goog.provide('olgm.herald.Feature');
 
 goog.require('goog.asserts');
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('ol');
+goog.require('ol.Observable');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');

@@ -4,7 +4,8 @@ goog.require('goog.asserts');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('ol');
+goog.require('ol.proj');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 

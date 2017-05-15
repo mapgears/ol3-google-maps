@@ -1,8 +1,7 @@
 goog.provide('olgm.gm.ImageOverlay');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
-
+goog.require('ol');
 
 /**
  * Creates a new image overlay.

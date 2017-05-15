@@ -1,7 +1,7 @@
 goog.provide('olgm.gm.PanesOverlay');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('ol');
 
 
 /**

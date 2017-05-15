@@ -1,5 +1,6 @@
 goog.provide('olgm.OLGoogleMaps');
 
+goog.require('ol');
 goog.require('olgm.Abstract');
 goog.require('olgm.herald.Layers');
 

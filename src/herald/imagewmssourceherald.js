@@ -1,7 +1,11 @@
 goog.provide('olgm.herald.ImageWMSSource');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('goog.asserts');
+goog.require('ol');
+goog.require('ol.extent');
+goog.require('ol.proj');
+goog.require('olgm');
 goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
 

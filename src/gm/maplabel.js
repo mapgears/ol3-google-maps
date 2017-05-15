@@ -34,7 +34,7 @@
 goog.provide('olgm.gm.MapLabel');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('ol');
 goog.require('olgm.gm.MapElement');
 
 
