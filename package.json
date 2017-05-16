@@ -32,10 +32,10 @@
   },
   "devDependencies": {
     "chai": "3.5.0",
-    "closure-util": "1.18.0",
+    "closure-util": "1.20.0",
     "geojsonhint": "^1.0.0",
-    "eslint": "3.12.0",
-    "eslint-config-openlayers": "6.0.0",
+    "eslint": "3.19.0",
+    "eslint-config-openlayers": "7.0.0",
     "fs-extra": "~0.8.1",
     "graceful-fs": "~3.0.2",
     "jsdoc": "~3.4.0",
