@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index, all" />
+    <title>OL3-Google-Maps with ol3-layerswitcher example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="resources/ol.css" type="text/css" />
+    <link rel="stylesheet" href="resources/ol3gm.css" type="text/css" />
+    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
+    <link rel="stylesheet" href="./lib/ol3-layerswitcher/ol3-layerswitcher.css" type="text/css" />
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="map" class="map"></div>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <h4>Layerswitcher example</h4>
+          <p>
+            An example featuring both ol3-google-maps and ol3-layerswitcher
+            libraries.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    
+    <script src="./lib/ol3-layerswitcher/ol3-layerswitcher.js"></script>
+
+    <!-- When loading Google Maps on your own server, replace the src with
+         https://maps.googleapis.com/maps/api/js?v=3&key=mykey
+         where mykey is your Google Maps API key -->
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyDIDCAbY9acmoT5c4ZbDFRlUBc-RHK2rTw"></script>
+
+    <script src="../ol3gm.js"></script>
+    <script src="layerswitcher.js"></script>
+  </body>
+</html>
