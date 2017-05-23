@@ -114,5 +114,6 @@ Finally, commit and push the changes
 
 ### Announce the release ###
 
-Post an email on the [ol3-dev](https://groups.google.com/forum/#!forum/ol3-dev)
+Post an email on the
+[openlayers-dev](https://groups.google.com/forum/#!forum/openlayers-dev)
 mailing list announcing the release.
