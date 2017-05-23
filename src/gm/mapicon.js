@@ -72,7 +72,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
   var ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   var anchor = this.imageStyle_.getAnchor() || [0, 0];
   var scale = this.imageStyle_.getScale() || 1;
