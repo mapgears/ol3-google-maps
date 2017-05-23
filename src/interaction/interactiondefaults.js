@@ -1,5 +1,6 @@
 goog.provide('olgm.interaction');
 
+goog.require('ol.interaction');
 goog.require('ol.interaction.DragPan');
 
 

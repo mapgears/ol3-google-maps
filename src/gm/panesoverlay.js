@@ -1,7 +1,7 @@
 goog.provide('olgm.gm.PanesOverlay');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('ol');
 
 
 /**
@@ -33,6 +33,7 @@ olgm.gm.PanesOverlay.prototype.getMapPanes = function() {
 /**
  * Override parent function, but do not do anything
  * @api
+ * @override
  */
 olgm.gm.PanesOverlay.prototype.onAdd = function() {
 
@@ -42,6 +43,7 @@ olgm.gm.PanesOverlay.prototype.onAdd = function() {
 /**
  * Override parent function, but do not do anything
  * @api
+ * @override
  */
 olgm.gm.PanesOverlay.prototype.draw = function() {
 
@@ -51,6 +53,7 @@ olgm.gm.PanesOverlay.prototype.draw = function() {
 /**
  * Override parent function, but do not do anything
  * @api
+ * @override
  */
 olgm.gm.PanesOverlay.prototype.onRemove = function() {
 

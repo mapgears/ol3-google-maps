@@ -1,5 +1,6 @@
 goog.provide('olgm');
 
+goog.require('ol.extent');
 
 /**
  * @type {!Array.<number>}

@@ -22,7 +22,7 @@ var createServer = exports.createServer = function(callback, loadTests) {
   var manager = new closure.Manager({
     closure: true, // use the bundled Closure Library
     lib: lib,
-    ignoreRequires: '^ol\\.'
+    ignoreRequires: 'ol'
   });
   manager.on('error', function(e) {
     log.error('ol3-google-maps', e.message);

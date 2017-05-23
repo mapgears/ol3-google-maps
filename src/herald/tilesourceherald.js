@@ -1,7 +1,12 @@
 goog.provide('olgm.herald.TileSource');
 
 /** @suppress {extraRequire} */
-goog.require('ol.has');
+goog.require('goog.asserts');
+goog.require('ol');
+goog.require('ol.extent');
+goog.require('ol.proj');
+goog.require('olgm');
+goog.require('olgm.gm');
 goog.require('olgm.gm.PanesOverlay');
 goog.require('olgm.herald.Source');
 
@@ -258,6 +263,7 @@ olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
 /**
  * Activate all cache items
  * @api
+ * @override
  */
 olgm.herald.TileSource.prototype.activate = function() {
   olgm.herald.Source.prototype.activate.call(this);
@@ -284,6 +290,7 @@ olgm.herald.TileSource.prototype.activateCacheItem_ = function(
 /**
  * Deactivate all cache items
  * @api
+ * @override
  */
 olgm.herald.TileSource.prototype.deactivate = function() {
   olgm.herald.Source.prototype.deactivate.call(this);
