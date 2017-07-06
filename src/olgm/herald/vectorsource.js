@@ -1,8 +1,6 @@
 goog.provide('olgm.herald.VectorSource');
 
-goog.require('goog.asserts');
 goog.require('ol');
-goog.require('ol.layer.Vector');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Source');
@@ -46,8 +44,7 @@ ol.inherits(olgm.herald.VectorSource, olgm.herald.Source);
  * @override
  */
 olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
-  var vectorLayer = /** {@type ol.layer.Vector} */ (layer);
-  goog.asserts.assertInstanceof(vectorLayer, ol.layer.Vector);
+  var vectorLayer = /** @type {ol.layer.Vector} */ (layer);
 
   // Source required
   var source = vectorLayer.getSource();
@@ -98,13 +95,12 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
 
 
 /**
- * Unwatch the WMS tile layer
+ * Unwatch the vector layer
  * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
 olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
-  var vectorLayer = /** {@type ol.layer.Vector} */ (layer);
-  goog.asserts.assertInstanceof(vectorLayer, ol.layer.Vector);
+  var vectorLayer = /** @type {ol.layer.Vector} */ (layer);
 
   var index = this.layers_.indexOf(vectorLayer);
   if (index !== -1) {

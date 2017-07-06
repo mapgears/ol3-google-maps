@@ -1,17 +1,16 @@
 goog.provide('olgm.gm');
 
-goog.require('goog.asserts');
-goog.require('ol.geom.Geometry');
 goog.require('ol.geom.LineString');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
-goog.require('ol.geom.MultiPolygon');
 goog.require('ol.geom.MultiLineString');
+goog.require('ol.geom.MultiPolygon');
+goog.require('ol.proj');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Icon');
 goog.require('ol.style.RegularShape');
-goog.require('ol.proj');
 goog.require('olgm');
+goog.require('olgm.asserts');
 goog.require('olgm.gm.MapLabel');
 goog.require('olgm.gm.MapIcon');
 
@@ -27,8 +26,7 @@ goog.require('olgm.gm.MapIcon');
  * @return {google.maps.Data.Feature} google Feature
  */
 olgm.gm.createFeature = function(feature, opt_ol3map) {
-  var geometry = feature.getGeometry();
-  goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
+  var geometry = /** @type {ol.geom.Geometry} */ (feature.getGeometry());
   var gmapGeometry = olgm.gm.createFeatureGeometry(geometry, opt_ol3map);
   return new google.maps.Data.Feature({
     geometry: gmapGeometry
@@ -57,8 +55,8 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
     gmapGeometry = olgm.gm.createGeometry(geometry, opt_ol3map);
   }
 
-  goog.asserts.assert(gmapGeometry !== null,
-      'GoogleMaps geometry should not be null');
+  olgm.asserts.assert(gmapGeometry !== null,
+      'Expected geometry to be ol.geom.Point|LineString|Polygon');
 
   return gmapGeometry;
 };

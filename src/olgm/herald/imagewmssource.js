@@ -1,12 +1,11 @@
 goog.provide('olgm.herald.ImageWMSSource');
 
-goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.extent');
-goog.require('ol.layer.Image');
 goog.require('ol.proj');
 goog.require('ol.source.ImageWMS');
 goog.require('olgm');
+goog.require('olgm.asserts');
 goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
 
@@ -41,18 +40,18 @@ ol.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
-  var imageLayer = /** {@type ol.layer.Image} */ (layer);
-  goog.asserts.assertInstanceof(imageLayer, ol.layer.Image);
+  var imageLayer = /** @type {ol.layer.Image} */ (layer);
 
+  // Source must be ImageWMS
   var source = imageLayer.getSource();
-  if (!source) {
+  if (!(source instanceof ol.source.ImageWMS)) {
     return;
   }
 
   this.layers_.push(imageLayer);
 
   // opacity
-  var opacity = layer.getOpacity();
+  var opacity = imageLayer.getOpacity();
 
   var cacheItem = /** {@type olgm.herald.ImageWMSSource.LayerCache} */ ({
     imageOverlay: null,
@@ -64,7 +63,7 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
   });
 
   // Hide the google layer when the ol3 layer is invisible
-  cacheItem.listenerKeys.push(layer.on('change:visible',
+  cacheItem.listenerKeys.push(imageLayer.on('change:visible',
       this.handleVisibleChange_.bind(this, cacheItem), this));
 
   cacheItem.listenerKeys.push(this.ol3map.on('moveend',
@@ -90,8 +89,9 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
  * @override
  */
 olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
-  goog.asserts.assertInstanceof(layer, ol.layer.Image);
-  var index = this.layers_.indexOf(layer);
+  var imageLayer = /** @type {ol.layer.Image} */ (layer);
+
+  var index = this.layers_.indexOf(imageLayer);
   if (index !== -1) {
     this.layers_.splice(index, 1);
 
@@ -102,7 +102,7 @@ olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
     this.resetImageOverlay_(cacheItem);
 
     // opacity
-    layer.setOpacity(cacheItem.opacity);
+    imageLayer.setOpacity(cacheItem.opacity);
 
     this.cache_.splice(index, 1);
   }
@@ -172,8 +172,7 @@ olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
 olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
     layer) {
   var key;
-  var source = layer.getSource();
-  goog.asserts.assertInstanceof(source, ol.source.ImageWMS);
+  var source = /** @type {ol.source.ImageWMS} */ (layer.getSource());
 
   var params = source.getParams();
   var ol3map = this.ol3map;
@@ -182,7 +181,8 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var url = source.getUrl();
   var size = ol3map.getSize();
 
-  goog.asserts.assert(size !== undefined);
+  olgm.asserts.assert(
+      size !== undefined, 'Expected the map to have a size');
 
   var view = ol3map.getView();
   var bbox = view.calculateExtent(size);
@@ -320,7 +320,8 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
   var view = this.ol3map.getView();
   var size = this.ol3map.getSize();
 
-  goog.asserts.assert(size !== undefined);
+  olgm.asserts.assert(
+      size !== undefined, 'Expected the map to have a size');
 
   var extent = view.calculateExtent(size);
 
@@ -333,7 +334,7 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
 
   var overlay = new olgm.gm.ImageOverlay(
       url,
-      size,
+      /** @type {Array<number>} */ (size),
       topLeftLatLng);
   overlay.setZIndex(cacheItem.zIndex);
 
