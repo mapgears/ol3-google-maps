@@ -3,6 +3,7 @@ goog.provide('olgm.herald.VectorFeature');
 goog.require('goog.asserts');
 /** @suppress {extraRequire} */
 goog.require('ol');
+goog.require('ol.Feature');
 goog.require('olgm');
 goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');

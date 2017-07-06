@@ -19,6 +19,11 @@
   "rules":{
     "no-constant-condition": 0,
     "openlayers-internal/enum": 2,
+    "openlayers-internal/no-duplicate-requires": 2,
+    "openlayers-internal/no-missing-requires": 2,
+    "openlayers-internal/no-unused-requires": 2,
+    "openlayers-internal/one-provide": 2,
+    "openlayers-internal/requires-first": 2,
     "openlayers-internal/valid-provide": 2,
     "openlayers-internal/valid-requires": 2,
     "indent": [2, 2, {

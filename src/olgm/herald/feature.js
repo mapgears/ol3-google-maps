@@ -4,6 +4,8 @@ goog.require('goog.asserts');
 /** @suppress {extraRequire} */
 goog.require('ol');
 goog.require('ol.Observable');
+goog.require('ol.geom.Geometry');
+goog.require('ol.style.Icon');
 goog.require('olgm');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');

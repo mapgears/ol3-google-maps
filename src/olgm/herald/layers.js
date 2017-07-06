@@ -2,6 +2,11 @@ goog.provide('olgm.herald.Layers');
 
 goog.require('goog.asserts');
 goog.require('ol');
+goog.require('ol.layer.Base');
+goog.require('ol.layer.Image');
+goog.require('ol.layer.Tile');
+goog.require('ol.layer.Vector');
+goog.require('ol.source.ImageWMS');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.ImageWMSSource');
