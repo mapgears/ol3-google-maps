@@ -10,6 +10,7 @@ goog.require('olgm.herald.Herald');
  * API whenever a Google Maps layer is active.
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
+ * @abstract
  * @constructor
  * @extends {olgm.herald.Herald}
  */
@@ -32,19 +33,21 @@ ol.inherits(olgm.herald.Source, olgm.herald.Herald);
  * Watch the layer. This adds the layer to the list of layers the herald is
  * listening to, so that it can display it using Google Maps as soon as the
  * layer becomes visible.
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to watch
+ * @abstract
  * @api
  */
-olgm.herald.Source.prototype.watchLayer = goog.abstractMethod;
+olgm.herald.Source.prototype.watchLayer = function(layer) {};
 
 
 /**
  * Stop watching the layer. This removes the layer from the list of layers the
  * herald is listening to, and restores its original opacity.
- * @param {ol.layer.Base} layer
+ * @param {ol.layer.Base} layer layer to unwatch
+ * @abstract
  * @api
  */
-olgm.herald.Source.prototype.unwatchLayer = goog.abstractMethod;
+olgm.herald.Source.prototype.unwatchLayer = function(layer) {};
 
 
 /**
