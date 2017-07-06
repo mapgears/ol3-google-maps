@@ -1,6 +1,5 @@
 goog.provide('olgm.herald.TileSource');
 
-/** @suppress {extraRequire} */
 goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.extent');

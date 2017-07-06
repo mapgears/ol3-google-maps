@@ -1,6 +1,5 @@
 goog.provide('olgm.gm.MapIcon');
 
-/** @suppress {extraRequire} */
 goog.require('ol');
 goog.require('olgm.gm.MapElement');
 

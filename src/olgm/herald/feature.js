@@ -1,7 +1,6 @@
 goog.provide('olgm.herald.Feature');
 
 goog.require('goog.asserts');
-/** @suppress {extraRequire} */
 goog.require('ol');
 goog.require('ol.Observable');
 goog.require('ol.geom.Geometry');

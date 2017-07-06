@@ -1,6 +1,5 @@
 goog.provide('olgm.herald.Source');
 
-/** @suppress {extraRequire} */
 goog.require('ol');
 goog.require('olgm.herald.Herald');
 

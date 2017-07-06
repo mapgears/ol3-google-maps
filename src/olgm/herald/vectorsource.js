@@ -1,6 +1,5 @@
 goog.provide('olgm.herald.VectorSource');
 
-/** @suppress {extraRequire} */
 goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.layer.Vector');
