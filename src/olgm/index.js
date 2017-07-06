@@ -1,3 +1,4 @@
+/* eslint openlayers-internal/valid-provide: 0*/
 goog.provide('olgm');
 
 goog.require('ol.extent');
