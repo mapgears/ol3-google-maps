@@ -136,9 +136,10 @@ olgm.herald.Feature.prototype.activate = function() {
 
   // event listeners (todo)
   var keys = this.listenerKeys;
-  this.geometryChangeKey_ = geometry.on('change',
-                                        this.handleGeometryChange_,
-                                        this);
+  this.geometryChangeKey_ = geometry.on(
+      'change',
+      this.handleGeometryChange_,
+      this);
   keys.push(this.geometryChangeKey_);
   keys.push(this.feature_.on(
       'change:' + this.feature_.getGeometryName(),

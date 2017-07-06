@@ -91,7 +91,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   ctx.globalAlpha = opacity;
 
   ctx.drawImage(image, x, y,
-    image.width * scale, image.height * scale);
+      image.width * scale, image.height * scale);
 };
 
 

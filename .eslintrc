@@ -1,16 +1,41 @@
 {
   "extends": "openlayers",
-  "env": {
-    "jquery": true
-  },
-  "rules": {
-    "no-console": 0,
-    "semi": 2
-  },
   "globals": {
-    "goog": false,
-    "google": false,
+    "ArrayBuffer": false,
+    "Float32Array": false,
+    "Uint16Array": false,
+    "Uint32Array": false,
+    "Uint8Array": false,
+    "Uint8ClampedArray": false,
     "ol": false,
+    "goog": false,
+    "proj4": false,
+    "google": false,
     "olgm": false
+  },
+  "plugins": [
+    "openlayers-internal"
+  ],
+  "rules":{
+    "no-constant-condition": 0,
+    "openlayers-internal/enum": 2,
+    "openlayers-internal/valid-provide": 2,
+    "openlayers-internal/valid-requires": 2,
+    "indent": [2, 2, {
+      "VariableDeclarator": 2,
+      "SwitchCase": 1,
+      "MemberExpression": 2,
+      "FunctionDeclaration": {
+        "parameters": 2,
+        "body": 1
+      },
+      "FunctionExpression": {
+        "parameters": 2,
+        "body": 1
+      },
+      "CallExpression": {
+        "arguments": 2
+      }
+    }]
   }
 }
