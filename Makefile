@@ -32,6 +32,7 @@ help:
 	@echo "Main targets:"
 	@echo
 	@echo "- dist                    Create a "distribution" for the library (dist/ol3gm.js)"
+	@echo "- dist-package            Create an "ES module distribution" for the library"
 	@echo "- check                   Perform a number of checks on the code (lint, compile, test etc.)"
 	@echo "- lint                    Check the code with the linter"
 	@echo "- serve                   Run a development web server for running the examples"
@@ -71,7 +72,7 @@ lint:
 	touch $@
 
 .PHONY: check
-check: lint dist test .build/geojsonhint.timestamp
+check: lint dist dist-package test .build/geojsonhint.timestamp
 
 .PHONY: clean
 clean:
@@ -81,6 +82,7 @@ clean:
 	rm -f node_modules/openlayers/build/ol.css
 	rm -rf dist/ol3
 	rm -rf dist/examples
+	rm -rf dist-package
 
 .PHONY: cleanall
 cleanall: clean
@@ -89,6 +91,15 @@ cleanall: clean
 .PHONY: test
 test:
 	node tasks/test.js
+
+.PHONY: dist-package
+dist-package:
+	@rm -rf dist-package
+	@cp -r package dist-package
+	@cd ./src && cp -r olgm/* ../dist-package
+	@cp css/ol3gm.css dist-package
+	./node_modules/.bin/jscodeshift --transform transforms/module.js dist-package
+	npm run lint-package
 
 .build/node_modules.timestamp: package.json
 	npm install

@@ -1,0 +1,21 @@
+{
+  "name": "olgm",
+  "version": "0.14.0",
+  "description": "ol3-google-maps as ES2015 modules",
+  "main": "index.js",
+  "module": "index.js",
+  "license": "MIT",
+  "peerDependencies": {
+    "ol": "4.x"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify",
+        {
+          "plugins": ["transform-es2015-modules-commonjs"]
+        }
+      ]
+    ]
+  }
+}
