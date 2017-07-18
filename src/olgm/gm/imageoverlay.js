@@ -1,6 +1,5 @@
 goog.provide('olgm.gm.ImageOverlay');
 
-/** @suppress {extraRequire} */
 goog.require('ol');
 
 /**

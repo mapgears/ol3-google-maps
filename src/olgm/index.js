@@ -1,6 +1,13 @@
+/* eslint openlayers-internal/valid-provide: 0*/
 goog.provide('olgm');
 
+goog.require('ol.Feature');
+goog.require('ol.Observable');
 goog.require('ol.extent');
+goog.require('ol.geom.Point');
+goog.require('ol.geom.Polygon');
+goog.require('ol.layer.Vector');
+goog.require('ol.style.Style');
 
 /**
  * @type {!Array.<number>}

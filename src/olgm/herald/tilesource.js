@@ -1,12 +1,12 @@
 goog.provide('olgm.herald.TileSource');
 
-/** @suppress {extraRequire} */
 goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.extent');
+goog.require('ol.layer.Tile');
 goog.require('ol.proj');
+goog.require('ol.source.TileImage');
 goog.require('olgm');
-goog.require('olgm.gm');
 goog.require('olgm.gm.PanesOverlay');
 goog.require('olgm.herald.Source');
 

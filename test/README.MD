@@ -2,7 +2,7 @@
 
 ### Where to write tests ###
 
-Place your tests in the test/src folder. The name of the test file should be
+Place your tests in the test/spec folder. The name of the test file should be
 the same as the name of the source file that contains the code you're testing,
 except that the extension will be `.test.js` instead of `.js`.
 

@@ -1,6 +1,13 @@
 goog.provide('olgm.gm');
 
 goog.require('goog.asserts');
+goog.require('ol.geom.Geometry');
+goog.require('ol.geom.LineString');
+goog.require('ol.geom.Point');
+goog.require('ol.geom.Polygon');
+goog.require('ol.style.Circle');
+goog.require('ol.style.Icon');
+goog.require('ol.style.RegularShape');
 goog.require('ol.proj');
 goog.require('olgm');
 goog.require('olgm.gm.MapLabel');
