@@ -114,14 +114,12 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
       latLngsArr.push(genLatLngs(coordsArr));
     });
     gmapGeometry = new google.maps.Data.Polygon(latLngsArr);
+  } else if (geometry instanceof ol.geom.LineString) {
+    var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
+    gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
   } else {
-    if (geometry instanceof ol.geom.LineString) {
-      var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
-      gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
-    } else {
-      var polygonlatLngs = genLatLngs(geometry.getCoordinates()[0]);
-      gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
-    }
+    var polygonlatLngs = genLatLngs(geometry.getCoordinates()[0]);
+    gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
   }
 
   return gmapGeometry;
