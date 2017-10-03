@@ -49,7 +49,8 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
   if (geometry instanceof ol.geom.Point) {
     gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
   } else if (geometry instanceof ol.geom.LineString ||
-             geometry instanceof ol.geom.Polygon) {
+             geometry instanceof ol.geom.Polygon ||
+             geometry instanceof ol.geom.MultiPolygon) {
     gmapGeometry = olgm.gm.createGeometry(geometry, opt_ol3map);
   }
 
@@ -93,26 +94,33 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
 
-  var latLngs = [];
-  var lonLatCoords;
+  var genLatLngs = function(coordinates){
+    var latLngs = [];
+    var lonLatCoords;
 
-  var coordinates;
-  if (geometry instanceof ol.geom.LineString) {
-    coordinates = geometry.getCoordinates();
-  } else {
-    coordinates = geometry.getCoordinates()[0];
-  }
-
-  for (var i = 0, len = coordinates.length; i < len; i++) {
-    lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
-    latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
+    for (var i = 0, len = coordinates.length; i < len; i++) {
+      lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
+      latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
+    }
+    return latLngs;
   }
 
   var gmapGeometry = null;
-  if (geometry instanceof ol.geom.LineString) {
-    gmapGeometry = new google.maps.Data.LineString(latLngs);
-  } else {
-    gmapGeometry = new google.maps.Data.Polygon([latLngs]);
+
+  if (geometry instanceof ol.geom.MultiPolygon){
+    var latLngsArr = []
+    geometry.getCoordinates()[0].forEach(function(coordsArr){
+      latLngsArr.push(genLatLngs(coordsArr));
+    });
+    gmapGeometry = new google.maps.Data.Polygon(latLngsArr);
+  } else{
+    if (geometry instanceof ol.geom.LineString) {
+      var latLngs = genLatLngs(geometry.getCoordinates());
+      gmapGeometry = new google.maps.Data.LineString(latLngs);
+    } else {
+      var latLngs = genLatLngs(geometry.getCoordinates()[0]);
+      gmapGeometry = new google.maps.Data.Polygon([latLngs]);
+    }
   }
 
   return gmapGeometry;
