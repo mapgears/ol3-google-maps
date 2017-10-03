@@ -5,6 +5,7 @@ goog.require('ol.geom.Geometry');
 goog.require('ol.geom.LineString');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
+goog.require('ol.geom.MultiPolygon');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Icon');
 goog.require('ol.style.RegularShape');
