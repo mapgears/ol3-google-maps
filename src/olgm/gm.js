@@ -85,7 +85,7 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon} geometry geometry to create
+ * @param {ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiPolygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.LineString|google.maps.Data.Polygon} google
