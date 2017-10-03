@@ -95,7 +95,7 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
 
-  var genLatLngs = function(coordinates){
+  var genLatLngs = function(coordinates) {
     var latLngs = [];
     var lonLatCoords;
 
@@ -104,23 +104,23 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
       latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
     }
     return latLngs;
-  }
+  };
 
   var gmapGeometry = null;
 
-  if (geometry instanceof ol.geom.MultiPolygon){
-    var latLngsArr = []
-    geometry.getCoordinates()[0].forEach(function(coordsArr){
+  if (geometry instanceof ol.geom.MultiPolygon) {
+    var latLngsArr = [];
+    geometry.getCoordinates()[0].forEach(function(coordsArr) {
       latLngsArr.push(genLatLngs(coordsArr));
     });
     gmapGeometry = new google.maps.Data.Polygon(latLngsArr);
-  } else{
+  } else {
     if (geometry instanceof ol.geom.LineString) {
-      var latLngs = genLatLngs(geometry.getCoordinates());
-      gmapGeometry = new google.maps.Data.LineString(latLngs);
+      var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
+      gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
     } else {
-      var latLngs = genLatLngs(geometry.getCoordinates()[0]);
-      gmapGeometry = new google.maps.Data.Polygon([latLngs]);
+      var polygonlatLngs = genLatLngs(geometry.getCoordinates()[0]);
+      gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
     }
   }
 
