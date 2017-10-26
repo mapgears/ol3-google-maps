@@ -16,6 +16,12 @@ Synchronizes:
  - Layers (Google, Vector)
  - Vector features (style, geometry)
 
+Installation
+-----------
+You can install OL3-Google-Maps via npm:
+
+    npm install ol3-google-maps --save
+
 
 Quick start
 -----------
