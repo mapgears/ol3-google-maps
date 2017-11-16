@@ -7,6 +7,8 @@ These tools are recommended when developing on Windows:
     * Make
 * Git Bash
 
+Alternatively, you can use [Ubuntu Bash](https://msdn.microsoft.com/en-us/commandline/wsl/install-win10) for **Windows 10** machines. In that case, skip to the installation guide for Windows 10 below.
+
 ### Development dependencies
 
 The minimum requirements are:
@@ -32,6 +34,34 @@ Also, through Cygwin, install virtualenv:
 To install the Node.js dependencies run
 
     $ npm install
+
+## Installation guide for Windows 10
+
+* Download [NodeJS](https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions) for Ubuntu.
+
+* Install Java:
+    
+        $ sudo apt-get install default-jre
+
+* Install Python:
+
+        $ sudo apt-get install build-essential
+        $ sudo apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
+        $ wget https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz
+        $ tar -xvf Python-2.7.13.tgz
+        $ cd Python-2.7.13
+        $ sudo ./configure
+        $ sudo make install
+        $ sudo make altinstall
+
+* Install dos2unix to convert `setkey.sh` in a Unix format:
+
+        $ sudo apt install dos2unix
+        $ dos2unix tasks/setkey.sh
+
+ > If you use Visual Studio Code for development, [learn](https://code.visualstudio.com/docs/editor/integrated-terminal) how to set the Ubuntu Bash as your integrated terminal.
+
+> Dos2unix is needed because new line characters in `setkey.sh` file are not correctly recognized and they generate a parse error when running `make serve`.
 
 
 ## Working with the build tool on Windows
