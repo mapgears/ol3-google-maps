@@ -6,7 +6,6 @@ goog.require('ol.geom.LineString');
 goog.require('ol.geom.MultiLineString');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
-goog.require('ol.geom.MultiPolygon');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Icon');
 goog.require('ol.style.RegularShape');
@@ -52,8 +51,7 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
     gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
   } else if (geometry instanceof ol.geom.LineString ||
              geometry instanceof ol.geom.MultiLineString ||
-             geometry instanceof ol.geom.Polygon ||
-             geometry instanceof ol.geom.MultiPolygon) {
+             geometry instanceof ol.geom.Polygon) {
     gmapGeometry = olgm.gm.createGeometry(geometry, opt_ol3map);
   }
 
@@ -90,8 +88,8 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
  * @param {ol.geom.LineString|ol.geom.MultiLineString|ol.geom.Polygon|ol.geom.MultiPolygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon|google.maps.Data.MultiPolygon} google
- * LineString, MultiLineString,Polygon or MultiPolygon
+ * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon} google
+ * LineString, MultiLineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
@@ -108,13 +106,7 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   };
 
   var gmapGeometry = null;
-  if (geometry instanceof ol.geom.MultiPolygon) {
-    var latLngsArr = [];
-    geometry.getCoordinates()[0].forEach(function(coordsArr) {
-      latLngsArr.push(genLatLngs(coordsArr));
-    });
-    gmapGeometry = new google.maps.Data.Polygon(latLngsArr);
-  } else if (geometry instanceof ol.geom.MultiLineString) {
+  if (geometry instanceof ol.geom.MultiLineString) {
     var latLngsArr = [];
     geometry.getCoordinates()[0].forEach(function(coordsArr) {
       latLngsArr.push(genLatLngs(coordsArr));
