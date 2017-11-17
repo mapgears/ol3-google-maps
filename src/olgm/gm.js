@@ -98,15 +98,15 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
       opt_ol3map.getView().getProjection() : 'EPSG:3857';
 
   var genLatLngs = function(coordinates) {
-      var latLngs = [];
-      var lonLatCoords;
-      for (var i = 0, len = coordinates.length; i < len; i++) {
-        lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
-        latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
-      }
-      return latLngs;
+    var latLngs = [];
+    var lonLatCoords;
+    for (var i = 0, len = coordinates.length; i < len; i++) {
+      lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
+      latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
+    }
+    return latLngs;
   };
-	
+
   var gmapGeometry = null;
   if (geometry instanceof ol.geom.MultiPolygon) {
     var latLngsArr = [];
