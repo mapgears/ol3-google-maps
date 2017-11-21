@@ -84,6 +84,9 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Convert geometry coordinates to latitude and longitude.
+ * @param {ol.Coordinate} coordinates coordinate to create
+ * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ *     `EPSG:3857` is used.
  * @return {google.maps.LatLng} google LatLng array
  */
 olgm.gm.coordinatesToLatLngs = function(coordinates, opt_ol3map) {
@@ -91,7 +94,7 @@ olgm.gm.coordinatesToLatLngs = function(coordinates, opt_ol3map) {
   opt_ol3map.getView().getProjection() : 'EPSG:3857';
   var latLngs = [];
   var lonLatCoords;
-  for (var i=0, len = coordinates.length; i < len; i++) {
+  for (var i = 0, len = coordinates.length; i < len; i++) {
     lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
     latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
   }
@@ -111,7 +114,7 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var gmapGeometry = null;
   if (geometry instanceof ol.geom.MultiLineString) {
     var latLngsArr = [];
-    for (var i=0; i < geometry.getCoordinates().length; i++) {
+    for (var i = 0; i < geometry.getCoordinates().length; i++) {
       latLngsArr.push(olgm.gm.coordinatesToLatLngs(geometry.getCoordinates()[i], opt_ol3map));
     }
     gmapGeometry = new google.maps.Data.LineString(latLngsArr);
