@@ -84,10 +84,10 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Convert geometry coordinates to latitude and longitude.
- * @param {ol.Coordinate} coordinates coordinate to create
+ * @param {Array.<ol.Coordinate>|null} coordinates coordinate to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.LatLng} google LatLng array
+ * @return {Array<(google.maps.LatLng|google.maps.LatLngLiteral|null)>|null} google LatLng array
  */
 olgm.gm.coordinatesToLatLngs = function(coordinates, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
