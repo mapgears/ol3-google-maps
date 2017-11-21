@@ -82,35 +82,37 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
   return new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]);
 };
 
+/**
+ * Convert coordinates to latitude and longitude value.
+ */
+olgm.gm.coordinatesToLatLngs = function(coordinates) {
+  var inProj = (opt_ol3map !== undefined) ?
+  opt_ol3map.getView().getProjection() : 'EPSG:3857';
+  var latLngs = [];
+  var lonLatCoords;
+  for (var i=0, len = coordinates.length; i < len; i++) {
+    lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
+    latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
+  }
+  return latLngs;
+};
+
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.MultiLineString|ol.geom.Polygon|ol.geom.MultiPolygon} geometry geometry to create
+ * @param {ol.geom.LineString|ol.geom.MultiLineString|ol.geom.Polygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon} google
  * LineString, MultiLineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
-  var inProj = (opt_ol3map !== undefined) ?
-      opt_ol3map.getView().getProjection() : 'EPSG:3857';
-
-  var genLatLngs = function(coordinates) {
-    var latLngs = [];
-    var lonLatCoords;
-    for (var i = 0, len = coordinates.length; i < len; i++) {
-      lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
-      latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
-    }
-    return latLngs;
-  };
-
   var gmapGeometry = null;
   if (geometry instanceof ol.geom.MultiLineString) {
     var latLngsArr = [];
-    geometry.getCoordinates()[0].forEach(function(coordsArr) {
-      latLngsArr.push(genLatLngs(coordsArr));
-    });
+    for(var i=0;i<geometry.getCoordinates().length;i++) {
+      latLngsArr.push(olgm.gm.coordinatesToLatLngs(geometry.getCoordinates()[i], opt_ol3map));
+    }
     gmapGeometry = new google.maps.Data.LineString(latLngsArr);
   } else if (geometry instanceof ol.geom.LineString) {
     var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
