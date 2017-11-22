@@ -210,8 +210,12 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
         var size = 0.1;
         var rotation = image.getRotation() + image.getAngle();
 
-        if (innerRadius == 0) {
+        if (innerRadius == 0 && image.getRadius2() === undefined) {
           nbPoints = nbPoints / 2;
+        }
+
+        if (innerRadius !== outerRadius) {
+          nbPoints = nbPoints * 2;
         }
 
         for (var i = 0; i < nbPoints; i++) {
