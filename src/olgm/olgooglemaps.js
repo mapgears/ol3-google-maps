@@ -63,10 +63,10 @@ olgm.OLGoogleMaps = function(options) {
   olgm.Abstract.call(this, options.map, gmap);
 
   var watchOptions = options.watch !== undefined ?
-      options.watch : {};
+    options.watch : {};
 
   var mapIconOptions = options.mapIconOptions !== undefined ?
-      options.mapIconOptions : {};
+    options.mapIconOptions : {};
 
   /**
    * @type {olgm.herald.Layers}
