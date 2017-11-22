@@ -32,8 +32,8 @@
   },
   "devDependencies": {
     "chai": "3.5.0",
-    "closure-util": "1.20.0",
-    "eslint": "3.19.0",
+    "closure-util": "1.26.0",
+    "eslint": "4.11.0",
     "eslint-config-openlayers": "7.0.0",
     "eslint-plugin-openlayers-internal": "^3.1.0",
     "fs-extra": "~0.8.1",
