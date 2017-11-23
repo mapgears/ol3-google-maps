@@ -112,17 +112,18 @@ olgm.gm.coordinatesToLatLngs = function(coordinates, opt_ol3map) {
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var gmapGeometry = null;
+  var coordinates = geometry.getCoordinates();
   if (geometry instanceof ol.geom.MultiLineString) {
     var latLngsArr = [];
-    for (var i = 0; i < geometry.getCoordinates().length; i++) {
-      latLngsArr.push(olgm.gm.coordinatesToLatLngs(geometry.getCoordinates()[i], opt_ol3map));
+    for (var i = 0, ii = coordinates.length; i < ii; i++) {
+      latLngsArr.push(olgm.gm.coordinatesToLatLngs(coordinates[i], opt_ol3map));
     }
     gmapGeometry = new google.maps.Data.LineString(latLngsArr);
   } else if (geometry instanceof ol.geom.LineString) {
-    var lineStringlatLngs = olgm.gm.coordinatesToLatLngs(geometry.getCoordinates(), opt_ol3map);
+    var lineStringlatLngs = olgm.gm.coordinatesToLatLngs(coordinates, opt_ol3map);
     gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
   } else {
-    var polygonlatLngs = olgm.gm.coordinatesToLatLngs(geometry.getCoordinates()[0], opt_ol3map);
+    var polygonlatLngs = olgm.gm.coordinatesToLatLngs(coordinates[0], opt_ol3map);
     gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
   }
 
