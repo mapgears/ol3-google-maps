@@ -703,6 +703,11 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.Map.prototype,
+    'getFeaturesAtPixel',
+    ol.Map.prototype.getFeaturesAtPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
     'forEachLayerAtPixel',
     ol.Map.prototype.forEachLayerAtPixel);
 
@@ -1096,6 +1101,14 @@ goog.exportProperty(
     'haversineDistance',
     ol.Sphere.prototype.haversineDistance);
 
+goog.exportSymbol(
+    'ol.Sphere.getLength',
+    ol.Sphere.getLength);
+
+goog.exportSymbol(
+    'ol.Sphere.getArea',
+    ol.Sphere.getArea);
+
 goog.exportProperty(
     ol.Tile.prototype,
     'getTileCoord',
@@ -1124,6 +1137,11 @@ goog.exportProperty(
     ol.VectorTile.prototype,
     'getProjection',
     ol.VectorTile.prototype.getProjection);
+
+goog.exportProperty(
+    ol.VectorTile.prototype,
+    'setExtent',
+    ol.VectorTile.prototype.setExtent);
 
 goog.exportProperty(
     ol.VectorTile.prototype,
@@ -1253,6 +1271,11 @@ goog.exportProperty(
     ol.View.prototype,
     'getZoomForResolution',
     ol.View.prototype.getZoomForResolution);
+
+goog.exportProperty(
+    ol.View.prototype,
+    'getResolutionForZoom',
+    ol.View.prototype.getResolutionForZoom);
 
 goog.exportProperty(
     ol.View.prototype,
@@ -1650,6 +1673,16 @@ goog.exportProperty(
     ol.style.Style.prototype,
     'clone',
     ol.style.Style.prototype.clone);
+
+goog.exportProperty(
+    ol.style.Style.prototype,
+    'getRenderer',
+    ol.style.Style.prototype.getRenderer);
+
+goog.exportProperty(
+    ol.style.Style.prototype,
+    'setRenderer',
+    ol.style.Style.prototype.setRenderer);
 
 goog.exportProperty(
     ol.style.Style.prototype,
@@ -2734,6 +2767,11 @@ goog.exportProperty(
     'setUseInterimTilesOnError',
     ol.layer.VectorTile.prototype.setUseInterimTilesOnError);
 
+goog.exportProperty(
+    ol.layer.VectorTile.prototype,
+    'getSource',
+    ol.layer.VectorTile.prototype.getSource);
+
 goog.exportSymbol(
     'ol.interaction.DoubleClickZoom',
     ol.interaction.DoubleClickZoom);
@@ -2852,8 +2890,8 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.interaction.Extent.Event.prototype,
-    'extent_',
-    ol.interaction.Extent.Event.prototype.extent_);
+    'extent',
+    ol.interaction.Extent.Event.prototype.extent);
 
 goog.exportSymbol(
     'ol.interaction.Interaction',
@@ -3852,6 +3890,11 @@ goog.exportProperty(
 goog.exportSymbol(
     'ol.format.MVT',
     ol.format.MVT);
+
+goog.exportProperty(
+    ol.format.MVT.prototype,
+    'getLastExtent',
+    ol.format.MVT.prototype.getLastExtent);
 
 goog.exportProperty(
     ol.format.MVT.prototype,
@@ -9786,11 +9829,6 @@ goog.exportProperty(
     ol.layer.Tile.prototype,
     'un',
     ol.layer.Tile.prototype.un);
-
-goog.exportProperty(
-    ol.layer.VectorTile.prototype,
-    'getSource',
-    ol.layer.VectorTile.prototype.getSource);
 
 goog.exportProperty(
     ol.layer.VectorTile.prototype,

@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.15.0
+// Version: v0.16.0
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -4788,6 +4788,27 @@ ol.obj.isEmpty = function(object) {
   return !property;
 };
 
+goog.provide('ol.geom.GeometryType');
+
+
+/**
+ * The geometry type. One of `'Point'`, `'LineString'`, `'LinearRing'`,
+ * `'Polygon'`, `'MultiPoint'`, `'MultiLineString'`, `'MultiPolygon'`,
+ * `'GeometryCollection'`, `'Circle'`.
+ * @enum {string}
+ */
+ol.geom.GeometryType = {
+  POINT: 'Point',
+  LINE_STRING: 'LineString',
+  LINEAR_RING: 'LinearRing',
+  POLYGON: 'Polygon',
+  MULTI_POINT: 'MultiPoint',
+  MULTI_LINE_STRING: 'MultiLineString',
+  MULTI_POLYGON: 'MultiPolygon',
+  GEOMETRY_COLLECTION: 'GeometryCollection',
+  CIRCLE: 'Circle'
+};
+
 /**
  * @license
  * Latitude/longitude spherical geodesy formulae taken from
@@ -4798,6 +4819,7 @@ ol.obj.isEmpty = function(object) {
 goog.provide('ol.Sphere');
 
 goog.require('ol.math');
+goog.require('ol.geom.GeometryType');
 
 
 /**
@@ -4841,18 +4863,7 @@ ol.Sphere = function(radius) {
  * @api
  */
 ol.Sphere.prototype.geodesicArea = function(coordinates) {
-  var area = 0, len = coordinates.length;
-  var x1 = coordinates[len - 1][0];
-  var y1 = coordinates[len - 1][1];
-  for (var i = 0; i < len; i++) {
-    var x2 = coordinates[i][0], y2 = coordinates[i][1];
-    area += ol.math.toRadians(x2 - x1) *
-        (2 + Math.sin(ol.math.toRadians(y1)) +
-        Math.sin(ol.math.toRadians(y2)));
-    x1 = x2;
-    y1 = y2;
-  }
-  return area * this.radius * this.radius / 2.0;
+  return ol.Sphere.getArea_(coordinates, this.radius);
 };
 
 
@@ -4865,14 +4876,7 @@ ol.Sphere.prototype.geodesicArea = function(coordinates) {
  * @api
  */
 ol.Sphere.prototype.haversineDistance = function(c1, c2) {
-  var lat1 = ol.math.toRadians(c1[1]);
-  var lat2 = ol.math.toRadians(c2[1]);
-  var deltaLatBy2 = (lat2 - lat1) / 2;
-  var deltaLonBy2 = ol.math.toRadians(c2[0] - c1[0]) / 2;
-  var a = Math.sin(deltaLatBy2) * Math.sin(deltaLatBy2) +
-      Math.sin(deltaLonBy2) * Math.sin(deltaLonBy2) *
-      Math.cos(lat1) * Math.cos(lat2);
-  return 2 * this.radius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return ol.Sphere.getDistance_(c1, c2, this.radius);
 };
 
 
@@ -4898,21 +4902,203 @@ ol.Sphere.prototype.offset = function(c1, distance, bearing) {
   return [ol.math.toDegrees(lon), ol.math.toDegrees(lat)];
 };
 
-goog.provide('ol.sphere.NORMAL');
 
-goog.require('ol.Sphere');
+/**
+ * The mean Earth radius (1/3 * (2a + b)) for the WGS84 ellipsoid.
+ * https://en.wikipedia.org/wiki/Earth_radius#Mean_radius
+ * @type {number}
+ */
+ol.Sphere.DEFAULT_RADIUS = 6371008.8;
 
 
 /**
- * The normal sphere.
- * @const
- * @type {ol.Sphere}
+ * Get the spherical length of a geometry.  This length is the sum of the
+ * great circle distances between coordinates.  For polygons, the length is
+ * the sum of all rings.  For points, the length is zero.  For multi-part
+ * geometries, the length is the sum of the length of each part.
+ * @param {ol.geom.Geometry} geometry A geometry.
+ * @param {olx.SphereMetricOptions=} opt_options Options for the length
+ *     calculation.  By default, geometries are assumed to be in 'EPSG:3857'.
+ *     You can change this by providing a `projection` option.
+ * @return {number} The spherical length (in meters).
+ * @api
  */
-ol.sphere.NORMAL = new ol.Sphere(6370997);
+ol.Sphere.getLength = function(geometry, opt_options) {
+  var options = opt_options || {};
+  var radius = options.radius || ol.Sphere.DEFAULT_RADIUS;
+  var projection = options.projection || 'EPSG:3857';
+  geometry = geometry.clone().transform(projection, 'EPSG:4326');
+  var type = geometry.getType();
+  var length = 0;
+  var coordinates, coords, i, ii, j, jj;
+  switch (type) {
+    case ol.geom.GeometryType.POINT:
+    case ol.geom.GeometryType.MULTI_POINT: {
+      break;
+    }
+    case ol.geom.GeometryType.LINE_STRING:
+    case ol.geom.GeometryType.LINEAR_RING: {
+      coordinates = /** @type {ol.geom.SimpleGeometry} */ (geometry).getCoordinates();
+      length = ol.Sphere.getLength_(coordinates, radius);
+      break;
+    }
+    case ol.geom.GeometryType.MULTI_LINE_STRING:
+    case ol.geom.GeometryType.POLYGON: {
+      coordinates = /** @type {ol.geom.SimpleGeometry} */ (geometry).getCoordinates();
+      for (i = 0, ii = coordinates.length; i < ii; ++i) {
+        length += ol.Sphere.getLength_(coordinates[i], radius);
+      }
+      break;
+    }
+    case ol.geom.GeometryType.MULTI_POLYGON: {
+      coordinates = /** @type {ol.geom.SimpleGeometry} */ (geometry).getCoordinates();
+      for (i = 0, ii = coordinates.length; i < ii; ++i) {
+        coords = coordinates[i];
+        for (j = 0, jj = coords.length; j < jj; ++j) {
+          length += ol.Sphere.getLength_(coords[j], radius);
+        }
+      }
+      break;
+    }
+    case ol.geom.GeometryType.GEOMETRY_COLLECTION: {
+      var geometries = /** @type {ol.geom.GeometryCollection} */ (geometry).getGeometries();
+      for (i = 0, ii = geometries.length; i < ii; ++i) {
+        length += ol.Sphere.getLength(geometries[i], opt_options);
+      }
+      break;
+    }
+    default: {
+      throw new Error('Unsupported geometry type: ' + type);
+    }
+  }
+  return length;
+};
+
+
+/**
+ * Get the cumulative great circle length of linestring coordinates (geographic).
+ * @param {Array} coordinates Linestring coordinates.
+ * @param {number} radius The sphere radius to use.
+ * @return {number} The length (in meters).
+ */
+ol.Sphere.getLength_ = function(coordinates, radius) {
+  var length = 0;
+  for (var i = 0, ii = coordinates.length; i < ii - 1; ++i) {
+    length += ol.Sphere.getDistance_(coordinates[i], coordinates[i + 1], radius);
+  }
+  return length;
+};
+
+
+/**
+ * Get the great circle distance between two geographic coordinates.
+ * @param {Array} c1 Starting coordinate.
+ * @param {Array} c2 Ending coordinate.
+ * @param {number} radius The sphere radius to use.
+ * @return {number} The great circle distance between the points (in meters).
+ */
+ol.Sphere.getDistance_ = function(c1, c2, radius) {
+  var lat1 = ol.math.toRadians(c1[1]);
+  var lat2 = ol.math.toRadians(c2[1]);
+  var deltaLatBy2 = (lat2 - lat1) / 2;
+  var deltaLonBy2 = ol.math.toRadians(c2[0] - c1[0]) / 2;
+  var a = Math.sin(deltaLatBy2) * Math.sin(deltaLatBy2) +
+      Math.sin(deltaLonBy2) * Math.sin(deltaLonBy2) *
+      Math.cos(lat1) * Math.cos(lat2);
+  return 2 * radius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+
+/**
+ * Get the spherical area of a geometry.  This is the area (in meters) assuming
+ * that polygon edges are segments of great circles on a sphere.
+ * @param {ol.geom.Geometry} geometry A geometry.
+ * @param {olx.SphereMetricOptions=} opt_options Options for the area
+ *     calculation.  By default, geometries are assumed to be in 'EPSG:3857'.
+ *     You can change this by providing a `projection` option.
+ * @return {number} The spherical area (in square meters).
+ * @api
+ */
+ol.Sphere.getArea = function(geometry, opt_options) {
+  var options = opt_options || {};
+  var radius = options.radius || ol.Sphere.DEFAULT_RADIUS;
+  var projection = options.projection || 'EPSG:3857';
+  geometry = geometry.clone().transform(projection, 'EPSG:4326');
+  var type = geometry.getType();
+  var area = 0;
+  var coordinates, coords, i, ii, j, jj;
+  switch (type) {
+    case ol.geom.GeometryType.POINT:
+    case ol.geom.GeometryType.MULTI_POINT:
+    case ol.geom.GeometryType.LINE_STRING:
+    case ol.geom.GeometryType.MULTI_LINE_STRING:
+    case ol.geom.GeometryType.LINEAR_RING: {
+      break;
+    }
+    case ol.geom.GeometryType.POLYGON: {
+      coordinates = /** @type {ol.geom.Polygon} */ (geometry).getCoordinates();
+      area = Math.abs(ol.Sphere.getArea_(coordinates[0], radius));
+      for (i = 1, ii = coordinates.length; i < ii; ++i) {
+        area -= Math.abs(ol.Sphere.getArea_(coordinates[i], radius));
+      }
+      break;
+    }
+    case ol.geom.GeometryType.MULTI_POLYGON: {
+      coordinates = /** @type {ol.geom.SimpleGeometry} */ (geometry).getCoordinates();
+      for (i = 0, ii = coordinates.length; i < ii; ++i) {
+        coords = coordinates[i];
+        area += Math.abs(ol.Sphere.getArea_(coords[0], radius));
+        for (j = 1, jj = coords.length; j < jj; ++j) {
+          area -= Math.abs(ol.Sphere.getArea_(coords[j], radius));
+        }
+      }
+      break;
+    }
+    case ol.geom.GeometryType.GEOMETRY_COLLECTION: {
+      var geometries = /** @type {ol.geom.GeometryCollection} */ (geometry).getGeometries();
+      for (i = 0, ii = geometries.length; i < ii; ++i) {
+        area += ol.Sphere.getArea(geometries[i], opt_options);
+      }
+      break;
+    }
+    default: {
+      throw new Error('Unsupported geometry type: ' + type);
+    }
+  }
+  return area;
+};
+
+
+/**
+ * Returns the spherical area for a list of coordinates.
+ *
+ * [Reference](https://trs-new.jpl.nasa.gov/handle/2014/40409)
+ * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for
+ * Polygons on a Sphere", JPL Publication 07-03, Jet Propulsion
+ * Laboratory, Pasadena, CA, June 2007
+ *
+ * @param {Array.<ol.Coordinate>} coordinates List of coordinates of a linear
+ * ring. If the ring is oriented clockwise, the area will be positive,
+ * otherwise it will be negative.
+ * @param {number} radius The sphere radius.
+ * @return {number} Area (in square meters).
+ */
+ol.Sphere.getArea_ = function(coordinates, radius) {
+  var area = 0, len = coordinates.length;
+  var x1 = coordinates[len - 1][0];
+  var y1 = coordinates[len - 1][1];
+  for (var i = 0; i < len; i++) {
+    var x2 = coordinates[i][0], y2 = coordinates[i][1];
+    area += ol.math.toRadians(x2 - x1) *
+        (2 + Math.sin(ol.math.toRadians(y1)) +
+        Math.sin(ol.math.toRadians(y2)));
+    x1 = x2;
+    y1 = y2;
+  }
+  return area * radius * radius / 2.0;
+};
 
 goog.provide('ol.proj.Units');
-
-goog.require('ol.sphere.NORMAL');
 
 
 /**
@@ -4937,8 +5123,9 @@ ol.proj.Units = {
  * @api
  */
 ol.proj.Units.METERS_PER_UNIT = {};
+// use the radius of the Normal sphere
 ol.proj.Units.METERS_PER_UNIT[ol.proj.Units.DEGREES] =
-    2 * Math.PI * ol.sphere.NORMAL.radius / 360;
+    2 * Math.PI * 6370997 / 360;
 ol.proj.Units.METERS_PER_UNIT[ol.proj.Units.FEET] = 0.3048;
 ol.proj.Units.METERS_PER_UNIT[ol.proj.Units.METERS] = 1;
 ol.proj.Units.METERS_PER_UNIT[ol.proj.Units.USFEET] = 1200 / 3937;
@@ -5008,66 +5195,66 @@ goog.require('ol.proj.proj4');
  * @api
  */
 ol.proj.Projection = function(options) {
- /**
-  * @private
-  * @type {string}
-  */
+  /**
+   * @private
+   * @type {string}
+   */
   this.code_ = options.code;
 
- /**
-  * @private
-  * @type {ol.proj.Units}
-  */
+  /**
+   * @private
+   * @type {ol.proj.Units}
+   */
   this.units_ = /** @type {ol.proj.Units} */ (options.units);
 
- /**
-  * @private
-  * @type {ol.Extent}
-  */
+  /**
+   * @private
+   * @type {ol.Extent}
+   */
   this.extent_ = options.extent !== undefined ? options.extent : null;
 
- /**
-  * @private
-  * @type {ol.Extent}
-  */
+  /**
+   * @private
+   * @type {ol.Extent}
+   */
   this.worldExtent_ = options.worldExtent !== undefined ?
-     options.worldExtent : null;
+    options.worldExtent : null;
 
- /**
-  * @private
-  * @type {string}
-  */
+  /**
+   * @private
+   * @type {string}
+   */
   this.axisOrientation_ = options.axisOrientation !== undefined ?
-     options.axisOrientation : 'enu';
+    options.axisOrientation : 'enu';
 
- /**
-  * @private
-  * @type {boolean}
-  */
+  /**
+   * @private
+   * @type {boolean}
+   */
   this.global_ = options.global !== undefined ? options.global : false;
 
- /**
-  * @private
-  * @type {boolean}
-  */
+  /**
+   * @private
+   * @type {boolean}
+   */
   this.canWrapX_ = !!(this.global_ && this.extent_);
 
- /**
- * @private
- * @type {function(number, ol.Coordinate):number|undefined}
- */
+  /**
+   * @private
+   * @type {function(number, ol.Coordinate):number|undefined}
+   */
   this.getPointResolutionFunc_ = options.getPointResolution;
 
- /**
-  * @private
-  * @type {ol.tilegrid.TileGrid}
-  */
+  /**
+   * @private
+   * @type {ol.tilegrid.TileGrid}
+   */
   this.defaultTileGrid_ = null;
 
- /**
-  * @private
-  * @type {number|undefined}
-  */
+  /**
+   * @private
+   * @type {number|undefined}
+   */
   this.metersPerUnit_ = options.metersPerUnit;
 
   var code = options.code;
@@ -5278,6 +5465,8 @@ ol.inherits(ol.proj.EPSG3857.Projection_, ol.proj.Projection);
 
 
 /**
+ * Radius of WGS84 sphere
+ *
  * @const
  * @type {number}
  */
@@ -5309,30 +5498,20 @@ ol.proj.EPSG3857.WORLD_EXTENT = [-180, -85, 180, 85];
 
 
 /**
- * Lists several projection codes with the same meaning as EPSG:3857.
- *
- * @type {Array.<string>}
- */
-ol.proj.EPSG3857.CODES = [
-  'EPSG:3857',
-  'EPSG:102100',
-  'EPSG:102113',
-  'EPSG:900913',
-  'urn:ogc:def:crs:EPSG:6.18:3:3857',
-  'urn:ogc:def:crs:EPSG::3857',
-  'http://www.opengis.net/gml/srs/epsg.xml#3857'
-];
-
-
-/**
  * Projections equal to EPSG:3857.
  *
  * @const
  * @type {Array.<ol.proj.Projection>}
  */
-ol.proj.EPSG3857.PROJECTIONS = ol.proj.EPSG3857.CODES.map(function(code) {
-  return new ol.proj.EPSG3857.Projection_(code);
-});
+ol.proj.EPSG3857.PROJECTIONS = [
+  new ol.proj.EPSG3857.Projection_('EPSG:3857'),
+  new ol.proj.EPSG3857.Projection_('EPSG:102100'),
+  new ol.proj.EPSG3857.Projection_('EPSG:102113'),
+  new ol.proj.EPSG3857.Projection_('EPSG:900913'),
+  new ol.proj.EPSG3857.Projection_('urn:ogc:def:crs:EPSG:6.18:3:3857'),
+  new ol.proj.EPSG3857.Projection_('urn:ogc:def:crs:EPSG::3857'),
+  new ol.proj.EPSG3857.Projection_('http://www.opengis.net/gml/srs/epsg.xml#3857')
+];
 
 
 /**
@@ -5399,24 +5578,11 @@ ol.proj.EPSG3857.toEPSG4326 = function(input, opt_output, opt_dimension) {
   return output;
 };
 
-goog.provide('ol.sphere.WGS84');
-
-goog.require('ol.Sphere');
-
-
-/**
- * A sphere with radius equal to the semi-major axis of the WGS84 ellipsoid.
- * @const
- * @type {ol.Sphere}
- */
-ol.sphere.WGS84 = new ol.Sphere(6378137);
-
 goog.provide('ol.proj.EPSG4326');
 
 goog.require('ol');
 goog.require('ol.proj.Projection');
 goog.require('ol.proj.Units');
-goog.require('ol.sphere.WGS84');
 
 
 /**
@@ -5448,6 +5614,15 @@ ol.inherits(ol.proj.EPSG4326.Projection_, ol.proj.Projection);
 
 
 /**
+ * Radius of WGS84 sphere
+ *
+ * @const
+ * @type {number}
+ */
+ol.proj.EPSG4326.RADIUS = 6378137;
+
+
+/**
  * Extent of the EPSG:4326 projection which is the whole world.
  *
  * @const
@@ -5460,7 +5635,7 @@ ol.proj.EPSG4326.EXTENT = [-180, -90, 180, 90];
  * @const
  * @type {number}
  */
-ol.proj.EPSG4326.METERS_PER_UNIT = Math.PI * ol.sphere.WGS84.radius / 180;
+ol.proj.EPSG4326.METERS_PER_UNIT = Math.PI * ol.proj.EPSG4326.RADIUS / 180;
 
 
 /**
@@ -5598,6 +5773,7 @@ ol.proj.transforms.get = function(sourceCode, destinationCode) {
 goog.provide('ol.proj');
 
 goog.require('ol');
+goog.require('ol.Sphere');
 goog.require('ol.extent');
 goog.require('ol.proj.EPSG3857');
 goog.require('ol.proj.EPSG4326');
@@ -5606,7 +5782,6 @@ goog.require('ol.proj.Units');
 goog.require('ol.proj.proj4');
 goog.require('ol.proj.projections');
 goog.require('ol.proj.transforms');
-goog.require('ol.sphere.NORMAL');
 
 
 /**
@@ -5616,6 +5791,14 @@ goog.require('ol.sphere.NORMAL');
  * @api
  */
 ol.proj.METERS_PER_UNIT = ol.proj.Units.METERS_PER_UNIT;
+
+
+/**
+ * A place to store the mean radius of the Earth.
+ * @private
+ * @type {ol.Sphere}
+ */
+ol.proj.SPHERE_ = new ol.Sphere(ol.Sphere.DEFAULT_RADIUS);
 
 
 if (ol.ENABLE_PROJ4JS) {
@@ -5652,10 +5835,12 @@ if (ol.ENABLE_PROJ4JS) {
  * @param {ol.ProjectionLike} projection The projection.
  * @param {number} resolution Nominal resolution in projection units.
  * @param {ol.Coordinate} point Point to find adjusted resolution at.
- * @return {number} Point resolution at point in projection units.
+ * @param {ol.proj.Units=} opt_units Units to get the point resolution in.
+ * Default is the projection's units.
+ * @return {number} Point resolution.
  * @api
  */
-ol.proj.getPointResolution = function(projection, resolution, point) {
+ol.proj.getPointResolution = function(projection, resolution, point, opt_units) {
   projection = ol.proj.get(projection);
   var pointResolution;
   var getter = projection.getPointResolutionFunc();
@@ -5663,7 +5848,7 @@ ol.proj.getPointResolution = function(projection, resolution, point) {
     pointResolution = getter(resolution, point);
   } else {
     var units = projection.getUnits();
-    if (units == ol.proj.Units.DEGREES) {
+    if (units == ol.proj.Units.DEGREES && !opt_units || opt_units == ol.proj.Units.DEGREES) {
       pointResolution = resolution;
     } else {
       // Estimate point resolution by transforming the center pixel to EPSG:4326,
@@ -5677,12 +5862,14 @@ ol.proj.getPointResolution = function(projection, resolution, point) {
         point[0], point[1] + resolution / 2
       ];
       vertices = toEPSG4326(vertices, vertices, 2);
-      var width = ol.sphere.NORMAL.haversineDistance(
+      var width = ol.proj.SPHERE_.haversineDistance(
           vertices.slice(0, 2), vertices.slice(2, 4));
-      var height = ol.sphere.NORMAL.haversineDistance(
+      var height = ol.proj.SPHERE_.haversineDistance(
           vertices.slice(4, 6), vertices.slice(6, 8));
       pointResolution = (width + height) / 2;
-      var metersPerUnit = projection.getMetersPerUnit();
+      var metersPerUnit = opt_units ?
+        ol.proj.Units.METERS_PER_UNIT[opt_units] :
+        projection.getMetersPerUnit();
       if (metersPerUnit !== undefined) {
         pointResolution /= metersPerUnit;
       }
@@ -5818,27 +6005,27 @@ ol.proj.addCoordinateTransforms = function(source, destination, forward, inverse
  */
 ol.proj.createTransformFromCoordinateTransform = function(transform) {
   return (
-      /**
-       * @param {Array.<number>} input Input.
-       * @param {Array.<number>=} opt_output Output.
-       * @param {number=} opt_dimension Dimension.
-       * @return {Array.<number>} Output.
-       */
-      function(input, opt_output, opt_dimension) {
-        var length = input.length;
-        var dimension = opt_dimension !== undefined ? opt_dimension : 2;
-        var output = opt_output !== undefined ? opt_output : new Array(length);
-        var point, i, j;
-        for (i = 0; i < length; i += dimension) {
-          point = transform([input[i], input[i + 1]]);
-          output[i] = point[0];
-          output[i + 1] = point[1];
-          for (j = dimension - 1; j >= 2; --j) {
-            output[i + j] = input[i + j];
-          }
+    /**
+     * @param {Array.<number>} input Input.
+     * @param {Array.<number>=} opt_output Output.
+     * @param {number=} opt_dimension Dimension.
+     * @return {Array.<number>} Output.
+     */
+    function(input, opt_output, opt_dimension) {
+      var length = input.length;
+      var dimension = opt_dimension !== undefined ? opt_dimension : 2;
+      var output = opt_output !== undefined ? opt_output : new Array(length);
+      var point, i, j;
+      for (i = 0; i < length; i += dimension) {
+        point = transform([input[i], input[i + 1]]);
+        output[i] = point[0];
+        output[i + 1] = point[1];
+        for (j = dimension - 1; j >= 2; --j) {
+          output[i + j] = input[i + j];
         }
-        return output;
-      });
+      }
+      return output;
+    });
 };
 
 
@@ -5888,9 +6075,9 @@ ol.proj.get = function(projectionLike) {
   } else if (typeof projectionLike === 'string') {
     var code = projectionLike;
     projection = ol.proj.projections.get(code);
-    if (ol.ENABLE_PROJ4JS) {
+    if (ol.ENABLE_PROJ4JS && !projection) {
       var proj4js = ol.proj.proj4.get();
-      if (!projection && typeof proj4js == 'function' &&
+      if (typeof proj4js == 'function' &&
           proj4js.defs(code) !== undefined) {
         projection = new ol.proj.Projection({code: code});
         ol.proj.addProjection(projection);
@@ -6274,8 +6461,8 @@ ol.tilegrid.TileGrid = function(options) {
    * @type {number|ol.Size}
    */
   this.tileSize_ = options.tileSize !== undefined ?
-      options.tileSize :
-      !this.tileSizes_ ? ol.DEFAULT_TILE_SIZE : null;
+    options.tileSize :
+    !this.tileSizes_ ? ol.DEFAULT_TILE_SIZE : null;
   ol.asserts.assert(
       (!this.tileSize_ && this.tileSizes_) ||
       (this.tileSize_ && !this.tileSizes_),
@@ -6725,7 +6912,7 @@ ol.tilegrid.wrapX = function(tileGrid, tileCoord, projection) {
  */
 ol.tilegrid.createForExtent = function(extent, opt_maxZoom, opt_tileSize, opt_corner) {
   var corner = opt_corner !== undefined ?
-      opt_corner : ol.extent.Corner.TOP_LEFT;
+    opt_corner : ol.extent.Corner.TOP_LEFT;
 
   var resolutions = ol.tilegrid.resolutionsFromExtent(
       extent, opt_maxZoom, opt_tileSize);
@@ -6748,7 +6935,7 @@ ol.tilegrid.createForExtent = function(extent, opt_maxZoom, opt_tileSize, opt_co
 ol.tilegrid.createXYZ = function(opt_options) {
   var options = /** @type {olx.tilegrid.TileGridOptions} */ ({});
   ol.obj.assign(options, opt_options !== undefined ?
-      opt_options : /** @type {olx.tilegrid.XYZOptions} */ ({}));
+    opt_options : /** @type {olx.tilegrid.XYZOptions} */ ({}));
   if (options.extent === undefined) {
     options.extent = ol.proj.get('EPSG:3857').getExtent();
   }
@@ -6771,13 +6958,13 @@ ol.tilegrid.createXYZ = function(opt_options) {
  */
 ol.tilegrid.resolutionsFromExtent = function(extent, opt_maxZoom, opt_tileSize) {
   var maxZoom = opt_maxZoom !== undefined ?
-      opt_maxZoom : ol.DEFAULT_MAX_ZOOM;
+    opt_maxZoom : ol.DEFAULT_MAX_ZOOM;
 
   var height = ol.extent.getHeight(extent);
   var width = ol.extent.getWidth(extent);
 
   var tileSize = ol.size.toSize(opt_tileSize !== undefined ?
-      opt_tileSize : ol.DEFAULT_TILE_SIZE);
+    opt_tileSize : ol.DEFAULT_TILE_SIZE);
   var maxResolution = Math.max(
       width / tileSize[0], height / tileSize[1]);
 
@@ -6933,20 +7120,20 @@ goog.require('ol.math');
  */
 ol.CenterConstraint.createExtent = function(extent) {
   return (
-      /**
-       * @param {ol.Coordinate|undefined} center Center.
-       * @return {ol.Coordinate|undefined} Center.
-       */
-      function(center) {
-        if (center) {
-          return [
-            ol.math.clamp(center[0], extent[0], extent[2]),
-            ol.math.clamp(center[1], extent[1], extent[3])
-          ];
-        } else {
-          return undefined;
-        }
-      });
+    /**
+     * @param {ol.Coordinate|undefined} center Center.
+     * @return {ol.Coordinate|undefined} Center.
+     */
+    function(center) {
+      if (center) {
+        return [
+          ol.math.clamp(center[0], extent[0], extent[2]),
+          ol.math.clamp(center[1], extent[1], extent[3])
+        ];
+      } else {
+        return undefined;
+      }
+    });
 };
 
 
@@ -7315,15 +7502,15 @@ ol.events.Event = function(type) {
  */
 ol.events.Event.prototype.preventDefault =
 
-/**
- * Stop event propagation.
- * @function
- * @override
- * @api
- */
-ol.events.Event.prototype.stopPropagation = function() {
-  this.propagationStopped = true;
-};
+  /**
+   * Stop event propagation.
+   * @function
+   * @override
+   * @api
+   */
+  ol.events.Event.prototype.stopPropagation = function() {
+    this.propagationStopped = true;
+  };
 
 
 /**
@@ -7474,8 +7661,8 @@ ol.events.EventTarget.prototype.getListeners = function(type) {
  */
 ol.events.EventTarget.prototype.hasListener = function(opt_type) {
   return opt_type ?
-      opt_type in this.listeners_ :
-      Object.keys(this.listeners_).length > 0;
+    opt_type in this.listeners_ :
+    Object.keys(this.listeners_).length > 0;
 };
 
 
@@ -7782,8 +7969,8 @@ ol.Object.changeEventTypeCache_ = {};
  */
 ol.Object.getChangeEventType = function(key) {
   return ol.Object.changeEventTypeCache_.hasOwnProperty(key) ?
-      ol.Object.changeEventTypeCache_[key] :
-      (ol.Object.changeEventTypeCache_[key] = 'change:' + key);
+    ol.Object.changeEventTypeCache_[key] :
+    (ol.Object.changeEventTypeCache_[key] = 'change:' + key);
 };
 
 
@@ -7944,7 +8131,7 @@ goog.require('ol.events.Event');
  * @constructor
  * @extends {ol.Object}
  * @fires ol.Collection.Event
- * @param {!Array.<T>=} opt_array Array.
+ * @param {Array.<T>=} opt_array Array.
  * @param {olx.CollectionOptions=} opt_options Collection options.
  * @template T
  * @api
@@ -8016,7 +8203,11 @@ ol.Collection.prototype.extend = function(arr) {
  * @api
  */
 ol.Collection.prototype.forEach = function(f, opt_this) {
-  this.array_.forEach(f, opt_this);
+  var fn = (opt_this) ? f.bind(opt_this) : f;
+  var array = this.array_;
+  for (var i = 0, ii = array.length; i < ii; ++i) {
+    fn(array[i], i, array);
+  }
 };
 
 
@@ -8292,56 +8483,56 @@ ol.color.fromNamed = function(color) {
  * @return {ol.Color} Color.
  */
 ol.color.fromString = (
-    function() {
+  function() {
 
-      // We maintain a small cache of parsed strings.  To provide cheap LRU-like
-      // semantics, whenever the cache grows too large we simply delete an
-      // arbitrary 25% of the entries.
+    // We maintain a small cache of parsed strings.  To provide cheap LRU-like
+    // semantics, whenever the cache grows too large we simply delete an
+    // arbitrary 25% of the entries.
 
+    /**
+     * @const
+     * @type {number}
+     */
+    var MAX_CACHE_SIZE = 1024;
+
+    /**
+     * @type {Object.<string, ol.Color>}
+     */
+    var cache = {};
+
+    /**
+     * @type {number}
+     */
+    var cacheSize = 0;
+
+    return (
       /**
-       * @const
-       * @type {number}
+       * @param {string} s String.
+       * @return {ol.Color} Color.
        */
-      var MAX_CACHE_SIZE = 1024;
-
-      /**
-       * @type {Object.<string, ol.Color>}
-       */
-      var cache = {};
-
-      /**
-       * @type {number}
-       */
-      var cacheSize = 0;
-
-      return (
-          /**
-           * @param {string} s String.
-           * @return {ol.Color} Color.
-           */
-          function(s) {
-            var color;
-            if (cache.hasOwnProperty(s)) {
-              color = cache[s];
-            } else {
-              if (cacheSize >= MAX_CACHE_SIZE) {
-                var i = 0;
-                var key;
-                for (key in cache) {
-                  if ((i++ & 3) === 0) {
-                    delete cache[key];
-                    --cacheSize;
-                  }
-                }
+      function(s) {
+        var color;
+        if (cache.hasOwnProperty(s)) {
+          color = cache[s];
+        } else {
+          if (cacheSize >= MAX_CACHE_SIZE) {
+            var i = 0;
+            var key;
+            for (key in cache) {
+              if ((i++ & 3) === 0) {
+                delete cache[key];
+                --cacheSize;
               }
-              color = ol.color.fromStringInternal_(s);
-              cache[s] = color;
-              ++cacheSize;
             }
-            return color;
-          });
+          }
+          color = ol.color.fromStringInternal_(s);
+          cache[s] = color;
+          ++cacheSize;
+        }
+        return color;
+      });
 
-    })();
+  })();
 
 
 /**
@@ -8445,9 +8636,9 @@ ol.colorlike.asColorLike = function(color) {
  */
 ol.colorlike.isColorLike = function(color) {
   return (
-      typeof color === 'string' ||
-      color instanceof CanvasPattern ||
-      color instanceof CanvasGradient
+    typeof color === 'string' ||
+    color instanceof CanvasPattern ||
+    color instanceof CanvasGradient
   );
 };
 
@@ -8678,7 +8869,7 @@ ol.control.Control.prototype.setMap = function(map) {
   this.map_ = map;
   if (this.map_) {
     var target = this.target_ ?
-        this.target_ : map.getOverlayContainerStopEvent();
+      this.target_ : map.getOverlayContainerStopEvent();
     target.appendChild(this.element);
     if (this.render !== ol.nullFunction) {
       this.listenerKeys.push(ol.events.listen(map,
@@ -8805,7 +8996,7 @@ ol.control.Attribution = function(opt_options) {
    * @type {boolean}
    */
   this.collapsible_ = options.collapsible !== undefined ?
-      options.collapsible : true;
+    options.collapsible : true;
 
   if (!this.collapsible_) {
     this.collapsed_ = false;
@@ -8843,7 +9034,7 @@ ol.control.Attribution = function(opt_options) {
 
 
   var activeLabel = (this.collapsible_ && !this.collapsed_) ?
-      this.collapseLabel_ : this.label_;
+    this.collapseLabel_ : this.label_;
   var button = document.createElement('button');
   button.setAttribute('type', 'button');
   button.title = tipLabel;
@@ -9421,16 +9612,16 @@ ol.control.Zoom = function(opt_options) {
   var zoomOutLabel = options.zoomOutLabel !== undefined ? options.zoomOutLabel : '\u2212';
 
   var zoomInTipLabel = options.zoomInTipLabel !== undefined ?
-      options.zoomInTipLabel : 'Zoom in';
+    options.zoomInTipLabel : 'Zoom in';
   var zoomOutTipLabel = options.zoomOutTipLabel !== undefined ?
-      options.zoomOutTipLabel : 'Zoom out';
+    options.zoomOutTipLabel : 'Zoom out';
 
   var inElement = document.createElement('button');
   inElement.className = className + '-in';
   inElement.setAttribute('type', 'button');
   inElement.title = zoomInTipLabel;
   inElement.appendChild(
-    typeof zoomInLabel === 'string' ? document.createTextNode(zoomInLabel) : zoomInLabel
+      typeof zoomInLabel === 'string' ? document.createTextNode(zoomInLabel) : zoomInLabel
   );
 
   ol.events.listen(inElement, ol.events.EventType.CLICK,
@@ -9441,7 +9632,7 @@ ol.control.Zoom = function(opt_options) {
   outElement.setAttribute('type', 'button');
   outElement.title = zoomOutTipLabel;
   outElement.appendChild(
-    typeof zoomOutLabel === 'string' ? document.createTextNode(zoomOutLabel) : zoomOutLabel
+      typeof zoomOutLabel === 'string' ? document.createTextNode(zoomOutLabel) : zoomOutLabel
   );
 
   ol.events.listen(outElement, ol.events.EventType.CLICK,
@@ -9547,7 +9738,7 @@ ol.control.defaults = function(opt_options) {
   }
 
   var attributionControl = options.attribution !== undefined ?
-      options.attribution : true;
+    options.attribution : true;
   if (attributionControl) {
     controls.push(new ol.control.Attribution(options.attributionOptions));
   }
@@ -9592,7 +9783,7 @@ ol.control.FullScreen = function(opt_options) {
    * @type {string}
    */
   this.cssClassName_ = options.className !== undefined ? options.className :
-      'ol-full-screen';
+    'ol-full-screen';
 
   var label = options.label !== undefined ? options.label : '\u2922';
 
@@ -9601,7 +9792,7 @@ ol.control.FullScreen = function(opt_options) {
    * @type {Node}
    */
   this.labelNode_ = typeof label === 'string' ?
-      document.createTextNode(label) : label;
+    document.createTextNode(label) : label;
 
   var labelActive = options.labelActive !== undefined ? options.labelActive : '\u00d7';
 
@@ -9610,7 +9801,7 @@ ol.control.FullScreen = function(opt_options) {
    * @type {Node}
    */
   this.labelActiveNode_ = typeof labelActive === 'string' ?
-      document.createTextNode(labelActive) : labelActive;
+    document.createTextNode(labelActive) : labelActive;
 
   var tipLabel = options.tipLabel ? options.tipLabel : 'Toggle full-screen';
   var button = document.createElement('button');
@@ -9849,7 +10040,7 @@ ol.control.MousePosition = function(opt_options) {
   element.className = options.className !== undefined ? options.className : 'ol-mouse-position';
 
   var render = options.render ?
-      options.render : ol.control.MousePosition.render;
+    options.render : ol.control.MousePosition.render;
 
   ol.control.Control.call(this, {
     element: element,
@@ -9940,7 +10131,7 @@ ol.control.MousePosition.prototype.handleProjectionChanged_ = function() {
  */
 ol.control.MousePosition.prototype.getCoordinateFormat = function() {
   return /** @type {ol.CoordinateFormatType|undefined} */ (
-      this.get(ol.control.MousePosition.Property_.COORDINATE_FORMAT));
+    this.get(ol.control.MousePosition.Property_.COORDINATE_FORMAT));
 };
 
 
@@ -9953,7 +10144,7 @@ ol.control.MousePosition.prototype.getCoordinateFormat = function() {
  */
 ol.control.MousePosition.prototype.getProjection = function() {
   return /** @type {ol.proj.Projection|undefined} */ (
-      this.get(ol.control.MousePosition.Property_.PROJECTION));
+    this.get(ol.control.MousePosition.Property_.PROJECTION));
 };
 
 
@@ -10487,7 +10678,7 @@ goog.require('ol');
 goog.require('ol.webgl');
 
 var ua = typeof navigator !== 'undefined' ?
-    navigator.userAgent.toLowerCase() : '';
+  navigator.userAgent.toLowerCase() : '';
 
 /**
  * User agent string says we are dealing with Firefox as browser.
@@ -10539,27 +10730,27 @@ ol.has.CANVAS_LINE_DASH = false;
  * @api
  */
 ol.has.CANVAS = ol.ENABLE_CANVAS && (
-    /**
-     * @return {boolean} Canvas supported.
-     */
-    function() {
-      if (!('HTMLCanvasElement' in window)) {
+  /**
+   * @return {boolean} Canvas supported.
+   */
+  function() {
+    if (!('HTMLCanvasElement' in window)) {
+      return false;
+    }
+    try {
+      var context = document.createElement('CANVAS').getContext('2d');
+      if (!context) {
         return false;
-      }
-      try {
-        var context = document.createElement('CANVAS').getContext('2d');
-        if (!context) {
-          return false;
-        } else {
-          if (context.setLineDash !== undefined) {
-            ol.has.CANVAS_LINE_DASH = true;
-          }
-          return true;
+      } else {
+        if (context.setLineDash !== undefined) {
+          ol.has.CANVAS_LINE_DASH = true;
         }
-      } catch (e) {
-        return false;
+        return true;
       }
-    })();
+    } catch (e) {
+      return false;
+    }
+  })();
 
 
 /**
@@ -10631,7 +10822,7 @@ ol.has.WEBGL;
         if (gl) {
           hasWebGL = true;
           textureSize = /** @type {number} */
-              (gl.getParameter(gl.MAX_TEXTURE_SIZE));
+            (gl.getParameter(gl.MAX_TEXTURE_SIZE));
           extensions = gl.getSupportedExtensions();
         }
       } catch (e) {
@@ -11513,7 +11704,7 @@ ol.pointer.PointerEvent = function(type, originalEvent, opt_eventDict) {
    * @type {Node}
    */
   this.relatedTarget = 'relatedTarget' in eventDict ?
-      eventDict['relatedTarget'] : null;
+    eventDict['relatedTarget'] : null;
 
   // PointerEvent related properties
 
@@ -12593,7 +12784,7 @@ ol.MapBrowserEventHandler = function(map, moveTolerance) {
    * @private
    */
   this.moveTolerance_ = moveTolerance ?
-      moveTolerance * ol.has.DEVICE_PIXEL_RATIO : ol.has.DEVICE_PIXEL_RATIO;
+    moveTolerance * ol.has.DEVICE_PIXEL_RATIO : ol.has.DEVICE_PIXEL_RATIO;
 
   /**
    * The most recent "down" type event (or null if none have occurred).
@@ -12708,13 +12899,13 @@ ol.MapBrowserEventHandler.prototype.updateActivePointers_ = function(pointerEven
 ol.MapBrowserEventHandler.prototype.handlePointerUp_ = function(pointerEvent) {
   this.updateActivePointers_(pointerEvent);
   var newEvent = new ol.MapBrowserPointerEvent(
-     ol.MapBrowserEventType.POINTERUP, this.map_, pointerEvent);
+      ol.MapBrowserEventType.POINTERUP, this.map_, pointerEvent);
   this.dispatchEvent(newEvent);
 
- // We emulate click events on left mouse button click, touch contact, and pen
- // contact. isMouseActionButton returns true in these cases (evt.button is set
- // to 0).
- // See http://www.w3.org/TR/pointerevents/#button-states
+  // We emulate click events on left mouse button click, touch contact, and pen
+  // contact. isMouseActionButton returns true in these cases (evt.button is set
+  // to 0).
+  // See http://www.w3.org/TR/pointerevents/#button-states
   if (!this.dragging_ && this.isMouseActionButton_(pointerEvent)) {
     this.emulateClick_(this.down_);
   }
@@ -12761,13 +12952,13 @@ ol.MapBrowserEventHandler.prototype.handlePointerDown_ = function(pointerEvent) 
         new ol.pointer.PointerEventHandler(document);
 
     this.dragListenerKeys_.push(
-      ol.events.listen(this.documentPointerEventHandler_,
-          ol.MapBrowserEventType.POINTERMOVE,
-          this.handlePointerMove_, this),
-      ol.events.listen(this.documentPointerEventHandler_,
-          ol.MapBrowserEventType.POINTERUP,
-          this.handlePointerUp_, this),
-      /* Note that the listener for `pointercancel is set up on
+        ol.events.listen(this.documentPointerEventHandler_,
+            ol.MapBrowserEventType.POINTERMOVE,
+            this.handlePointerMove_, this),
+        ol.events.listen(this.documentPointerEventHandler_,
+            ol.MapBrowserEventType.POINTERUP,
+            this.handlePointerUp_, this),
+        /* Note that the listener for `pointercancel is set up on
        * `pointerEventHandler_` and not `documentPointerEventHandler_` like
        * the `pointerup` and `pointermove` listeners.
        *
@@ -12780,9 +12971,9 @@ ol.MapBrowserEventHandler.prototype.handlePointerDown_ = function(pointerEvent) 
        * only receive a `touchcancel` from `pointerEventHandler_`, because it is
        * only registered there.
        */
-      ol.events.listen(this.pointerEventHandler_,
-          ol.MapBrowserEventType.POINTERCANCEL,
-          this.handlePointerUp_, this)
+        ol.events.listen(this.pointerEventHandler_,
+            ol.MapBrowserEventType.POINTERCANCEL,
+            this.handlePointerUp_, this)
     );
   }
 };
@@ -13101,7 +13292,7 @@ ol.structs.PriorityQueue.prototype.siftUp_ = function(index) {
 
     var smallerChildIndex = rIndex < count &&
         priorities[rIndex] < priorities[lIndex] ?
-        rIndex : lIndex;
+      rIndex : lIndex;
 
     elements[index] = elements[smallerChildIndex];
     priorities[index] = priorities[smallerChildIndex];
@@ -13273,17 +13464,26 @@ ol.TileQueue.prototype.handleTileChange = function(event) {
  */
 ol.TileQueue.prototype.loadMoreTiles = function(maxTotalLoading, maxNewLoads) {
   var newLoads = 0;
-  var tile, tileKey;
+  var abortedTiles = false;
+  var state, tile, tileKey;
   while (this.tilesLoading_ < maxTotalLoading && newLoads < maxNewLoads &&
          this.getCount() > 0) {
     tile = /** @type {ol.Tile} */ (this.dequeue()[0]);
     tileKey = tile.getKey();
-    if (tile.getState() === ol.TileState.IDLE && !(tileKey in this.tilesLoadingKeys_)) {
+    state = tile.getState();
+    if (state === ol.TileState.ABORT) {
+      abortedTiles = true;
+    } else if (state === ol.TileState.IDLE && !(tileKey in this.tilesLoadingKeys_)) {
       this.tilesLoadingKeys_[tileKey] = true;
       ++this.tilesLoading_;
       ++newLoads;
       tile.load();
     }
+  }
+  if (newLoads === 0 && abortedTiles) {
+    // Do not stop the render loop when all wanted tiles were aborted due to
+    // a small, saturated tile cache.
+    this.tileChangeCallback_();
   }
 };
 
@@ -13299,28 +13499,28 @@ goog.require('ol.math');
  */
 ol.ResolutionConstraint.createSnapToResolutions = function(resolutions) {
   return (
-      /**
-       * @param {number|undefined} resolution Resolution.
-       * @param {number} delta Delta.
-       * @param {number} direction Direction.
-       * @return {number|undefined} Resolution.
-       */
-      function(resolution, delta, direction) {
-        if (resolution !== undefined) {
-          var z =
+    /**
+     * @param {number|undefined} resolution Resolution.
+     * @param {number} delta Delta.
+     * @param {number} direction Direction.
+     * @return {number|undefined} Resolution.
+     */
+    function(resolution, delta, direction) {
+      if (resolution !== undefined) {
+        var z =
               ol.array.linearFindNearest(resolutions, resolution, direction);
-          z = ol.math.clamp(z + delta, 0, resolutions.length - 1);
-          var index = Math.floor(z);
-          if (z != index && index < resolutions.length - 1) {
-            var power = resolutions[index] / resolutions[index + 1];
-            return resolutions[index] / Math.pow(power, z - index);
-          } else {
-            return resolutions[index];
-          }
+        z = ol.math.clamp(z + delta, 0, resolutions.length - 1);
+        var index = Math.floor(z);
+        if (z != index && index < resolutions.length - 1) {
+          var power = resolutions[index] / resolutions[index + 1];
+          return resolutions[index] / Math.pow(power, z - index);
         } else {
-          return undefined;
+          return resolutions[index];
         }
-      });
+      } else {
+        return undefined;
+      }
+    });
 };
 
 
@@ -13332,26 +13532,26 @@ ol.ResolutionConstraint.createSnapToResolutions = function(resolutions) {
  */
 ol.ResolutionConstraint.createSnapToPower = function(power, maxResolution, opt_maxLevel) {
   return (
-      /**
-       * @param {number|undefined} resolution Resolution.
-       * @param {number} delta Delta.
-       * @param {number} direction Direction.
-       * @return {number|undefined} Resolution.
-       */
-      function(resolution, delta, direction) {
-        if (resolution !== undefined) {
-          var offset = -direction / 2 + 0.5;
-          var oldLevel = Math.floor(
-              Math.log(maxResolution / resolution) / Math.log(power) + offset);
-          var newLevel = Math.max(oldLevel + delta, 0);
-          if (opt_maxLevel !== undefined) {
-            newLevel = Math.min(newLevel, opt_maxLevel);
-          }
-          return maxResolution / Math.pow(power, newLevel);
-        } else {
-          return undefined;
+    /**
+     * @param {number|undefined} resolution Resolution.
+     * @param {number} delta Delta.
+     * @param {number} direction Direction.
+     * @return {number|undefined} Resolution.
+     */
+    function(resolution, delta, direction) {
+      if (resolution !== undefined) {
+        var offset = -direction / 2 + 0.5;
+        var oldLevel = Math.floor(
+            Math.log(maxResolution / resolution) / Math.log(power) + offset);
+        var newLevel = Math.max(oldLevel + delta, 0);
+        if (opt_maxLevel !== undefined) {
+          newLevel = Math.min(newLevel, opt_maxLevel);
         }
-      });
+        return maxResolution / Math.pow(power, newLevel);
+      } else {
+        return undefined;
+      }
+    });
 };
 
 goog.provide('ol.RotationConstraint');
@@ -13394,19 +13594,19 @@ ol.RotationConstraint.none = function(rotation, delta) {
 ol.RotationConstraint.createSnapToN = function(n) {
   var theta = 2 * Math.PI / n;
   return (
-      /**
-       * @param {number|undefined} rotation Rotation.
-       * @param {number} delta Delta.
-       * @return {number|undefined} Rotation.
-       */
-      function(rotation, delta) {
-        if (rotation !== undefined) {
-          rotation = Math.floor((rotation + delta) / theta + 0.5) * theta;
-          return rotation;
-        } else {
-          return undefined;
-        }
-      });
+    /**
+     * @param {number|undefined} rotation Rotation.
+     * @param {number} delta Delta.
+     * @return {number|undefined} Rotation.
+     */
+    function(rotation, delta) {
+      if (rotation !== undefined) {
+        rotation = Math.floor((rotation + delta) / theta + 0.5) * theta;
+        return rotation;
+      } else {
+        return undefined;
+      }
+    });
 };
 
 
@@ -13417,22 +13617,22 @@ ol.RotationConstraint.createSnapToN = function(n) {
 ol.RotationConstraint.createSnapToZero = function(opt_tolerance) {
   var tolerance = opt_tolerance || ol.math.toRadians(5);
   return (
-      /**
-       * @param {number|undefined} rotation Rotation.
-       * @param {number} delta Delta.
-       * @return {number|undefined} Rotation.
-       */
-      function(rotation, delta) {
-        if (rotation !== undefined) {
-          if (Math.abs(rotation + delta) <= tolerance) {
-            return 0;
-          } else {
-            return rotation + delta;
-          }
+    /**
+     * @param {number|undefined} rotation Rotation.
+     * @param {number} delta Delta.
+     * @return {number|undefined} Rotation.
+     */
+    function(rotation, delta) {
+      if (rotation !== undefined) {
+        if (Math.abs(rotation + delta) <= tolerance) {
+          return 0;
         } else {
-          return undefined;
+          return rotation + delta;
         }
-      });
+      } else {
+        return undefined;
+      }
+    });
 };
 
 goog.provide('ol.ViewHint');
@@ -13578,7 +13778,7 @@ ol.coordinate.closestOnSegment = function(coordinate, segment) {
   var dx = x2 - x1;
   var dy = y2 - y1;
   var along = (dx === 0 && dy === 0) ? 0 :
-      ((dx * (x0 - x1)) + (dy * (y0 - y1))) / ((dx * dx + dy * dy) || 0);
+    ((dx * (x0 - x1)) + (dy * (y0 - y1))) / ((dx * dx + dy * dy) || 0);
   var x, y;
   if (along <= 0) {
     x = x1;
@@ -13619,13 +13819,13 @@ ol.coordinate.closestOnSegment = function(coordinate, segment) {
  */
 ol.coordinate.createStringXY = function(opt_fractionDigits) {
   return (
-      /**
-       * @param {ol.Coordinate|undefined} coordinate Coordinate.
-       * @return {string} String XY.
-       */
-      function(coordinate) {
-        return ol.coordinate.toStringXY(coordinate, opt_fractionDigits);
-      });
+    /**
+     * @param {ol.Coordinate|undefined} coordinate Coordinate.
+     * @return {string} String XY.
+     */
+    function(coordinate) {
+      return ol.coordinate.toStringXY(coordinate, opt_fractionDigits);
+    });
 };
 
 
@@ -13693,8 +13893,8 @@ ol.coordinate.degreesToStringHDMS = function(hemispheres, degrees, opt_fractionD
 ol.coordinate.format = function(coordinate, template, opt_fractionDigits) {
   if (coordinate) {
     return template
-      .replace('{x}', coordinate[0].toFixed(opt_fractionDigits))
-      .replace('{y}', coordinate[1].toFixed(opt_fractionDigits));
+        .replace('{x}', coordinate[0].toFixed(opt_fractionDigits))
+        .replace('{y}', coordinate[1].toFixed(opt_fractionDigits));
   } else {
     return '';
   }
@@ -13872,27 +14072,6 @@ ol.coordinate.toStringHDMS = function(coordinate, opt_fractionDigits) {
  */
 ol.coordinate.toStringXY = function(coordinate, opt_fractionDigits) {
   return ol.coordinate.format(coordinate, '{x}, {y}', opt_fractionDigits);
-};
-
-goog.provide('ol.geom.GeometryType');
-
-
-/**
- * The geometry type. One of `'Point'`, `'LineString'`, `'LinearRing'`,
- * `'Polygon'`, `'MultiPoint'`, `'MultiLineString'`, `'MultiPolygon'`,
- * `'GeometryCollection'`, `'Circle'`.
- * @enum {string}
- */
-ol.geom.GeometryType = {
-  POINT: 'Point',
-  LINE_STRING: 'LineString',
-  LINEAR_RING: 'LinearRing',
-  POLYGON: 'Polygon',
-  MULTI_POINT: 'MultiPoint',
-  MULTI_LINE_STRING: 'MultiLineString',
-  MULTI_POLYGON: 'MultiPolygon',
-  GEOMETRY_COLLECTION: 'GeometryCollection',
-  CIRCLE: 'Circle'
 };
 
 goog.provide('ol.geom.GeometryLayout');
@@ -15153,7 +15332,7 @@ goog.require('ol.math');
 ol.geom.flat.simplify.lineString = function(flatCoordinates, offset, end,
     stride, squaredTolerance, highQuality, opt_simplifiedFlatCoordinates) {
   var simplifiedFlatCoordinates = opt_simplifiedFlatCoordinates !== undefined ?
-      opt_simplifiedFlatCoordinates : [];
+    opt_simplifiedFlatCoordinates : [];
   if (!highQuality) {
     end = ol.geom.flat.simplify.radialDistance(flatCoordinates, offset, end,
         stride, squaredTolerance,
@@ -16322,8 +16501,8 @@ ol.geom.flat.orient.orientLinearRings = function(flatCoordinates, offset, ends, 
     var isClockwise = ol.geom.flat.orient.linearRingIsClockwise(
         flatCoordinates, offset, end, stride);
     var reverse = i === 0 ?
-        (right && isClockwise) || (!right && !isClockwise) :
-        (right && !isClockwise) || (!right && isClockwise);
+      (right && isClockwise) || (!right && !isClockwise) :
+      (right && !isClockwise) || (!right && isClockwise);
     if (reverse) {
       ol.geom.flat.reverse.coordinates(flatCoordinates, offset, end, stride);
     }
@@ -16840,6 +17019,7 @@ goog.require('ol.extent');
 goog.require('ol.geom.GeometryType');
 goog.require('ol.geom.Polygon');
 goog.require('ol.geom.SimpleGeometry');
+goog.require('ol.math');
 goog.require('ol.obj');
 goog.require('ol.proj');
 goog.require('ol.proj.Units');
@@ -16950,7 +17130,7 @@ ol.View.prototype.applyOptions_ = function(options) {
    */
   var properties = {};
   properties[ol.ViewProperty.CENTER] = options.center !== undefined ?
-      options.center : null;
+    options.center : null;
 
   var resolutionConstraintInfo = ol.View.createResolutionConstraint_(
       options);
@@ -17110,7 +17290,7 @@ ol.View.prototype.animate = function(var_args) {
     if (options.zoom !== undefined) {
       animation.sourceResolution = resolution;
       animation.targetResolution = this.constrainResolution(
-            this.maxResolution_, options.zoom - this.minZoom_, 0);
+          this.maxResolution_, options.zoom - this.minZoom_, 0);
       resolution = animation.targetResolution;
     } else if (options.resolution) {
       animation.sourceResolution = resolution;
@@ -17120,12 +17300,20 @@ ol.View.prototype.animate = function(var_args) {
 
     if (options.rotation !== undefined) {
       animation.sourceRotation = rotation;
-      animation.targetRotation = options.rotation;
+      var delta = ol.math.modulo(options.rotation - rotation + Math.PI, 2 * Math.PI) - Math.PI;
+      animation.targetRotation = rotation + delta;
       rotation = animation.targetRotation;
     }
 
     animation.callback = callback;
-    start += animation.duration;
+
+    // check if animation is a no-op
+    if (ol.View.isNoopAnimation(animation)) {
+      animation.complete = true;
+      // we still push it onto the series for callback handling
+    } else {
+      start += animation.duration;
+    }
     series.push(animation);
   }
   this.animations_.push(series);
@@ -17210,8 +17398,8 @@ ol.View.prototype.updateAnimations_ = function() {
       }
       if (animation.sourceResolution && animation.targetResolution) {
         var resolution = progress === 1 ?
-            animation.targetResolution :
-            animation.sourceResolution + progress * (animation.targetResolution - animation.sourceResolution);
+          animation.targetResolution :
+          animation.sourceResolution + progress * (animation.targetResolution - animation.sourceResolution);
         if (animation.anchor) {
           this.set(ol.ViewProperty.CENTER,
               this.calculateCenterZoom(resolution, animation.anchor));
@@ -17220,8 +17408,8 @@ ol.View.prototype.updateAnimations_ = function() {
       }
       if (animation.sourceRotation !== undefined && animation.targetRotation !== undefined) {
         var rotation = progress === 1 ?
-            animation.targetRotation :
-            animation.sourceRotation + progress * (animation.targetRotation - animation.sourceRotation);
+          ol.math.modulo(animation.targetRotation + Math.PI, 2 * Math.PI) - Math.PI :
+          animation.sourceRotation + progress * (animation.targetRotation - animation.sourceRotation);
         if (animation.anchor) {
           this.set(ol.ViewProperty.CENTER,
               this.calculateCenterRotate(rotation, animation.anchor));
@@ -17351,7 +17539,7 @@ ol.View.prototype.constrainRotation = function(rotation, opt_delta) {
  */
 ol.View.prototype.getCenter = function() {
   return /** @type {ol.Coordinate|undefined} */ (
-      this.get(ol.ViewProperty.CENTER));
+    this.get(ol.ViewProperty.CENTER));
 };
 
 
@@ -17479,7 +17667,7 @@ ol.View.prototype.getProjection = function() {
  */
 ol.View.prototype.getResolution = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.ViewProperty.RESOLUTION));
+    this.get(ol.ViewProperty.RESOLUTION));
 };
 
 
@@ -17522,14 +17710,14 @@ ol.View.prototype.getResolutionForValueFunction = function(opt_power) {
   var minResolution = this.minResolution_;
   var max = Math.log(maxResolution / minResolution) / Math.log(power);
   return (
-      /**
-       * @param {number} value Value.
-       * @return {number} Resolution.
-       */
-      function(value) {
-        var resolution = maxResolution / Math.pow(power, value * max);
-        return resolution;
-      });
+    /**
+     * @param {number} value Value.
+     * @return {number} Resolution.
+     */
+    function(value) {
+      var resolution = maxResolution / Math.pow(power, value * max);
+      return resolution;
+    });
 };
 
 
@@ -17556,15 +17744,15 @@ ol.View.prototype.getValueForResolutionFunction = function(opt_power) {
   var minResolution = this.minResolution_;
   var max = Math.log(maxResolution / minResolution) / Math.log(power);
   return (
-      /**
-       * @param {number} resolution Resolution.
-       * @return {number} Value.
-       */
-      function(resolution) {
-        var value =
+    /**
+     * @param {number} resolution Resolution.
+     * @return {number} Value.
+     */
+    function(resolution) {
+      var value =
             (Math.log(maxResolution / resolution) / Math.log(power)) / max;
-        return value;
-      });
+      return value;
+    });
 };
 
 
@@ -17631,6 +17819,18 @@ ol.View.prototype.getZoomForResolution = function(resolution) {
 
 
 /**
+ * Get the resolution for a zoom level.
+ * @param {number} zoom Zoom level.
+ * @return {number} The view resolution for the provided zoom level.
+ * @api
+ */
+ol.View.prototype.getResolutionForZoom = function(zoom) {
+  return /** @type {number} */ (this.constrainResolution(
+      this.maxResolution_, zoom - this.minZoom_, 0));
+};
+
+
+/**
  * Fit the given geometry or extent based on the given map size and border.
  * The size is pixel dimensions of the box to fit the extent into.
  * In most cases you will want to use the map size, that is `map.getSize()`.
@@ -17664,7 +17864,7 @@ ol.View.prototype.fit = function(geometryOrExtent, opt_options) {
 
   var padding = options.padding !== undefined ? options.padding : [0, 0, 0, 0];
   var constrainResolution = options.constrainResolution !== undefined ?
-      options.constrainResolution : true;
+    options.constrainResolution : true;
   var nearest = options.nearest !== undefined ? options.nearest : false;
   var minResolution;
   if (options.minResolution !== undefined) {
@@ -17700,7 +17900,7 @@ ol.View.prototype.fit = function(geometryOrExtent, opt_options) {
       [minRotX, minRotY, maxRotX, maxRotY],
       [size[0] - padding[1] - padding[3], size[1] - padding[0] - padding[2]]);
   resolution = isNaN(resolution) ? minResolution :
-      Math.max(resolution, minResolution);
+    Math.max(resolution, minResolution);
   if (constrainResolution) {
     var constrainedResolution = this.constrainResolution(resolution, 0, 0);
     if (!nearest && constrainedResolution < resolution) {
@@ -17846,9 +18046,7 @@ ol.View.prototype.setRotation = function(rotation) {
  * @api
  */
 ol.View.prototype.setZoom = function(zoom) {
-  var resolution = this.constrainResolution(
-      this.maxResolution_, zoom - this.minZoom_, 0);
-  this.setResolution(resolution);
+  this.setResolution(this.getResolutionForZoom(zoom));
 };
 
 
@@ -17883,13 +18081,13 @@ ol.View.createResolutionConstraint_ = function(options) {
   var defaultZoomFactor = 2;
 
   var minZoom = options.minZoom !== undefined ?
-      options.minZoom : ol.DEFAULT_MIN_ZOOM;
+    options.minZoom : ol.DEFAULT_MIN_ZOOM;
 
   var maxZoom = options.maxZoom !== undefined ?
-      options.maxZoom : defaultMaxZoom;
+    options.maxZoom : defaultMaxZoom;
 
   var zoomFactor = options.zoomFactor !== undefined ?
-      options.zoomFactor : defaultZoomFactor;
+    options.zoomFactor : defaultZoomFactor;
 
   if (options.resolutions !== undefined) {
     var resolutions = options.resolutions;
@@ -17902,10 +18100,10 @@ ol.View.createResolutionConstraint_ = function(options) {
     var projection = ol.proj.createProjection(options.projection, 'EPSG:3857');
     var extent = projection.getExtent();
     var size = !extent ?
-        // use an extent that can fit the whole world if need be
-        360 * ol.proj.METERS_PER_UNIT[ol.proj.Units.DEGREES] /
+      // use an extent that can fit the whole world if need be
+      360 * ol.proj.METERS_PER_UNIT[ol.proj.Units.DEGREES] /
             projection.getMetersPerUnit() :
-        Math.max(ol.extent.getWidth(extent), ol.extent.getHeight(extent));
+      Math.max(ol.extent.getWidth(extent), ol.extent.getHeight(extent));
 
     var defaultMaxResolution = size / ol.DEFAULT_TILE_SIZE / Math.pow(
         defaultZoomFactor, ol.DEFAULT_MIN_ZOOM);
@@ -17955,7 +18153,7 @@ ol.View.createResolutionConstraint_ = function(options) {
  */
 ol.View.createRotationConstraint_ = function(options) {
   var enableRotation = options.enableRotation !== undefined ?
-      options.enableRotation : true;
+    options.enableRotation : true;
   if (enableRotation) {
     var constrainRotation = options.constrainRotation;
     if (constrainRotation === undefined || constrainRotation === true) {
@@ -17970,6 +18168,27 @@ ol.View.createRotationConstraint_ = function(options) {
   } else {
     return ol.RotationConstraint.disable;
   }
+};
+
+
+/**
+ * Determine if an animation involves no view change.
+ * @param {ol.ViewAnimation} animation The animation.
+ * @return {boolean} The animation involves no view change.
+ */
+ol.View.isNoopAnimation = function(animation) {
+  if (animation.sourceCenter && animation.targetCenter) {
+    if (!ol.coordinate.equals(animation.sourceCenter, animation.targetCenter)) {
+      return false;
+    }
+  }
+  if (animation.sourceResolution !== animation.targetResolution) {
+    return false;
+  }
+  if (animation.sourceRotation !== animation.targetRotation) {
+    return false;
+  }
+  return true;
 };
 
 goog.provide('ol.Kinetic');
@@ -18165,7 +18384,7 @@ ol.inherits(ol.interaction.Interaction, ol.Object);
  */
 ol.interaction.Interaction.prototype.getActive = function() {
   return /** @type {boolean} */ (
-      this.get(ol.interaction.Property.ACTIVE));
+    this.get(ol.interaction.Property.ACTIVE));
 };
 
 
@@ -18424,7 +18643,7 @@ goog.require('ol.has');
 ol.events.condition.altKeyOnly = function(mapBrowserEvent) {
   var originalEvent = mapBrowserEvent.originalEvent;
   return (
-      originalEvent.altKey &&
+    originalEvent.altKey &&
       !(originalEvent.metaKey || originalEvent.ctrlKey) &&
       !originalEvent.shiftKey);
 };
@@ -18441,7 +18660,7 @@ ol.events.condition.altKeyOnly = function(mapBrowserEvent) {
 ol.events.condition.altShiftKeysOnly = function(mapBrowserEvent) {
   var originalEvent = mapBrowserEvent.originalEvent;
   return (
-      originalEvent.altKey &&
+    originalEvent.altKey &&
       !(originalEvent.metaKey || originalEvent.ctrlKey) &&
       originalEvent.shiftKey);
 };
@@ -18545,7 +18764,7 @@ ol.events.condition.doubleClick = function(mapBrowserEvent) {
 ol.events.condition.noModifierKeys = function(mapBrowserEvent) {
   var originalEvent = mapBrowserEvent.originalEvent;
   return (
-      !originalEvent.altKey &&
+    !originalEvent.altKey &&
       !(originalEvent.metaKey || originalEvent.ctrlKey) &&
       !originalEvent.shiftKey);
 };
@@ -18563,7 +18782,7 @@ ol.events.condition.noModifierKeys = function(mapBrowserEvent) {
 ol.events.condition.platformModifierKeyOnly = function(mapBrowserEvent) {
   var originalEvent = mapBrowserEvent.originalEvent;
   return (
-      !originalEvent.altKey &&
+    !originalEvent.altKey &&
       (ol.has.MAC ? originalEvent.metaKey : originalEvent.ctrlKey) &&
       !originalEvent.shiftKey);
 };
@@ -18580,7 +18799,7 @@ ol.events.condition.platformModifierKeyOnly = function(mapBrowserEvent) {
 ol.events.condition.shiftKeyOnly = function(mapBrowserEvent) {
   var originalEvent = mapBrowserEvent.originalEvent;
   return (
-      !originalEvent.altKey &&
+    !originalEvent.altKey &&
       !(originalEvent.metaKey || originalEvent.ctrlKey) &&
       originalEvent.shiftKey);
 };
@@ -18598,7 +18817,7 @@ ol.events.condition.targetNotEditable = function(mapBrowserEvent) {
   var target = mapBrowserEvent.originalEvent.target;
   var tagName = target.tagName;
   return (
-      tagName !== 'INPUT' &&
+    tagName !== 'INPUT' &&
       tagName !== 'SELECT' &&
       tagName !== 'TEXTAREA');
 };
@@ -18662,7 +18881,7 @@ ol.interaction.Pointer = function(opt_options) {
   var options = opt_options ? opt_options : {};
 
   var handleEvent = options.handleEvent ?
-      options.handleEvent : ol.interaction.Pointer.handleEvent;
+    options.handleEvent : ol.interaction.Pointer.handleEvent;
 
   ol.interaction.Interaction.call(this, {
     handleEvent: handleEvent
@@ -18673,28 +18892,28 @@ ol.interaction.Pointer = function(opt_options) {
    * @private
    */
   this.handleDownEvent_ = options.handleDownEvent ?
-      options.handleDownEvent : ol.interaction.Pointer.handleDownEvent;
+    options.handleDownEvent : ol.interaction.Pointer.handleDownEvent;
 
   /**
    * @type {function(ol.MapBrowserPointerEvent)}
    * @private
    */
   this.handleDragEvent_ = options.handleDragEvent ?
-      options.handleDragEvent : ol.interaction.Pointer.handleDragEvent;
+    options.handleDragEvent : ol.interaction.Pointer.handleDragEvent;
 
   /**
    * @type {function(ol.MapBrowserPointerEvent)}
    * @private
    */
   this.handleMoveEvent_ = options.handleMoveEvent ?
-      options.handleMoveEvent : ol.interaction.Pointer.handleMoveEvent;
+    options.handleMoveEvent : ol.interaction.Pointer.handleMoveEvent;
 
   /**
    * @type {function(ol.MapBrowserPointerEvent):boolean}
    * @private
    */
   this.handleUpEvent_ = options.handleUpEvent ?
-      options.handleUpEvent : ol.interaction.Pointer.handleUpEvent;
+    options.handleUpEvent : ol.interaction.Pointer.handleUpEvent;
 
   /**
    * @type {boolean}
@@ -18703,7 +18922,7 @@ ol.interaction.Pointer = function(opt_options) {
   this.handlingDownUpSequence = false;
 
   /**
-   * @type {Object.<number, ol.pointer.PointerEvent>}
+   * @type {Object.<string, ol.pointer.PointerEvent>}
    * @private
    */
   this.trackedPointers_ = {};
@@ -18743,7 +18962,7 @@ ol.interaction.Pointer.centroid = function(pointerEvents) {
 ol.interaction.Pointer.prototype.isPointerDraggingEvent_ = function(mapBrowserEvent) {
   var type = mapBrowserEvent.type;
   return (
-      type === ol.MapBrowserEventType.POINTERDOWN ||
+    type === ol.MapBrowserEventType.POINTERDOWN ||
       type === ol.MapBrowserEventType.POINTERDRAG ||
       type === ol.MapBrowserEventType.POINTERUP);
 };
@@ -18757,14 +18976,15 @@ ol.interaction.Pointer.prototype.updateTrackedPointers_ = function(mapBrowserEve
   if (this.isPointerDraggingEvent_(mapBrowserEvent)) {
     var event = mapBrowserEvent.pointerEvent;
 
+    var id = event.pointerId.toString();
     if (mapBrowserEvent.type == ol.MapBrowserEventType.POINTERUP) {
-      delete this.trackedPointers_[event.pointerId];
+      delete this.trackedPointers_[id];
     } else if (mapBrowserEvent.type ==
         ol.MapBrowserEventType.POINTERDOWN) {
-      this.trackedPointers_[event.pointerId] = event;
-    } else if (event.pointerId in this.trackedPointers_) {
+      this.trackedPointers_[id] = event;
+    } else if (id in this.trackedPointers_) {
       // update only when there was a pointerdown event for this pointer
-      this.trackedPointers_[event.pointerId] = event;
+      this.trackedPointers_[id] = event;
     }
     this.targetPointers = ol.obj.getValues(this.trackedPointers_);
   }
@@ -18905,7 +19125,7 @@ ol.interaction.DragPan = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.noModifierKeys;
+    options.condition : ol.events.condition.noModifierKeys;
 
   /**
    * @private
@@ -19067,7 +19287,7 @@ ol.interaction.DragRotate = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.altShiftKeysOnly;
+    options.condition : ol.events.condition.altShiftKeysOnly;
 
   /**
    * @private
@@ -19355,14 +19575,14 @@ ol.interaction.DragBox = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.always;
+    options.condition : ol.events.condition.always;
 
   /**
    * @private
    * @type {ol.DragBoxEndConditionType}
    */
   this.boxEndCondition_ = options.boxEndCondition ?
-      options.boxEndCondition : ol.interaction.DragBox.defaultBoxEndCondition;
+    options.boxEndCondition : ol.interaction.DragBox.defaultBoxEndCondition;
 };
 ol.inherits(ol.interaction.DragBox, ol.interaction.Pointer);
 
@@ -19397,7 +19617,7 @@ ol.interaction.DragBox.handleDragEvent_ = function(mapBrowserEvent) {
   this.box_.setPixels(this.startPixel_, mapBrowserEvent.pixel);
 
   this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType_.BOXDRAG,
-    mapBrowserEvent.coordinate, mapBrowserEvent));
+      mapBrowserEvent.coordinate, mapBrowserEvent));
 };
 
 
@@ -19556,7 +19776,7 @@ ol.interaction.DragZoom = function(opt_options) {
   var options = opt_options ? opt_options : {};
 
   var condition = options.condition ?
-      options.condition : ol.events.condition.shiftKeyOnly;
+    options.condition : ol.events.condition.shiftKeyOnly;
 
   /**
    * @private
@@ -19680,7 +19900,7 @@ ol.interaction.KeyboardPan = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition !== undefined ?
-      options.condition : this.defaultCondition_;
+    options.condition : this.defaultCondition_;
 
   /**
    * @private
@@ -19693,7 +19913,7 @@ ol.interaction.KeyboardPan = function(opt_options) {
    * @type {number}
    */
   this.pixelDelta_ = options.pixelDelta !== undefined ?
-      options.pixelDelta : 128;
+    options.pixelDelta : 128;
 
 };
 ol.inherits(ol.interaction.KeyboardPan, ol.interaction.Interaction);
@@ -19778,7 +19998,7 @@ ol.interaction.KeyboardZoom = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ? options.condition :
-          ol.events.condition.targetNotEditable;
+    ol.events.condition.targetNotEditable;
 
   /**
    * @private
@@ -19991,8 +20211,8 @@ ol.interaction.MouseWheelZoom.handleEvent = function(mapBrowserEvent) {
 
   if (!this.mode_ || now - this.startTime_ > this.trackpadEventGap_) {
     this.mode_ = Math.abs(delta) < 4 ?
-        ol.interaction.MouseWheelZoom.Mode_.TRACKPAD :
-        ol.interaction.MouseWheelZoom.Mode_.WHEEL;
+      ol.interaction.MouseWheelZoom.Mode_.TRACKPAD :
+      ol.interaction.MouseWheelZoom.Mode_.WHEEL;
   }
 
   if (this.mode_ === ol.interaction.MouseWheelZoom.Mode_.TRACKPAD) {
@@ -20505,13 +20725,13 @@ ol.interaction.defaults = function(opt_options) {
   var kinetic = new ol.Kinetic(-0.005, 0.05, 100);
 
   var altShiftDragRotate = options.altShiftDragRotate !== undefined ?
-      options.altShiftDragRotate : true;
+    options.altShiftDragRotate : true;
   if (altShiftDragRotate) {
     interactions.push(new ol.interaction.DragRotate());
   }
 
   var doubleClickZoom = options.doubleClickZoom !== undefined ?
-      options.doubleClickZoom : true;
+    options.doubleClickZoom : true;
   if (doubleClickZoom) {
     interactions.push(new ol.interaction.DoubleClickZoom({
       delta: options.zoomDelta,
@@ -20527,7 +20747,7 @@ ol.interaction.defaults = function(opt_options) {
   }
 
   var pinchRotate = options.pinchRotate !== undefined ? options.pinchRotate :
-      true;
+    true;
   if (pinchRotate) {
     interactions.push(new ol.interaction.PinchRotate());
   }
@@ -20550,7 +20770,7 @@ ol.interaction.defaults = function(opt_options) {
   }
 
   var mouseWheelZoom = options.mouseWheelZoom !== undefined ?
-      options.mouseWheelZoom : true;
+    options.mouseWheelZoom : true;
   if (mouseWheelZoom) {
     interactions.push(new ol.interaction.MouseWheelZoom({
       constrainResolution: options.constrainResolution,
@@ -20559,7 +20779,7 @@ ol.interaction.defaults = function(opt_options) {
   }
 
   var shiftDragZoom = options.shiftDragZoom !== undefined ?
-      options.shiftDragZoom : true;
+    options.shiftDragZoom : true;
   if (shiftDragZoom) {
     interactions.push(new ol.interaction.DragZoom({
       duration: options.zoomDuration
@@ -20694,7 +20914,7 @@ ol.layer.Base.prototype.getLayerStatesArray = function(opt_states) {};
  */
 ol.layer.Base.prototype.getExtent = function() {
   return /** @type {ol.Extent|undefined} */ (
-      this.get(ol.layer.Property.EXTENT));
+    this.get(ol.layer.Property.EXTENT));
 };
 
 
@@ -20706,7 +20926,7 @@ ol.layer.Base.prototype.getExtent = function() {
  */
 ol.layer.Base.prototype.getMaxResolution = function() {
   return /** @type {number} */ (
-      this.get(ol.layer.Property.MAX_RESOLUTION));
+    this.get(ol.layer.Property.MAX_RESOLUTION));
 };
 
 
@@ -20718,7 +20938,7 @@ ol.layer.Base.prototype.getMaxResolution = function() {
  */
 ol.layer.Base.prototype.getMinResolution = function() {
   return /** @type {number} */ (
-      this.get(ol.layer.Property.MIN_RESOLUTION));
+    this.get(ol.layer.Property.MIN_RESOLUTION));
 };
 
 
@@ -20927,9 +21147,7 @@ ol.layer.Group.prototype.createRenderer = function(mapRenderer) {};
  * @private
  */
 ol.layer.Group.prototype.handleLayerChange_ = function() {
-  if (this.getVisible()) {
-    this.changed();
-  }
+  this.changed();
 };
 
 
@@ -21754,7 +21972,7 @@ ol.renderer.Map.expireIconCache_ = function(map, frameState) {
  * @template S,T,U
  */
 ol.renderer.Map.prototype.forEachFeatureAtCoordinate = function(coordinate, frameState, hitTolerance, callback, thisArg,
-        layerFilter, thisArg2) {
+    layerFilter, thisArg2) {
   var result;
   var viewState = frameState.viewState;
   var viewResolution = viewState.resolution;
@@ -21824,7 +22042,7 @@ ol.renderer.Map.prototype.forEachFeatureAtCoordinate = function(coordinate, fram
  * @template S,T,U
  */
 ol.renderer.Map.prototype.forEachLayerAtPixel = function(pixel, frameState, callback, thisArg,
-        layerFilter, thisArg2) {};
+    layerFilter, thisArg2) {};
 
 
 /**
@@ -21954,7 +22172,7 @@ ol.renderer.Map.prototype.removeUnusedLayerRenderers_ = function(map, frameState
  */
 ol.renderer.Map.prototype.scheduleExpireIconCache = function(frameState) {
   frameState.postRenderFunctions.push(
-    /** @type {ol.PostRenderFunction} */ (ol.renderer.Map.expireIconCache_)
+      /** @type {ol.PostRenderFunction} */ (ol.renderer.Map.expireIconCache_)
   );
 };
 
@@ -21968,7 +22186,7 @@ ol.renderer.Map.prototype.scheduleRemoveUnusedLayerRenderers = function(frameSta
   for (layerKey in this.layerRenderers_) {
     if (!(layerKey in frameState.layerStates)) {
       frameState.postRenderFunctions.push(
-        /** @type {ol.PostRenderFunction} */ (this.removeUnusedLayerRenderers_.bind(this))
+          /** @type {ol.PostRenderFunction} */ (this.removeUnusedLayerRenderers_.bind(this))
       );
       return;
     }
@@ -22159,6 +22377,16 @@ goog.provide('ol.render.VectorContext');
  */
 ol.render.VectorContext = function() {
 };
+
+
+/**
+ * Render a geometry with a custom renderer.
+ *
+ * @param {ol.geom.SimpleGeometry} geometry Geometry.
+ * @param {ol.Feature|ol.render.Feature} feature Feature.
+ * @param {Function} renderer Renderer.
+ */
+ol.render.VectorContext.prototype.drawCustom = function(geometry, feature, renderer) {};
 
 
 /**
@@ -23011,6 +23239,7 @@ ol.render.canvas.Immediate.prototype.setContextStrokeState_ = function(strokeSta
     context.lineCap = strokeState.lineCap;
     if (ol.has.CANVAS_LINE_DASH) {
       context.setLineDash(strokeState.lineDash);
+      context.lineDashOffset = strokeState.lineDashOffset;
     }
     context.lineJoin = strokeState.lineJoin;
     context.lineWidth = strokeState.lineWidth;
@@ -23019,6 +23248,7 @@ ol.render.canvas.Immediate.prototype.setContextStrokeState_ = function(strokeSta
     this.contextStrokeState_ = {
       lineCap: strokeState.lineCap,
       lineDash: strokeState.lineDash,
+      lineDashOffset: strokeState.lineDashOffset,
       lineJoin: strokeState.lineJoin,
       lineWidth: strokeState.lineWidth,
       miterLimit: strokeState.miterLimit,
@@ -23032,6 +23262,10 @@ ol.render.canvas.Immediate.prototype.setContextStrokeState_ = function(strokeSta
       if (!ol.array.equals(
           contextStrokeState.lineDash, strokeState.lineDash)) {
         context.setLineDash(contextStrokeState.lineDash = strokeState.lineDash);
+      }
+      if (contextStrokeState.lineDashOffset != strokeState.lineDashOffset) {
+        contextStrokeState.lineDashOffset = context.lineDashOffset =
+            strokeState.lineDashOffset;
       }
     }
     if (contextStrokeState.lineJoin != strokeState.lineJoin) {
@@ -23098,7 +23332,7 @@ ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, st
     var fillStyleColor = fillStyle.getColor();
     this.fillState_ = {
       fillStyle: ol.colorlike.asColorLike(fillStyleColor ?
-          fillStyleColor : ol.render.canvas.defaultFillStyle)
+        fillStyleColor : ol.render.canvas.defaultFillStyle)
     };
   }
   if (!strokeStyle) {
@@ -23113,19 +23347,19 @@ ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, st
     var strokeStyleMiterLimit = strokeStyle.getMiterLimit();
     this.strokeState_ = {
       lineCap: strokeStyleLineCap !== undefined ?
-          strokeStyleLineCap : ol.render.canvas.defaultLineCap,
+        strokeStyleLineCap : ol.render.canvas.defaultLineCap,
       lineDash: strokeStyleLineDash ?
-          strokeStyleLineDash : ol.render.canvas.defaultLineDash,
+        strokeStyleLineDash : ol.render.canvas.defaultLineDash,
       lineDashOffset: strokeStyleLineDashOffset ?
-          strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset,
+        strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset,
       lineJoin: strokeStyleLineJoin !== undefined ?
-          strokeStyleLineJoin : ol.render.canvas.defaultLineJoin,
+        strokeStyleLineJoin : ol.render.canvas.defaultLineJoin,
       lineWidth: this.pixelRatio_ * (strokeStyleWidth !== undefined ?
-          strokeStyleWidth : ol.render.canvas.defaultLineWidth),
+        strokeStyleWidth : ol.render.canvas.defaultLineWidth),
       miterLimit: strokeStyleMiterLimit !== undefined ?
-          strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit,
+        strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit,
       strokeStyle: ol.colorlike.asColorLike(strokeStyleColor ?
-          strokeStyleColor : ol.render.canvas.defaultStrokeStyle)
+        strokeStyleColor : ol.render.canvas.defaultStrokeStyle)
     };
   }
 };
@@ -23156,7 +23390,7 @@ ol.render.canvas.Immediate.prototype.setImageStyle = function(imageStyle) {
     this.imageOriginY_ = imageOrigin[1];
     this.imageRotateWithView_ = imageStyle.getRotateWithView();
     this.imageRotation_ = imageStyle.getRotation();
-    this.imageScale_ = imageStyle.getScale();
+    this.imageScale_ = imageStyle.getScale() * this.pixelRatio_;
     this.imageSnapToPixel_ = imageStyle.getSnapToPixel();
     this.imageWidth_ = imageSize[0];
   }
@@ -23181,7 +23415,7 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
       var textFillStyleColor = textFillStyle.getColor();
       this.textFillState_ = {
         fillStyle: ol.colorlike.asColorLike(textFillStyleColor ?
-            textFillStyleColor : ol.render.canvas.defaultFillStyle)
+          textFillStyleColor : ol.render.canvas.defaultFillStyle)
       };
     }
     var textStrokeStyle = textStyle.getStroke();
@@ -23197,19 +23431,19 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
       var textStrokeStyleMiterLimit = textStrokeStyle.getMiterLimit();
       this.textStrokeState_ = {
         lineCap: textStrokeStyleLineCap !== undefined ?
-            textStrokeStyleLineCap : ol.render.canvas.defaultLineCap,
+          textStrokeStyleLineCap : ol.render.canvas.defaultLineCap,
         lineDash: textStrokeStyleLineDash ?
-            textStrokeStyleLineDash : ol.render.canvas.defaultLineDash,
+          textStrokeStyleLineDash : ol.render.canvas.defaultLineDash,
         lineDashOffset: textStrokeStyleLineDashOffset ?
-            textStrokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset,
+          textStrokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset,
         lineJoin: textStrokeStyleLineJoin !== undefined ?
-            textStrokeStyleLineJoin : ol.render.canvas.defaultLineJoin,
+          textStrokeStyleLineJoin : ol.render.canvas.defaultLineJoin,
         lineWidth: textStrokeStyleWidth !== undefined ?
-            textStrokeStyleWidth : ol.render.canvas.defaultLineWidth,
+          textStrokeStyleWidth : ol.render.canvas.defaultLineWidth,
         miterLimit: textStrokeStyleMiterLimit !== undefined ?
-            textStrokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit,
+          textStrokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit,
         strokeStyle: ol.colorlike.asColorLike(textStrokeStyleColor ?
-            textStrokeStyleColor : ol.render.canvas.defaultStrokeStyle)
+          textStrokeStyleColor : ol.render.canvas.defaultStrokeStyle)
       };
     }
     var textFont = textStyle.getFont();
@@ -23223,11 +23457,11 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
     var textTextBaseline = textStyle.getTextBaseline();
     this.textState_ = {
       font: textFont !== undefined ?
-          textFont : ol.render.canvas.defaultFont,
+        textFont : ol.render.canvas.defaultFont,
       textAlign: textTextAlign !== undefined ?
-          textTextAlign : ol.render.canvas.defaultTextAlign,
+        textTextAlign : ol.render.canvas.defaultTextAlign,
       textBaseline: textTextBaseline !== undefined ?
-          textTextBaseline : ol.render.canvas.defaultTextBaseline
+        textTextBaseline : ol.render.canvas.defaultTextBaseline
     };
     this.text_ = textText !== undefined ? textText : '';
     this.textOffsetX_ =
@@ -23237,7 +23471,7 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
     this.textRotateWithView_ = textRotateWithView !== undefined ? textRotateWithView : false;
     this.textRotation_ = textRotation !== undefined ? textRotation : 0;
     this.textScale_ = this.pixelRatio_ * (textScale !== undefined ?
-        textScale : 1);
+      textScale : 1);
   }
 };
 
@@ -23429,7 +23663,7 @@ ol.renderer.canvas.Map.prototype.renderFrame = function(frameState) {
  * @inheritDoc
  */
 ol.renderer.canvas.Map.prototype.forEachLayerAtPixel = function(pixel, frameState, callback, thisArg,
-        layerFilter, thisArg2) {
+    layerFilter, thisArg2) {
   var result;
   var viewState = frameState.viewState;
   var viewResolution = viewState.resolution;
@@ -23465,6 +23699,7 @@ goog.provide('ol.render.ReplayType');
  */
 ol.render.ReplayType = {
   CIRCLE: 'Circle',
+  DEFAULT: 'Default',
   IMAGE: 'Image',
   LINE_STRING: 'LineString',
   POLYGON: 'Polygon',
@@ -23485,7 +23720,8 @@ ol.render.replay.ORDER = [
   ol.render.ReplayType.CIRCLE,
   ol.render.ReplayType.LINE_STRING,
   ol.render.ReplayType.IMAGE,
-  ol.render.ReplayType.TEXT
+  ol.render.ReplayType.TEXT,
+  ol.render.ReplayType.DEFAULT
 ];
 
 goog.provide('ol.render.ReplayGroup');
@@ -23661,8 +23897,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.render.webgl.circlereplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.circlereplay.defaultshader.Fragment.DEBUG_SOURCE :
-      ol.render.webgl.circlereplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
+    ol.render.webgl.circlereplay.defaultshader.Fragment.DEBUG_SOURCE :
+    ol.render.webgl.circlereplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
 
 
   ol.render.webgl.circlereplay.defaultshader.fragment = new ol.render.webgl.circlereplay.defaultshader.Fragment();
@@ -23698,8 +23934,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.render.webgl.circlereplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.circlereplay.defaultshader.Vertex.DEBUG_SOURCE :
-      ol.render.webgl.circlereplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
+    ol.render.webgl.circlereplay.defaultshader.Vertex.DEBUG_SOURCE :
+    ol.render.webgl.circlereplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
 
 
   ol.render.webgl.circlereplay.defaultshader.vertex = new ol.render.webgl.circlereplay.defaultshader.Vertex();
@@ -23956,9 +24192,9 @@ if (ol.ENABLE_WEBGL) {
    * @param {ol.Size} size Size.
    * @param {number} pixelRatio Pixel ratio.
    * @return {ol.render.webgl.circlereplay.defaultshader.Locations|
-              ol.render.webgl.imagereplay.defaultshader.Locations|
               ol.render.webgl.linestringreplay.defaultshader.Locations|
-              ol.render.webgl.polygonreplay.defaultshader.Locations} Locations.
+              ol.render.webgl.polygonreplay.defaultshader.Locations|
+              ol.render.webgl.texturereplay.defaultshader.Locations} Locations.
    */
   ol.render.webgl.Replay.prototype.setUpProgram = function(gl, context, size, pixelRatio) {};
 
@@ -23968,9 +24204,9 @@ if (ol.ENABLE_WEBGL) {
    * @protected
    * @param {WebGLRenderingContext} gl gl.
    * @param {ol.render.webgl.circlereplay.defaultshader.Locations|
-             ol.render.webgl.imagereplay.defaultshader.Locations|
              ol.render.webgl.linestringreplay.defaultshader.Locations|
-             ol.render.webgl.polygonreplay.defaultshader.Locations} locations Locations.
+             ol.render.webgl.polygonreplay.defaultshader.Locations|
+             ol.render.webgl.texturereplay.defaultshader.Locations} locations Locations.
    */
   ol.render.webgl.Replay.prototype.shutDownProgram = function(gl, locations) {};
 
@@ -24125,11 +24361,11 @@ if (ol.ENABLE_WEBGL) {
     }
 
     gl.uniformMatrix4fv(locations.u_projectionMatrix, false,
-       ol.vec.Mat4.fromTransform(this.tmpMat4_, projectionMatrix));
+        ol.vec.Mat4.fromTransform(this.tmpMat4_, projectionMatrix));
     gl.uniformMatrix4fv(locations.u_offsetScaleMatrix, false,
-       ol.vec.Mat4.fromTransform(this.tmpMat4_, offsetScaleMatrix));
+        ol.vec.Mat4.fromTransform(this.tmpMat4_, offsetScaleMatrix));
     gl.uniformMatrix4fv(locations.u_offsetRotateMatrix, false,
-       ol.vec.Mat4.fromTransform(this.tmpMat4_, offsetRotateMatrix));
+        ol.vec.Mat4.fromTransform(this.tmpMat4_, offsetRotateMatrix));
     gl.uniform1f(locations.u_opacity, opacity);
 
     // draw!
@@ -24151,10 +24387,10 @@ if (ol.ENABLE_WEBGL) {
       }
       gl.clear(gl.STENCIL_BUFFER_BIT);
       gl.stencilFunc(/** @type {number} */ (tmpStencilFunc),
-         /** @type {number} */ (tmpStencilRef), /** @type {number} */ (tmpStencilMaskVal));
+          /** @type {number} */ (tmpStencilRef), /** @type {number} */ (tmpStencilMaskVal));
       gl.stencilMask(/** @type {number} */ (tmpStencilMask));
       gl.stencilOp(/** @type {number} */ (tmpStencilOpFail),
-         /** @type {number} */ (tmpStencilOpZFail), /** @type {number} */ (tmpStencilOpPass));
+          /** @type {number} */ (tmpStencilOpZFail), /** @type {number} */ (tmpStencilOpPass));
     }
 
     return result;
@@ -24170,7 +24406,7 @@ if (ol.ENABLE_WEBGL) {
   ol.render.webgl.Replay.prototype.drawElements = function(
       gl, context, start, end) {
     var elementType = context.hasOESElementIndexUint ?
-        ol.webgl.UNSIGNED_INT : ol.webgl.UNSIGNED_SHORT;
+      ol.webgl.UNSIGNED_INT : ol.webgl.UNSIGNED_SHORT;
     var elementSize = context.hasOESElementIndexUint ? 4 : 2;
 
     var numItems = end - start;
@@ -24189,9 +24425,17 @@ if (ol.ENABLE_WEBGL) {
 
   /**
    * @const
+   * @type {string}
+   */
+  ol.render.webgl.defaultFont = '10px sans-serif';
+
+
+  /**
+   * @const
    * @type {ol.Color}
    */
   ol.render.webgl.defaultFillStyle = [0.0, 0.0, 0.0, 1.0];
+
 
   /**
    * @const
@@ -24233,6 +24477,21 @@ if (ol.ENABLE_WEBGL) {
    */
   ol.render.webgl.defaultStrokeStyle = [0.0, 0.0, 0.0, 1.0];
 
+
+  /**
+   * @const
+   * @type {number}
+   */
+  ol.render.webgl.defaultTextAlign = 0.5;
+
+
+  /**
+   * @const
+   * @type {number}
+   */
+  ol.render.webgl.defaultTextBaseline = 0.5;
+
+
   /**
    * @const
    * @type {number}
@@ -24252,7 +24511,7 @@ if (ol.ENABLE_WEBGL) {
   ol.render.webgl.triangleIsCounterClockwise = function(x1, y1, x2, y2, x3, y3) {
     var area = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
     return (area <= ol.render.webgl.EPSILON && area >= -ol.render.webgl.EPSILON) ?
-        undefined : area > 0;
+      undefined : area > 0;
   };
 
   /**
@@ -24290,7 +24549,7 @@ if (ol.ENABLE_WEBGL) {
      * @type {number}
      */
     this.usage_ = opt_usage !== undefined ?
-        opt_usage : ol.webgl.Buffer.Usage_.STATIC_DRAW;
+      opt_usage : ol.webgl.Buffer.Usage_.STATIC_DRAW;
 
   };
 
@@ -24706,10 +24965,10 @@ if (ol.ENABLE_WEBGL) {
     if (strokeStyle) {
       var strokeStyleLineDash = strokeStyle.getLineDash();
       this.state_.lineDash = strokeStyleLineDash ?
-          strokeStyleLineDash : ol.render.webgl.defaultLineDash;
+        strokeStyleLineDash : ol.render.webgl.defaultLineDash;
       var strokeStyleLineDashOffset = strokeStyle.getLineDashOffset();
       this.state_.lineDashOffset = strokeStyleLineDashOffset ?
-          strokeStyleLineDashOffset : ol.render.webgl.defaultLineDashOffset;
+        strokeStyleLineDashOffset : ol.render.webgl.defaultLineDashOffset;
       strokeStyleColor = strokeStyle.getColor();
       if (!(strokeStyleColor instanceof CanvasGradient) &&
           !(strokeStyleColor instanceof CanvasPattern)) {
@@ -24721,7 +24980,7 @@ if (ol.ENABLE_WEBGL) {
       }
       strokeStyleWidth = strokeStyle.getWidth();
       strokeStyleWidth = strokeStyleWidth !== undefined ?
-          strokeStyleWidth : ol.render.webgl.defaultLineWidth;
+        strokeStyleWidth : ol.render.webgl.defaultLineWidth;
     } else {
       strokeStyleColor = [0, 0, 0, 0];
       strokeStyleWidth = 0;
@@ -24750,7 +25009,7 @@ if (ol.ENABLE_WEBGL) {
 
 // This file is automatically generated, do not edit
 /* eslint openlayers-internal/no-missing-requires: 0 */
-goog.provide('ol.render.webgl.imagereplay.defaultshader');
+goog.provide('ol.render.webgl.texturereplay.defaultshader');
 
 goog.require('ol');
 goog.require('ol.webgl.Fragment');
@@ -24763,36 +25022,36 @@ if (ol.ENABLE_WEBGL) {
    * @extends {ol.webgl.Fragment}
    * @struct
    */
-  ol.render.webgl.imagereplay.defaultshader.Fragment = function() {
-    ol.webgl.Fragment.call(this, ol.render.webgl.imagereplay.defaultshader.Fragment.SOURCE);
+  ol.render.webgl.texturereplay.defaultshader.Fragment = function() {
+    ol.webgl.Fragment.call(this, ol.render.webgl.texturereplay.defaultshader.Fragment.SOURCE);
   };
-  ol.inherits(ol.render.webgl.imagereplay.defaultshader.Fragment, ol.webgl.Fragment);
+  ol.inherits(ol.render.webgl.texturereplay.defaultshader.Fragment, ol.webgl.Fragment);
 
 
   /**
    * @const
    * @type {string}
    */
-  ol.render.webgl.imagereplay.defaultshader.Fragment.DEBUG_SOURCE = 'precision mediump float;\nvarying vec2 v_texCoord;\nvarying float v_opacity;\n\nuniform float u_opacity;\nuniform sampler2D u_image;\n\nvoid main(void) {\n  vec4 texColor = texture2D(u_image, v_texCoord);\n  gl_FragColor.rgb = texColor.rgb;\n  float alpha = texColor.a * v_opacity * u_opacity;\n  if (alpha == 0.0) {\n    discard;\n  }\n  gl_FragColor.a = alpha;\n}\n';
+  ol.render.webgl.texturereplay.defaultshader.Fragment.DEBUG_SOURCE = 'precision mediump float;\nvarying vec2 v_texCoord;\nvarying float v_opacity;\n\nuniform float u_opacity;\nuniform sampler2D u_image;\n\nvoid main(void) {\n  vec4 texColor = texture2D(u_image, v_texCoord);\n  gl_FragColor.rgb = texColor.rgb;\n  float alpha = texColor.a * v_opacity * u_opacity;\n  if (alpha == 0.0) {\n    discard;\n  }\n  gl_FragColor.a = alpha;\n}\n';
 
 
   /**
    * @const
    * @type {string}
    */
-  ol.render.webgl.imagereplay.defaultshader.Fragment.OPTIMIZED_SOURCE = 'precision mediump float;varying vec2 a;varying float b;uniform float k;uniform sampler2D l;void main(void){vec4 texColor=texture2D(l,a);gl_FragColor.rgb=texColor.rgb;float alpha=texColor.a*b*k;if(alpha==0.0){discard;}gl_FragColor.a=alpha;}';
+  ol.render.webgl.texturereplay.defaultshader.Fragment.OPTIMIZED_SOURCE = 'precision mediump float;varying vec2 a;varying float b;uniform float k;uniform sampler2D l;void main(void){vec4 texColor=texture2D(l,a);gl_FragColor.rgb=texColor.rgb;float alpha=texColor.a*b*k;if(alpha==0.0){discard;}gl_FragColor.a=alpha;}';
 
 
   /**
    * @const
    * @type {string}
    */
-  ol.render.webgl.imagereplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.imagereplay.defaultshader.Fragment.DEBUG_SOURCE :
-      ol.render.webgl.imagereplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
+  ol.render.webgl.texturereplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
+    ol.render.webgl.texturereplay.defaultshader.Fragment.DEBUG_SOURCE :
+    ol.render.webgl.texturereplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
 
 
-  ol.render.webgl.imagereplay.defaultshader.fragment = new ol.render.webgl.imagereplay.defaultshader.Fragment();
+  ol.render.webgl.texturereplay.defaultshader.fragment = new ol.render.webgl.texturereplay.defaultshader.Fragment();
 
 
   /**
@@ -24800,36 +25059,36 @@ if (ol.ENABLE_WEBGL) {
    * @extends {ol.webgl.Vertex}
    * @struct
    */
-  ol.render.webgl.imagereplay.defaultshader.Vertex = function() {
-    ol.webgl.Vertex.call(this, ol.render.webgl.imagereplay.defaultshader.Vertex.SOURCE);
+  ol.render.webgl.texturereplay.defaultshader.Vertex = function() {
+    ol.webgl.Vertex.call(this, ol.render.webgl.texturereplay.defaultshader.Vertex.SOURCE);
   };
-  ol.inherits(ol.render.webgl.imagereplay.defaultshader.Vertex, ol.webgl.Vertex);
+  ol.inherits(ol.render.webgl.texturereplay.defaultshader.Vertex, ol.webgl.Vertex);
 
 
   /**
    * @const
    * @type {string}
    */
-  ol.render.webgl.imagereplay.defaultshader.Vertex.DEBUG_SOURCE = 'varying vec2 v_texCoord;\nvarying float v_opacity;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\nattribute vec2 a_offsets;\nattribute float a_opacity;\nattribute float a_rotateWithView;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_offsetScaleMatrix;\nuniform mat4 u_offsetRotateMatrix;\n\nvoid main(void) {\n  mat4 offsetMatrix = u_offsetScaleMatrix;\n  if (a_rotateWithView == 1.0) {\n    offsetMatrix = u_offsetScaleMatrix * u_offsetRotateMatrix;\n  }\n  vec4 offsets = offsetMatrix * vec4(a_offsets, 0.0, 0.0);\n  gl_Position = u_projectionMatrix * vec4(a_position, 0.0, 1.0) + offsets;\n  v_texCoord = a_texCoord;\n  v_opacity = a_opacity;\n}\n\n\n';
+  ol.render.webgl.texturereplay.defaultshader.Vertex.DEBUG_SOURCE = 'varying vec2 v_texCoord;\nvarying float v_opacity;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\nattribute vec2 a_offsets;\nattribute float a_opacity;\nattribute float a_rotateWithView;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_offsetScaleMatrix;\nuniform mat4 u_offsetRotateMatrix;\n\nvoid main(void) {\n  mat4 offsetMatrix = u_offsetScaleMatrix;\n  if (a_rotateWithView == 1.0) {\n    offsetMatrix = u_offsetScaleMatrix * u_offsetRotateMatrix;\n  }\n  vec4 offsets = offsetMatrix * vec4(a_offsets, 0.0, 0.0);\n  gl_Position = u_projectionMatrix * vec4(a_position, 0.0, 1.0) + offsets;\n  v_texCoord = a_texCoord;\n  v_opacity = a_opacity;\n}\n\n\n';
 
 
   /**
    * @const
    * @type {string}
    */
-  ol.render.webgl.imagereplay.defaultshader.Vertex.OPTIMIZED_SOURCE = 'varying vec2 a;varying float b;attribute vec2 c;attribute vec2 d;attribute vec2 e;attribute float f;attribute float g;uniform mat4 h;uniform mat4 i;uniform mat4 j;void main(void){mat4 offsetMatrix=i;if(g==1.0){offsetMatrix=i*j;}vec4 offsets=offsetMatrix*vec4(e,0.0,0.0);gl_Position=h*vec4(c,0.0,1.0)+offsets;a=d;b=f;}';
+  ol.render.webgl.texturereplay.defaultshader.Vertex.OPTIMIZED_SOURCE = 'varying vec2 a;varying float b;attribute vec2 c;attribute vec2 d;attribute vec2 e;attribute float f;attribute float g;uniform mat4 h;uniform mat4 i;uniform mat4 j;void main(void){mat4 offsetMatrix=i;if(g==1.0){offsetMatrix=i*j;}vec4 offsets=offsetMatrix*vec4(e,0.0,0.0);gl_Position=h*vec4(c,0.0,1.0)+offsets;a=d;b=f;}';
 
 
   /**
    * @const
    * @type {string}
    */
-  ol.render.webgl.imagereplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.imagereplay.defaultshader.Vertex.DEBUG_SOURCE :
-      ol.render.webgl.imagereplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
+  ol.render.webgl.texturereplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
+    ol.render.webgl.texturereplay.defaultshader.Vertex.DEBUG_SOURCE :
+    ol.render.webgl.texturereplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
 
 
-  ol.render.webgl.imagereplay.defaultshader.vertex = new ol.render.webgl.imagereplay.defaultshader.Vertex();
+  ol.render.webgl.texturereplay.defaultshader.vertex = new ol.render.webgl.texturereplay.defaultshader.Vertex();
 
 
   /**
@@ -24838,7 +25097,7 @@ if (ol.ENABLE_WEBGL) {
    * @param {WebGLProgram} program Program.
    * @struct
    */
-  ol.render.webgl.imagereplay.defaultshader.Locations = function(gl, program) {
+  ol.render.webgl.texturereplay.defaultshader.Locations = function(gl, program) {
 
     /**
      * @type {WebGLUniformLocation}
@@ -25034,7 +25293,7 @@ if (ol.ENABLE_WEBGL) {
         arrayBuffer = new Float32Array(arr);
       } else if (target == ol.webgl.ELEMENT_ARRAY_BUFFER) {
         arrayBuffer = this.hasOESElementIndexUint ?
-            new Uint32Array(arr) : new Uint16Array(arr);
+          new Uint32Array(arr) : new Uint16Array(arr);
       }
       gl.bufferData(target, arrayBuffer, buf.getUsage());
       this.bufferCache_[bufferKey] = {
@@ -25290,164 +25549,135 @@ if (ol.ENABLE_WEBGL) {
 
 }
 
-goog.provide('ol.render.webgl.ImageReplay');
+goog.provide('ol.render.webgl.TextureReplay');
 
 goog.require('ol');
 goog.require('ol.extent');
 goog.require('ol.obj');
-goog.require('ol.render.webgl.imagereplay.defaultshader');
+goog.require('ol.render.webgl.texturereplay.defaultshader');
 goog.require('ol.render.webgl.Replay');
 goog.require('ol.webgl');
-goog.require('ol.webgl.Buffer');
 goog.require('ol.webgl.Context');
-
 
 if (ol.ENABLE_WEBGL) {
 
   /**
    * @constructor
+   * @abstract
    * @extends {ol.render.webgl.Replay}
    * @param {number} tolerance Tolerance.
    * @param {ol.Extent} maxExtent Max extent.
    * @struct
    */
-  ol.render.webgl.ImageReplay = function(tolerance, maxExtent) {
+  ol.render.webgl.TextureReplay = function(tolerance, maxExtent) {
     ol.render.webgl.Replay.call(this, tolerance, maxExtent);
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.anchorX_ = undefined;
+    this.anchorX = undefined;
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.anchorY_ = undefined;
+    this.anchorY = undefined;
 
     /**
      * @type {Array.<number>}
-     * @private
+     * @protected
      */
-    this.groupIndices_ = [];
+    this.groupIndices = [];
 
     /**
      * @type {Array.<number>}
-     * @private
+     * @protected
      */
-    this.hitDetectionGroupIndices_ = [];
+    this.hitDetectionGroupIndices = [];
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.height_ = undefined;
-
-    /**
-     * @type {Array.<HTMLCanvasElement|HTMLImageElement|HTMLVideoElement>}
-     * @private
-     */
-    this.images_ = [];
-
-    /**
-     * @type {Array.<HTMLCanvasElement|HTMLImageElement|HTMLVideoElement>}
-     * @private
-     */
-    this.hitDetectionImages_ = [];
+    this.height = undefined;
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.imageHeight_ = undefined;
+    this.imageHeight = undefined;
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.imageWidth_ = undefined;
+    this.imageWidth = undefined;
 
     /**
-     * @private
-     * @type {ol.render.webgl.imagereplay.defaultshader.Locations}
+     * @protected
+     * @type {ol.render.webgl.texturereplay.defaultshader.Locations}
      */
-    this.defaultLocations_ = null;
+    this.defaultLocations = null;
 
     /**
-     * @private
+     * @protected
      * @type {number|undefined}
      */
-    this.opacity_ = undefined;
-
-    /**
-     * @type {number|undefined}
-     * @private
-     */
-    this.originX_ = undefined;
+    this.opacity = undefined;
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.originY_ = undefined;
+    this.originX = undefined;
 
     /**
-     * @private
+     * @type {number|undefined}
+     * @protected
+     */
+    this.originY = undefined;
+
+    /**
+     * @protected
      * @type {boolean|undefined}
      */
-    this.rotateWithView_ = undefined;
+    this.rotateWithView = undefined;
 
     /**
-     * @private
+     * @protected
      * @type {number|undefined}
      */
-    this.rotation_ = undefined;
+    this.rotation = undefined;
 
     /**
-     * @private
+     * @protected
      * @type {number|undefined}
      */
-    this.scale_ = undefined;
-
-    /**
-     * @type {Array.<WebGLTexture>}
-     * @private
-     */
-    this.textures_ = [];
-
-    /**
-     * @type {Array.<WebGLTexture>}
-     * @private
-     */
-    this.hitDetectionTextures_ = [];
+    this.scale = undefined;
 
     /**
      * @type {number|undefined}
-     * @private
+     * @protected
      */
-    this.width_ = undefined;
+    this.width = undefined;
   };
-  ol.inherits(ol.render.webgl.ImageReplay, ol.render.webgl.Replay);
+  ol.inherits(ol.render.webgl.TextureReplay, ol.render.webgl.Replay);
 
 
   /**
    * @inheritDoc
    */
-  ol.render.webgl.ImageReplay.prototype.getDeleteResourcesFunction = function(context) {
+  ol.render.webgl.TextureReplay.prototype.getDeleteResourcesFunction = function(context) {
     var verticesBuffer = this.verticesBuffer;
     var indicesBuffer = this.indicesBuffer;
-    var textures = this.textures_;
-    var hitDetectionTextures = this.hitDetectionTextures_;
+    var textures = this.getTextures(true);
     var gl = context.getGL();
     return function() {
       if (!gl.isContextLost()) {
         var i, ii;
         for (i = 0, ii = textures.length; i < ii; ++i) {
           gl.deleteTexture(textures[i]);
-        }
-        for (i = 0, ii = hitDetectionTextures.length; i < ii; ++i) {
-          gl.deleteTexture(hitDetectionTextures[i]);
         }
       }
       context.deleteBuffer(verticesBuffer);
@@ -25462,22 +25692,22 @@ if (ol.ENABLE_WEBGL) {
    * @param {number} end End.
    * @param {number} stride Stride.
    * @return {number} My end.
-   * @private
+   * @protected
    */
-  ol.render.webgl.ImageReplay.prototype.drawCoordinates_ = function(flatCoordinates, offset, end, stride) {
-    var anchorX = /** @type {number} */ (this.anchorX_);
-    var anchorY = /** @type {number} */ (this.anchorY_);
-    var height = /** @type {number} */ (this.height_);
-    var imageHeight = /** @type {number} */ (this.imageHeight_);
-    var imageWidth = /** @type {number} */ (this.imageWidth_);
-    var opacity = /** @type {number} */ (this.opacity_);
-    var originX = /** @type {number} */ (this.originX_);
-    var originY = /** @type {number} */ (this.originY_);
-    var rotateWithView = this.rotateWithView_ ? 1.0 : 0.0;
+  ol.render.webgl.TextureReplay.prototype.drawCoordinates = function(flatCoordinates, offset, end, stride) {
+    var anchorX = /** @type {number} */ (this.anchorX);
+    var anchorY = /** @type {number} */ (this.anchorY);
+    var height = /** @type {number} */ (this.height);
+    var imageHeight = /** @type {number} */ (this.imageHeight);
+    var imageWidth = /** @type {number} */ (this.imageWidth);
+    var opacity = /** @type {number} */ (this.opacity);
+    var originX = /** @type {number} */ (this.originX);
+    var originY = /** @type {number} */ (this.originY);
+    var rotateWithView = this.rotateWithView ? 1.0 : 0.0;
     // this.rotation_ is anti-clockwise, but rotation is clockwise
-    var rotation = /** @type {number} */ (-this.rotation_);
-    var scale = /** @type {number} */ (this.scale_);
-    var width = /** @type {number} */ (this.width_);
+    var rotation = /** @type {number} */ (-this.rotation);
+    var scale = /** @type {number} */ (this.scale);
+    var width = /** @type {number} */ (this.width);
     var cos = Math.cos(rotation);
     var sin = Math.sin(rotation);
     var numIndices = this.indices.length;
@@ -25560,85 +25790,14 @@ if (ol.ENABLE_WEBGL) {
 
 
   /**
-   * @inheritDoc
-   */
-  ol.render.webgl.ImageReplay.prototype.drawMultiPoint = function(multiPointGeometry, feature) {
-    this.startIndices.push(this.indices.length);
-    this.startIndicesFeature.push(feature);
-    var flatCoordinates = multiPointGeometry.getFlatCoordinates();
-    var stride = multiPointGeometry.getStride();
-    this.drawCoordinates_(
-        flatCoordinates, 0, flatCoordinates.length, stride);
-  };
-
-
-  /**
-   * @inheritDoc
-   */
-  ol.render.webgl.ImageReplay.prototype.drawPoint = function(pointGeometry, feature) {
-    this.startIndices.push(this.indices.length);
-    this.startIndicesFeature.push(feature);
-    var flatCoordinates = pointGeometry.getFlatCoordinates();
-    var stride = pointGeometry.getStride();
-    this.drawCoordinates_(
-        flatCoordinates, 0, flatCoordinates.length, stride);
-  };
-
-
-  /**
-   * @inheritDoc
-   */
-  ol.render.webgl.ImageReplay.prototype.finish = function(context) {
-    var gl = context.getGL();
-
-    this.groupIndices_.push(this.indices.length);
-    this.hitDetectionGroupIndices_.push(this.indices.length);
-
-    // create, bind, and populate the vertices buffer
-    this.verticesBuffer = new ol.webgl.Buffer(this.vertices);
-
-    var indices = this.indices;
-
-    // create, bind, and populate the indices buffer
-    this.indicesBuffer = new ol.webgl.Buffer(indices);
-
-    // create textures
-    /** @type {Object.<string, WebGLTexture>} */
-    var texturePerImage = {};
-
-    this.createTextures_(this.textures_, this.images_, texturePerImage, gl);
-
-    this.createTextures_(this.hitDetectionTextures_, this.hitDetectionImages_,
-        texturePerImage, gl);
-
-    this.anchorX_ = undefined;
-    this.anchorY_ = undefined;
-    this.height_ = undefined;
-    this.images_ = null;
-    this.hitDetectionImages_ = null;
-    this.imageHeight_ = undefined;
-    this.imageWidth_ = undefined;
-    this.indices = null;
-    this.opacity_ = undefined;
-    this.originX_ = undefined;
-    this.originY_ = undefined;
-    this.rotateWithView_ = undefined;
-    this.rotation_ = undefined;
-    this.scale_ = undefined;
-    this.vertices = null;
-    this.width_ = undefined;
-  };
-
-
-  /**
-   * @private
+   * @protected
    * @param {Array.<WebGLTexture>} textures Textures.
    * @param {Array.<HTMLCanvasElement|HTMLImageElement|HTMLVideoElement>} images
    *    Images.
    * @param {Object.<string, WebGLTexture>} texturePerImage Texture cache.
    * @param {WebGLRenderingContext} gl Gl.
    */
-  ol.render.webgl.ImageReplay.prototype.createTextures_ = function(textures, images, texturePerImage, gl) {
+  ol.render.webgl.TextureReplay.prototype.createTextures = function(textures, images, texturePerImage, gl) {
     var texture, image, uid, i;
     var ii = images.length;
     for (i = 0; i < ii; ++i) {
@@ -25660,20 +25819,20 @@ if (ol.ENABLE_WEBGL) {
   /**
    * @inheritDoc
    */
-  ol.render.webgl.ImageReplay.prototype.setUpProgram = function(gl, context, size, pixelRatio) {
+  ol.render.webgl.TextureReplay.prototype.setUpProgram = function(gl, context, size, pixelRatio) {
     // get the program
-    var fragmentShader = ol.render.webgl.imagereplay.defaultshader.fragment;
-    var vertexShader = ol.render.webgl.imagereplay.defaultshader.vertex;
+    var fragmentShader = ol.render.webgl.texturereplay.defaultshader.fragment;
+    var vertexShader = ol.render.webgl.texturereplay.defaultshader.vertex;
     var program = context.getProgram(fragmentShader, vertexShader);
 
     // get the locations
     var locations;
-    if (!this.defaultLocations_) {
+    if (!this.defaultLocations) {
       // eslint-disable-next-line openlayers-internal/no-missing-requires
-      locations = new ol.render.webgl.imagereplay.defaultshader.Locations(gl, program);
-      this.defaultLocations_ = locations;
+      locations = new ol.render.webgl.texturereplay.defaultshader.Locations(gl, program);
+      this.defaultLocations = locations;
     } else {
-      locations = this.defaultLocations_;
+      locations = this.defaultLocations;
     }
 
     // use the program (FIXME: use the return value)
@@ -25707,7 +25866,7 @@ if (ol.ENABLE_WEBGL) {
   /**
    * @inheritDoc
    */
-  ol.render.webgl.ImageReplay.prototype.shutDownProgram = function(gl, locations) {
+  ol.render.webgl.TextureReplay.prototype.shutDownProgram = function(gl, locations) {
     gl.disableVertexAttribArray(locations.a_position);
     gl.disableVertexAttribArray(locations.a_offsets);
     gl.disableVertexAttribArray(locations.a_texCoord);
@@ -25719,12 +25878,12 @@ if (ol.ENABLE_WEBGL) {
   /**
    * @inheritDoc
    */
-  ol.render.webgl.ImageReplay.prototype.drawReplay = function(gl, context, skippedFeaturesHash, hitDetection) {
-    var textures = hitDetection ? this.hitDetectionTextures_ : this.textures_;
-    var groupIndices = hitDetection ? this.hitDetectionGroupIndices_ : this.groupIndices_;
+  ol.render.webgl.TextureReplay.prototype.drawReplay = function(gl, context, skippedFeaturesHash, hitDetection) {
+    var textures = hitDetection ? this.getHitDetectionTextures() : this.getTextures();
+    var groupIndices = hitDetection ? this.hitDetectionGroupIndices : this.groupIndices;
 
     if (!ol.obj.isEmpty(skippedFeaturesHash)) {
-      this.drawReplaySkipping_(
+      this.drawReplaySkipping(
           gl, context, skippedFeaturesHash, textures, groupIndices);
     } else {
       var i, ii, start;
@@ -25756,7 +25915,7 @@ if (ol.ENABLE_WEBGL) {
    *    drawElements with feature D
    *    drawElements with feature F and G
    *
-   * @private
+   * @protected
    * @param {WebGLRenderingContext} gl gl.
    * @param {ol.webgl.Context} context Context.
    * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
@@ -25764,7 +25923,7 @@ if (ol.ENABLE_WEBGL) {
    * @param {Array.<WebGLTexture>} textures Textures.
    * @param {Array.<number>} groupIndices Texture group indices.
    */
-  ol.render.webgl.ImageReplay.prototype.drawReplaySkipping_ = function(gl, context, skippedFeaturesHash, textures,
+  ol.render.webgl.TextureReplay.prototype.drawReplaySkipping = function(gl, context, skippedFeaturesHash, textures,
       groupIndices) {
     var featureIndex = 0;
 
@@ -25789,12 +25948,12 @@ if (ol.ENABLE_WEBGL) {
           }
           // continue with the next feature
           start = (featureIndex === this.startIndices.length - 1) ?
-              groupEnd : this.startIndices[featureIndex + 1];
+            groupEnd : this.startIndices[featureIndex + 1];
           end = start;
         } else {
           // the feature is not skipped, augment the end index
           end = (featureIndex === this.startIndices.length - 1) ?
-              groupEnd : this.startIndices[featureIndex + 1];
+            groupEnd : this.startIndices[featureIndex + 1];
         }
         featureIndex++;
       }
@@ -25811,14 +25970,15 @@ if (ol.ENABLE_WEBGL) {
   /**
    * @inheritDoc
    */
-  ol.render.webgl.ImageReplay.prototype.drawHitDetectionReplayOneByOne = function(gl, context, skippedFeaturesHash,
+  ol.render.webgl.TextureReplay.prototype.drawHitDetectionReplayOneByOne = function(gl, context, skippedFeaturesHash,
       featureCallback, opt_hitExtent) {
     var i, groupStart, start, end, feature, featureUid;
     var featureIndex = this.startIndices.length - 1;
-    for (i = this.hitDetectionTextures_.length - 1; i >= 0; --i) {
-      gl.bindTexture(ol.webgl.TEXTURE_2D, this.hitDetectionTextures_[i]);
-      groupStart = (i > 0) ? this.hitDetectionGroupIndices_[i - 1] : 0;
-      end = this.hitDetectionGroupIndices_[i];
+    var hitDetectionTextures = this.getHitDetectionTextures();
+    for (i = hitDetectionTextures.length - 1; i >= 0; --i) {
+      gl.bindTexture(ol.webgl.TEXTURE_2D, hitDetectionTextures[i]);
+      groupStart = (i > 0) ? this.hitDetectionGroupIndices[i - 1] : 0;
+      end = this.hitDetectionGroupIndices[i];
 
       // draw all features for this texture group
       while (featureIndex >= 0 &&
@@ -25852,6 +26012,149 @@ if (ol.ENABLE_WEBGL) {
   /**
    * @inheritDoc
    */
+  ol.render.webgl.TextureReplay.prototype.finish = function(context) {
+    this.anchorX = undefined;
+    this.anchorY = undefined;
+    this.height = undefined;
+    this.imageHeight = undefined;
+    this.imageWidth = undefined;
+    this.indices = null;
+    this.opacity = undefined;
+    this.originX = undefined;
+    this.originY = undefined;
+    this.rotateWithView = undefined;
+    this.rotation = undefined;
+    this.scale = undefined;
+    this.vertices = null;
+    this.width = undefined;
+  };
+
+
+  /**
+   * @abstract
+   * @protected
+   * @param {boolean=} opt_all Return hit detection textures with regular ones.
+   * @returns {Array.<WebGLTexture>} Textures.
+   */
+  ol.render.webgl.TextureReplay.prototype.getTextures = function(opt_all) {};
+
+
+  /**
+   * @abstract
+   * @protected
+   * @returns {Array.<WebGLTexture>} Textures.
+   */
+  ol.render.webgl.TextureReplay.prototype.getHitDetectionTextures = function() {};
+}
+
+goog.provide('ol.render.webgl.ImageReplay');
+
+goog.require('ol');
+goog.require('ol.render.webgl.TextureReplay');
+goog.require('ol.webgl.Buffer');
+
+
+if (ol.ENABLE_WEBGL) {
+
+  /**
+   * @constructor
+   * @extends {ol.render.webgl.TextureReplay}
+   * @param {number} tolerance Tolerance.
+   * @param {ol.Extent} maxExtent Max extent.
+   * @struct
+   */
+  ol.render.webgl.ImageReplay = function(tolerance, maxExtent) {
+    ol.render.webgl.TextureReplay.call(this, tolerance, maxExtent);
+
+    /**
+     * @type {Array.<HTMLCanvasElement|HTMLImageElement|HTMLVideoElement>}
+     * @protected
+     */
+    this.images_ = [];
+
+    /**
+     * @type {Array.<HTMLCanvasElement|HTMLImageElement|HTMLVideoElement>}
+     * @protected
+     */
+    this.hitDetectionImages_ = [];
+
+    /**
+     * @type {Array.<WebGLTexture>}
+     * @private
+     */
+    this.textures_ = [];
+
+    /**
+     * @type {Array.<WebGLTexture>}
+     * @private
+     */
+    this.hitDetectionTextures_ = [];
+
+  };
+  ol.inherits(ol.render.webgl.ImageReplay, ol.render.webgl.TextureReplay);
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.ImageReplay.prototype.drawMultiPoint = function(multiPointGeometry, feature) {
+    this.startIndices.push(this.indices.length);
+    this.startIndicesFeature.push(feature);
+    var flatCoordinates = multiPointGeometry.getFlatCoordinates();
+    var stride = multiPointGeometry.getStride();
+    this.drawCoordinates(
+        flatCoordinates, 0, flatCoordinates.length, stride);
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.ImageReplay.prototype.drawPoint = function(pointGeometry, feature) {
+    this.startIndices.push(this.indices.length);
+    this.startIndicesFeature.push(feature);
+    var flatCoordinates = pointGeometry.getFlatCoordinates();
+    var stride = pointGeometry.getStride();
+    this.drawCoordinates(
+        flatCoordinates, 0, flatCoordinates.length, stride);
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.ImageReplay.prototype.finish = function(context) {
+    var gl = context.getGL();
+
+    this.groupIndices.push(this.indices.length);
+    this.hitDetectionGroupIndices.push(this.indices.length);
+
+    // create, bind, and populate the vertices buffer
+    this.verticesBuffer = new ol.webgl.Buffer(this.vertices);
+
+    var indices = this.indices;
+
+    // create, bind, and populate the indices buffer
+    this.indicesBuffer = new ol.webgl.Buffer(indices);
+
+    // create textures
+    /** @type {Object.<string, WebGLTexture>} */
+    var texturePerImage = {};
+
+    this.createTextures(this.textures_, this.images_, texturePerImage, gl);
+
+    this.createTextures(this.hitDetectionTextures_, this.hitDetectionImages_,
+        texturePerImage, gl);
+
+    this.images_ = null;
+    this.hitDetectionImages_ = null;
+    ol.render.webgl.TextureReplay.prototype.finish.call(this, context);
+  };
+
+
+  /**
+   * @inheritDoc
+   */
   ol.render.webgl.ImageReplay.prototype.setImageStyle = function(imageStyle) {
     var anchor = imageStyle.getAnchor();
     var image = imageStyle.getImage(1);
@@ -25870,7 +26173,7 @@ if (ol.ENABLE_WEBGL) {
     } else {
       currentImage = this.images_[this.images_.length - 1];
       if (ol.getUid(currentImage) != ol.getUid(image)) {
-        this.groupIndices_.push(this.indices.length);
+        this.groupIndices.push(this.indices.length);
         this.images_.push(image);
       }
     }
@@ -25881,23 +26184,39 @@ if (ol.ENABLE_WEBGL) {
       currentImage =
           this.hitDetectionImages_[this.hitDetectionImages_.length - 1];
       if (ol.getUid(currentImage) != ol.getUid(hitDetectionImage)) {
-        this.hitDetectionGroupIndices_.push(this.indices.length);
+        this.hitDetectionGroupIndices.push(this.indices.length);
         this.hitDetectionImages_.push(hitDetectionImage);
       }
     }
 
-    this.anchorX_ = anchor[0];
-    this.anchorY_ = anchor[1];
-    this.height_ = size[1];
-    this.imageHeight_ = imageSize[1];
-    this.imageWidth_ = imageSize[0];
-    this.opacity_ = opacity;
-    this.originX_ = origin[0];
-    this.originY_ = origin[1];
-    this.rotation_ = rotation;
-    this.rotateWithView_ = rotateWithView;
-    this.scale_ = scale;
-    this.width_ = size[0];
+    this.anchorX = anchor[0];
+    this.anchorY = anchor[1];
+    this.height = size[1];
+    this.imageHeight = imageSize[1];
+    this.imageWidth = imageSize[0];
+    this.opacity = opacity;
+    this.originX = origin[0];
+    this.originY = origin[1];
+    this.rotation = rotation;
+    this.rotateWithView = rotateWithView;
+    this.scale = scale;
+    this.width = size[0];
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.ImageReplay.prototype.getTextures = function(opt_all) {
+    return opt_all ? this.textures_.concat(this.hitDetectionTextures_) : this.textures_;
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.ImageReplay.prototype.getHitDetectionTextures = function() {
+    return this.hitDetectionTextures_;
   };
 
 }
@@ -25963,8 +26282,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.render.webgl.linestringreplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.linestringreplay.defaultshader.Fragment.DEBUG_SOURCE :
-      ol.render.webgl.linestringreplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
+    ol.render.webgl.linestringreplay.defaultshader.Fragment.DEBUG_SOURCE :
+    ol.render.webgl.linestringreplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
 
 
   ol.render.webgl.linestringreplay.defaultshader.fragment = new ol.render.webgl.linestringreplay.defaultshader.Fragment();
@@ -26000,8 +26319,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.render.webgl.linestringreplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.linestringreplay.defaultshader.Vertex.DEBUG_SOURCE :
-      ol.render.webgl.linestringreplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
+    ol.render.webgl.linestringreplay.defaultshader.Vertex.DEBUG_SOURCE :
+    ol.render.webgl.linestringreplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
 
 
   ol.render.webgl.linestringreplay.defaultshader.vertex = new ol.render.webgl.linestringreplay.defaultshader.Vertex();
@@ -26186,9 +26505,9 @@ if (ol.ENABLE_WEBGL) {
     //ol.render.webgl.LineStringReplay.Instruction_, and a rounding factor (1 or 2). If the product is even,
     //we round it. If it is odd, we don't.
     var lineJoin = this.state_.lineJoin === 'bevel' ? 0 :
-        this.state_.lineJoin === 'miter' ? 1 : 2;
+      this.state_.lineJoin === 'miter' ? 1 : 2;
     var lineCap = this.state_.lineCap === 'butt' ? 0 :
-        this.state_.lineCap === 'square' ? 1 : 2;
+      this.state_.lineCap === 'square' ? 1 : 2;
     var closed = ol.geom.flat.topology.lineStringIsClosed(flatCoordinates, offset, end, stride);
     var startCoords, sign, n;
     var lastIndex = numIndices;
@@ -26292,7 +26611,7 @@ if (ol.ENABLE_WEBGL) {
 
       // We group CW and straight lines, thus the not so inituitive CCW checking function.
       sign = ol.render.webgl.triangleIsCounterClockwise(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1])
-          ? -1 : 1;
+        ? -1 : 1;
 
       numVertices = this.addVertices_(p0, p1, p2,
           sign * ol.render.webgl.LineStringReplay.Instruction_.BEVEL_FIRST * (lineJoin || 1), numVertices);
@@ -26334,7 +26653,7 @@ if (ol.ENABLE_WEBGL) {
     if (closed) {
       n = n || numVertices / 7;
       sign = ol.geom.flat.orient.linearRingIsClockwise([p0[0], p0[1], p1[0], p1[1], p2[0], p2[1]], 0, 6, 2)
-          ? 1 : -1;
+        ? 1 : -1;
 
       numVertices = this.addVertices_(p0, p1, p2,
           sign * ol.render.webgl.LineStringReplay.Instruction_.BEVEL_FIRST * (lineJoin || 1), numVertices);
@@ -26733,16 +27052,16 @@ if (ol.ENABLE_WEBGL) {
   ol.render.webgl.LineStringReplay.prototype.setFillStrokeStyle = function(fillStyle, strokeStyle) {
     var strokeStyleLineCap = strokeStyle.getLineCap();
     this.state_.lineCap = strokeStyleLineCap !== undefined ?
-        strokeStyleLineCap : ol.render.webgl.defaultLineCap;
+      strokeStyleLineCap : ol.render.webgl.defaultLineCap;
     var strokeStyleLineDash = strokeStyle.getLineDash();
     this.state_.lineDash = strokeStyleLineDash ?
-        strokeStyleLineDash : ol.render.webgl.defaultLineDash;
+      strokeStyleLineDash : ol.render.webgl.defaultLineDash;
     var strokeStyleLineDashOffset = strokeStyle.getLineDashOffset();
     this.state_.lineDashOffset = strokeStyleLineDashOffset ?
-        strokeStyleLineDashOffset : ol.render.webgl.defaultLineDashOffset;
+      strokeStyleLineDashOffset : ol.render.webgl.defaultLineDashOffset;
     var strokeStyleLineJoin = strokeStyle.getLineJoin();
     this.state_.lineJoin = strokeStyleLineJoin !== undefined ?
-        strokeStyleLineJoin : ol.render.webgl.defaultLineJoin;
+      strokeStyleLineJoin : ol.render.webgl.defaultLineJoin;
     var strokeStyleColor = strokeStyle.getColor();
     if (!(strokeStyleColor instanceof CanvasGradient) &&
         !(strokeStyleColor instanceof CanvasPattern)) {
@@ -26754,10 +27073,10 @@ if (ol.ENABLE_WEBGL) {
     }
     var strokeStyleWidth = strokeStyle.getWidth();
     strokeStyleWidth = strokeStyleWidth !== undefined ?
-        strokeStyleWidth : ol.render.webgl.defaultLineWidth;
+      strokeStyleWidth : ol.render.webgl.defaultLineWidth;
     var strokeStyleMiterLimit = strokeStyle.getMiterLimit();
     strokeStyleMiterLimit = strokeStyleMiterLimit !== undefined ?
-        strokeStyleMiterLimit : ol.render.webgl.defaultMiterLimit;
+      strokeStyleMiterLimit : ol.render.webgl.defaultMiterLimit;
     if (!this.state_.strokeColor || !ol.array.equals(this.state_.strokeColor, strokeStyleColor) ||
         this.state_.lineWidth !== strokeStyleWidth || this.state_.miterLimit !== strokeStyleMiterLimit) {
       this.state_.changed = true;
@@ -26826,8 +27145,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.render.webgl.polygonreplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.polygonreplay.defaultshader.Fragment.DEBUG_SOURCE :
-      ol.render.webgl.polygonreplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
+    ol.render.webgl.polygonreplay.defaultshader.Fragment.DEBUG_SOURCE :
+    ol.render.webgl.polygonreplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
 
 
   ol.render.webgl.polygonreplay.defaultshader.fragment = new ol.render.webgl.polygonreplay.defaultshader.Fragment();
@@ -26863,8 +27182,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.render.webgl.polygonreplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
-      ol.render.webgl.polygonreplay.defaultshader.Vertex.DEBUG_SOURCE :
-      ol.render.webgl.polygonreplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
+    ol.render.webgl.polygonreplay.defaultshader.Vertex.DEBUG_SOURCE :
+    ol.render.webgl.polygonreplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
 
 
   ol.render.webgl.polygonreplay.defaultshader.vertex = new ol.render.webgl.polygonreplay.defaultshader.Vertex();
@@ -27183,17 +27502,17 @@ ol.style.Stroke.prototype.getChecksum = function() {
     }
     this.checksum_ += ',' +
         (this.lineCap_ !== undefined ?
-            this.lineCap_.toString() : '-') + ',' +
+          this.lineCap_.toString() : '-') + ',' +
         (this.lineDash_ ?
-            this.lineDash_.toString() : '-') + ',' +
+          this.lineDash_.toString() : '-') + ',' +
         (this.lineDashOffset_ !== undefined ?
-            this.lineDashOffset_ : '-') + ',' +
+          this.lineDashOffset_ : '-') + ',' +
         (this.lineJoin_ !== undefined ?
-            this.lineJoin_ : '-') + ',' +
+          this.lineJoin_ : '-') + ',' +
         (this.miterLimit_ !== undefined ?
-            this.miterLimit_.toString() : '-') + ',' +
+          this.miterLimit_.toString() : '-') + ',' +
         (this.width_ !== undefined ?
-            this.width_.toString() : '-');
+          this.width_.toString() : '-');
   }
 
   return this.checksum_;
@@ -28106,7 +28425,7 @@ ol.structs.RBush.prototype.clear = function() {
 
 /**
  * @param {ol.Extent=} opt_extent Extent.
- * @return {!ol.Extent} Extent.
+ * @return {ol.Extent} Extent.
  */
 ol.structs.RBush.prototype.getExtent = function(opt_extent) {
   // FIXME add getExtent() to rbush
@@ -28206,7 +28525,8 @@ if (ol.ENABLE_WEBGL) {
     var outerRing = new ol.structs.LinkedList();
     var rtree = new ol.structs.RBush();
     // Initialize the outer ring
-    var maxX = this.processFlatCoordinates_(flatCoordinates, stride, outerRing, rtree, true);
+    this.processFlatCoordinates_(flatCoordinates, stride, outerRing, rtree, true);
+    var maxCoords = this.getMaxCoords_(outerRing);
 
     // Eliminate holes, if there are any
     if (holeFlatCoordinates.length) {
@@ -28215,15 +28535,18 @@ if (ol.ENABLE_WEBGL) {
       for (i = 0, ii = holeFlatCoordinates.length; i < ii; ++i) {
         var holeList = {
           list: new ol.structs.LinkedList(),
-          maxX: undefined,
+          maxCoords: undefined,
           rtree: new ol.structs.RBush()
         };
         holeLists.push(holeList);
-        holeList.maxX = this.processFlatCoordinates_(holeFlatCoordinates[i],
+        this.processFlatCoordinates_(holeFlatCoordinates[i],
             stride, holeList.list, holeList.rtree, false);
+        this.classifyPoints_(holeList.list, holeList.rtree, true);
+        holeList.maxCoords = this.getMaxCoords_(holeList.list);
       }
       holeLists.sort(function(a, b) {
-        return b.maxX[0] === a.maxX[0] ? a.maxX[1] - b.maxX[1] : b.maxX[0] - a.maxX[0];
+        return b.maxCoords[0] === a.maxCoords[0] ?
+          a.maxCoords[1] - b.maxCoords[1] : b.maxCoords[0] - a.maxCoords[0];
       });
       for (i = 0; i < holeLists.length; ++i) {
         var currList = holeLists[i].list;
@@ -28231,6 +28554,7 @@ if (ol.ENABLE_WEBGL) {
         var currItem = start;
         var intersection;
         do {
+          //TODO: Triangulate holes when they intersect the outer ring.
           if (this.getIntersections_(currItem, rtree).length) {
             intersection = true;
             break;
@@ -28238,8 +28562,7 @@ if (ol.ENABLE_WEBGL) {
           currItem = currList.nextItem();
         } while (start !== currItem);
         if (!intersection) {
-          this.classifyPoints_(currList, holeLists[i].rtree, true);
-          if (this.bridgeHole_(currList, holeLists[i].maxX[0], outerRing, maxX[0], rtree)) {
+          if (this.bridgeHole_(currList, holeLists[i].maxCoords[0], outerRing, maxCoords[0], rtree)) {
             rtree.concat(holeLists[i].rtree);
             this.classifyPoints_(outerRing, rtree, false);
           }
@@ -28260,13 +28583,12 @@ if (ol.ENABLE_WEBGL) {
    * @param {ol.structs.LinkedList} list Linked list.
    * @param {ol.structs.RBush} rtree R-Tree of the polygon.
    * @param {boolean} clockwise Coordinate order should be clockwise.
-   * @return {Array.<number>} X and Y coords of maximum X value.
    */
   ol.render.webgl.PolygonReplay.prototype.processFlatCoordinates_ = function(
       flatCoordinates, stride, list, rtree, clockwise) {
     var isClockwise = ol.geom.flat.orient.linearRingIsClockwise(flatCoordinates,
         0, flatCoordinates.length, stride);
-    var i, ii, maxXX, maxXY;
+    var i, ii;
     var n = this.vertices.length / 2;
     /** @type {ol.WebglPolygonVertex} */
     var start;
@@ -28279,17 +28601,11 @@ if (ol.ENABLE_WEBGL) {
     if (clockwise === isClockwise) {
       start = this.createPoint_(flatCoordinates[0], flatCoordinates[1], n++);
       p0 = start;
-      maxXX = flatCoordinates[0];
-      maxXY = flatCoordinates[1];
       for (i = stride, ii = flatCoordinates.length; i < ii; i += stride) {
         p1 = this.createPoint_(flatCoordinates[i], flatCoordinates[i + 1], n++);
         segments.push(this.insertItem_(p0, p1, list));
         extents.push([Math.min(p0.x, p1.x), Math.min(p0.y, p1.y), Math.max(p0.x, p1.x),
           Math.max(p0.y, p1.y)]);
-        if (flatCoordinates[i] > maxXX) {
-          maxXX = flatCoordinates[i];
-          maxXY = flatCoordinates[i + 1];
-        }
         p0 = p1;
       }
       segments.push(this.insertItem_(p1, start, list));
@@ -28299,17 +28615,11 @@ if (ol.ENABLE_WEBGL) {
       var end = flatCoordinates.length - stride;
       start = this.createPoint_(flatCoordinates[end], flatCoordinates[end + 1], n++);
       p0 = start;
-      maxXX = flatCoordinates[end];
-      maxXY = flatCoordinates[end + 1];
       for (i = end - stride, ii = 0; i >= ii; i -= stride) {
         p1 = this.createPoint_(flatCoordinates[i], flatCoordinates[i + 1], n++);
         segments.push(this.insertItem_(p0, p1, list));
         extents.push([Math.min(p0.x, p1.x), Math.min(p0.y, p1.y), Math.max(p0.x, p1.x),
           Math.max(p0.y, p1.y)]);
-        if (flatCoordinates[i] > maxXX) {
-          maxXX = flatCoordinates[i];
-          maxXY = flatCoordinates[i + 1];
-        }
         p0 = p1;
       }
       segments.push(this.insertItem_(p1, start, list));
@@ -28317,8 +28627,28 @@ if (ol.ENABLE_WEBGL) {
         Math.max(p0.y, p1.y)]);
     }
     rtree.load(extents, segments);
+  };
 
-    return [maxXX, maxXY];
+
+  /**
+   * Returns the rightmost coordinates of a polygon on the X axis.
+   * @private
+   * @param {ol.structs.LinkedList} list Polygons ring.
+   * @return {Array.<number>} Max X coordinates.
+   */
+  ol.render.webgl.PolygonReplay.prototype.getMaxCoords_ = function(list) {
+    var start = list.firstItem();
+    var seg = start;
+    var maxCoords = [seg.p0.x, seg.p0.y];
+
+    do {
+      seg = list.nextItem();
+      if (seg.p0.x > maxCoords[0]) {
+        maxCoords = [seg.p0.x, seg.p0.y];
+      }
+    } while (seg !== start);
+
+    return maxCoords;
   };
 
 
@@ -28338,8 +28668,8 @@ if (ol.ENABLE_WEBGL) {
     do {
       var reflex = ccw ? ol.render.webgl.triangleIsCounterClockwise(s1.p1.x,
           s1.p1.y, s0.p1.x, s0.p1.y, s0.p0.x, s0.p0.y) :
-          ol.render.webgl.triangleIsCounterClockwise(s0.p0.x, s0.p0.y, s0.p1.x,
-          s0.p1.y, s1.p1.x, s1.p1.y);
+        ol.render.webgl.triangleIsCounterClockwise(s0.p0.x, s0.p0.y, s0.p1.x,
+            s0.p1.y, s1.p1.x, s1.p1.y);
       if (reflex === undefined) {
         this.removeItem_(s0, s1, list, rtree);
         pointsReclassified = true;
@@ -28452,7 +28782,7 @@ if (ol.ENABLE_WEBGL) {
           if (!this.classifyPoints_(list, rtree, ccw)) {
             // Due to the behavior of OL's PIP algorithm, the ear clipping cannot
             // introduce touching segments. However, the original data may have some.
-            if (!this.resolveLocalSelfIntersections_(list, rtree, true)) {
+            if (!this.resolveSelfIntersections_(list, rtree, true)) {
               break;
             }
           }
@@ -28462,7 +28792,7 @@ if (ol.ENABLE_WEBGL) {
           // We ran out of ears, try to reclassify.
           if (!this.classifyPoints_(list, rtree, ccw)) {
             // We have a bad polygon, try to resolve local self-intersections.
-            if (!this.resolveLocalSelfIntersections_(list, rtree)) {
+            if (!this.resolveSelfIntersections_(list, rtree)) {
               simple = this.isSimple_(list, rtree);
               if (!simple) {
                 // We have a really bad polygon, try more time consuming methods.
@@ -28509,10 +28839,15 @@ if (ol.ENABLE_WEBGL) {
       p2 = s2.p1;
       if (p1.reflex === false) {
         // We might have a valid ear
-        var diagonalIsInside = ccw ? this.diagonalIsInside_(s3.p1, p2, p1, p0,
-            s0.p0) : this.diagonalIsInside_(s0.p0, p0, p1, p2, s3.p1);
+        var variableCriterion;
+        if (simple) {
+          variableCriterion = this.getPointsInTriangle_(p0, p1, p2, rtree, true).length === 0;
+        } else {
+          variableCriterion = ccw ? this.diagonalIsInside_(s3.p1, p2, p1, p0,
+              s0.p0) : this.diagonalIsInside_(s0.p0, p0, p1, p2, s3.p1);
+        }
         if ((simple || this.getIntersections_({p0: p0, p1: p2}, rtree).length === 0) &&
-            diagonalIsInside && this.getPointsInTriangle_(p0, p1, p2, rtree, true).length === 0) {
+            variableCriterion) {
           //The diagonal is completely inside the polygon
           if (simple || p0.reflex === false || p2.reflex === false ||
               ol.geom.flat.orient.linearRingIsClockwise([s0.p0.x, s0.p0.y, p0.x,
@@ -28547,7 +28882,7 @@ if (ol.ENABLE_WEBGL) {
    * @param {boolean=} opt_touch Resolve touching segments.
    * @return {boolean} There were resolved intersections.
   */
-  ol.render.webgl.PolygonReplay.prototype.resolveLocalSelfIntersections_ = function(
+  ol.render.webgl.PolygonReplay.prototype.resolveSelfIntersections_ = function(
       list, rtree, opt_touch) {
     var start = list.firstItem();
     list.nextItem();
@@ -28736,7 +29071,7 @@ if (ol.ENABLE_WEBGL) {
   };
 
 
-   /**
+  /**
     * @private
     * @param {ol.WebglPolygonSegment} s0 Segment before the remove candidate.
     * @param {ol.WebglPolygonSegment} s1 Remove candidate segment.
@@ -28769,7 +29104,7 @@ if (ol.ENABLE_WEBGL) {
     var result = [];
     var segmentsInExtent = rtree.getInExtent([Math.min(p0.x, p1.x, p2.x),
       Math.min(p0.y, p1.y, p2.y), Math.max(p0.x, p1.x, p2.x), Math.max(p0.y,
-        p1.y, p2.y)]);
+          p1.y, p2.y)]);
     for (i = 0, ii = segmentsInExtent.length; i < ii; ++i) {
       for (j in segmentsInExtent[i]) {
         p = segmentsInExtent[i][j];
@@ -29185,74 +29520,859 @@ if (ol.ENABLE_WEBGL) {
 
 }
 
+goog.provide('ol.style.Atlas');
+
+goog.require('ol.dom');
+
+
+/**
+ * This class facilitates the creation of image atlases.
+ *
+ * Images added to an atlas will be rendered onto a single
+ * atlas canvas. The distribution of images on the canvas is
+ * managed with the bin packing algorithm described in:
+ * http://www.blackpawn.com/texts/lightmaps/
+ *
+ * @constructor
+ * @struct
+ * @param {number} size The size in pixels of the sprite image.
+ * @param {number} space The space in pixels between images.
+ *    Because texture coordinates are float values, the edges of
+ *    images might not be completely correct (in a way that the
+ *    edges overlap when being rendered). To avoid this we add a
+ *    padding around each image.
+ */
+ol.style.Atlas = function(size, space) {
+
+  /**
+   * @private
+   * @type {number}
+   */
+  this.space_ = space;
+
+  /**
+   * @private
+   * @type {Array.<ol.AtlasBlock>}
+   */
+  this.emptyBlocks_ = [{x: 0, y: 0, width: size, height: size}];
+
+  /**
+   * @private
+   * @type {Object.<string, ol.AtlasInfo>}
+   */
+  this.entries_ = {};
+
+  /**
+   * @private
+   * @type {CanvasRenderingContext2D}
+   */
+  this.context_ = ol.dom.createCanvasContext2D(size, size);
+
+  /**
+   * @private
+   * @type {HTMLCanvasElement}
+   */
+  this.canvas_ = this.context_.canvas;
+};
+
+
+/**
+ * @param {string} id The identifier of the entry to check.
+ * @return {?ol.AtlasInfo} The atlas info.
+ */
+ol.style.Atlas.prototype.get = function(id) {
+  return this.entries_[id] || null;
+};
+
+
+/**
+ * @param {string} id The identifier of the entry to add.
+ * @param {number} width The width.
+ * @param {number} height The height.
+ * @param {function(CanvasRenderingContext2D, number, number)} renderCallback
+ *    Called to render the new image onto an atlas image.
+ * @param {Object=} opt_this Value to use as `this` when executing
+ *    `renderCallback`.
+ * @return {?ol.AtlasInfo} The position and atlas image for the entry.
+ */
+ol.style.Atlas.prototype.add = function(id, width, height, renderCallback, opt_this) {
+  var block, i, ii;
+  for (i = 0, ii = this.emptyBlocks_.length; i < ii; ++i) {
+    block = this.emptyBlocks_[i];
+    if (block.width >= width + this.space_ &&
+        block.height >= height + this.space_) {
+      // we found a block that is big enough for our entry
+      var entry = {
+        offsetX: block.x + this.space_,
+        offsetY: block.y + this.space_,
+        image: this.canvas_
+      };
+      this.entries_[id] = entry;
+
+      // render the image on the atlas image
+      renderCallback.call(opt_this, this.context_,
+          block.x + this.space_, block.y + this.space_);
+
+      // split the block after the insertion, either horizontally or vertically
+      this.split_(i, block, width + this.space_, height + this.space_);
+
+      return entry;
+    }
+  }
+
+  // there is no space for the new entry in this atlas
+  return null;
+};
+
+
+/**
+ * @private
+ * @param {number} index The index of the block.
+ * @param {ol.AtlasBlock} block The block to split.
+ * @param {number} width The width of the entry to insert.
+ * @param {number} height The height of the entry to insert.
+ */
+ol.style.Atlas.prototype.split_ = function(index, block, width, height) {
+  var deltaWidth = block.width - width;
+  var deltaHeight = block.height - height;
+
+  /** @type {ol.AtlasBlock} */
+  var newBlock1;
+  /** @type {ol.AtlasBlock} */
+  var newBlock2;
+
+  if (deltaWidth > deltaHeight) {
+    // split vertically
+    // block right of the inserted entry
+    newBlock1 = {
+      x: block.x + width,
+      y: block.y,
+      width: block.width - width,
+      height: block.height
+    };
+
+    // block below the inserted entry
+    newBlock2 = {
+      x: block.x,
+      y: block.y + height,
+      width: width,
+      height: block.height - height
+    };
+    this.updateBlocks_(index, newBlock1, newBlock2);
+  } else {
+    // split horizontally
+    // block right of the inserted entry
+    newBlock1 = {
+      x: block.x + width,
+      y: block.y,
+      width: block.width - width,
+      height: height
+    };
+
+    // block below the inserted entry
+    newBlock2 = {
+      x: block.x,
+      y: block.y + height,
+      width: block.width,
+      height: block.height - height
+    };
+    this.updateBlocks_(index, newBlock1, newBlock2);
+  }
+};
+
+
+/**
+ * Remove the old block and insert new blocks at the same array position.
+ * The new blocks are inserted at the same position, so that splitted
+ * blocks (that are potentially smaller) are filled first.
+ * @private
+ * @param {number} index The index of the block to remove.
+ * @param {ol.AtlasBlock} newBlock1 The 1st block to add.
+ * @param {ol.AtlasBlock} newBlock2 The 2nd block to add.
+ */
+ol.style.Atlas.prototype.updateBlocks_ = function(index, newBlock1, newBlock2) {
+  var args = [index, 1];
+  if (newBlock1.width > 0 && newBlock1.height > 0) {
+    args.push(newBlock1);
+  }
+  if (newBlock2.width > 0 && newBlock2.height > 0) {
+    args.push(newBlock2);
+  }
+  this.emptyBlocks_.splice.apply(this.emptyBlocks_, args);
+};
+
+goog.provide('ol.style.AtlasManager');
+
+goog.require('ol');
+goog.require('ol.style.Atlas');
+
+
+/**
+ * Manages the creation of image atlases.
+ *
+ * Images added to this manager will be inserted into an atlas, which
+ * will be used for rendering.
+ * The `size` given in the constructor is the size for the first
+ * atlas. After that, when new atlases are created, they will have
+ * twice the size as the latest atlas (until `maxSize` is reached).
+ *
+ * If an application uses many images or very large images, it is recommended
+ * to set a higher `size` value to avoid the creation of too many atlases.
+ *
+ * @constructor
+ * @struct
+ * @api
+ * @param {olx.style.AtlasManagerOptions=} opt_options Options.
+ */
+ol.style.AtlasManager = function(opt_options) {
+
+  var options = opt_options || {};
+
+  /**
+   * The size in pixels of the latest atlas image.
+   * @private
+   * @type {number}
+   */
+  this.currentSize_ = options.initialSize !== undefined ?
+    options.initialSize : ol.INITIAL_ATLAS_SIZE;
+
+  /**
+   * The maximum size in pixels of atlas images.
+   * @private
+   * @type {number}
+   */
+  this.maxSize_ = options.maxSize !== undefined ?
+    options.maxSize : ol.MAX_ATLAS_SIZE != -1 ?
+      ol.MAX_ATLAS_SIZE : ol.WEBGL_MAX_TEXTURE_SIZE !== undefined ?
+        ol.WEBGL_MAX_TEXTURE_SIZE : 2048;
+
+  /**
+   * The size in pixels between images.
+   * @private
+   * @type {number}
+   */
+  this.space_ = options.space !== undefined ? options.space : 1;
+
+  /**
+   * @private
+   * @type {Array.<ol.style.Atlas>}
+   */
+  this.atlases_ = [new ol.style.Atlas(this.currentSize_, this.space_)];
+
+  /**
+   * The size in pixels of the latest atlas image for hit-detection images.
+   * @private
+   * @type {number}
+   */
+  this.currentHitSize_ = this.currentSize_;
+
+  /**
+   * @private
+   * @type {Array.<ol.style.Atlas>}
+   */
+  this.hitAtlases_ = [new ol.style.Atlas(this.currentHitSize_, this.space_)];
+};
+
+
+/**
+ * @param {string} id The identifier of the entry to check.
+ * @return {?ol.AtlasManagerInfo} The position and atlas image for the
+ *    entry, or `null` if the entry is not part of the atlas manager.
+ */
+ol.style.AtlasManager.prototype.getInfo = function(id) {
+  /** @type {?ol.AtlasInfo} */
+  var info = this.getInfo_(this.atlases_, id);
+
+  if (!info) {
+    return null;
+  }
+  var hitInfo = /** @type {ol.AtlasInfo} */ (this.getInfo_(this.hitAtlases_, id));
+
+  return this.mergeInfos_(info, hitInfo);
+};
+
+
+/**
+ * @private
+ * @param {Array.<ol.style.Atlas>} atlases The atlases to search.
+ * @param {string} id The identifier of the entry to check.
+ * @return {?ol.AtlasInfo} The position and atlas image for the entry,
+ *    or `null` if the entry is not part of the atlases.
+ */
+ol.style.AtlasManager.prototype.getInfo_ = function(atlases, id) {
+  var atlas, info, i, ii;
+  for (i = 0, ii = atlases.length; i < ii; ++i) {
+    atlas = atlases[i];
+    info = atlas.get(id);
+    if (info) {
+      return info;
+    }
+  }
+  return null;
+};
+
+
+/**
+ * @private
+ * @param {ol.AtlasInfo} info The info for the real image.
+ * @param {ol.AtlasInfo} hitInfo The info for the hit-detection
+ *    image.
+ * @return {?ol.AtlasManagerInfo} The position and atlas image for the
+ *    entry, or `null` if the entry is not part of the atlases.
+ */
+ol.style.AtlasManager.prototype.mergeInfos_ = function(info, hitInfo) {
+  return /** @type {ol.AtlasManagerInfo} */ ({
+    offsetX: info.offsetX,
+    offsetY: info.offsetY,
+    image: info.image,
+    hitImage: hitInfo.image
+  });
+};
+
+
+/**
+ * Add an image to the atlas manager.
+ *
+ * If an entry for the given id already exists, the entry will
+ * be overridden (but the space on the atlas graphic will not be freed).
+ *
+ * If `renderHitCallback` is provided, the image (or the hit-detection version
+ * of the image) will be rendered into a separate hit-detection atlas image.
+ *
+ * @param {string} id The identifier of the entry to add.
+ * @param {number} width The width.
+ * @param {number} height The height.
+ * @param {function(CanvasRenderingContext2D, number, number)} renderCallback
+ *    Called to render the new image onto an atlas image.
+ * @param {function(CanvasRenderingContext2D, number, number)=}
+ *    opt_renderHitCallback Called to render a hit-detection image onto a hit
+ *    detection atlas image.
+ * @param {Object=} opt_this Value to use as `this` when executing
+ *    `renderCallback` and `renderHitCallback`.
+ * @return {?ol.AtlasManagerInfo}  The position and atlas image for the
+ *    entry, or `null` if the image is too big.
+ */
+ol.style.AtlasManager.prototype.add = function(id, width, height,
+    renderCallback, opt_renderHitCallback, opt_this) {
+  if (width + this.space_ > this.maxSize_ ||
+      height + this.space_ > this.maxSize_) {
+    return null;
+  }
+
+  /** @type {?ol.AtlasInfo} */
+  var info = this.add_(false,
+      id, width, height, renderCallback, opt_this);
+  if (!info) {
+    return null;
+  }
+
+  // even if no hit-detection entry is requested, we insert a fake entry into
+  // the hit-detection atlas, to make sure that the offset is the same for
+  // the original image and the hit-detection image.
+  var renderHitCallback = opt_renderHitCallback !== undefined ?
+    opt_renderHitCallback : ol.nullFunction;
+
+  var hitInfo = /** @type {ol.AtlasInfo} */ (this.add_(true,
+      id, width, height, renderHitCallback, opt_this));
+
+  return this.mergeInfos_(info, hitInfo);
+};
+
+
+/**
+ * @private
+ * @param {boolean} isHitAtlas If the hit-detection atlases are used.
+ * @param {string} id The identifier of the entry to add.
+ * @param {number} width The width.
+ * @param {number} height The height.
+ * @param {function(CanvasRenderingContext2D, number, number)} renderCallback
+ *    Called to render the new image onto an atlas image.
+ * @param {Object=} opt_this Value to use as `this` when executing
+ *    `renderCallback` and `renderHitCallback`.
+ * @return {?ol.AtlasInfo}  The position and atlas image for the entry,
+ *    or `null` if the image is too big.
+ */
+ol.style.AtlasManager.prototype.add_ = function(isHitAtlas, id, width, height,
+    renderCallback, opt_this) {
+  var atlases = (isHitAtlas) ? this.hitAtlases_ : this.atlases_;
+  var atlas, info, i, ii;
+  for (i = 0, ii = atlases.length; i < ii; ++i) {
+    atlas = atlases[i];
+    info = atlas.add(id, width, height, renderCallback, opt_this);
+    if (info) {
+      return info;
+    } else if (!info && i === ii - 1) {
+      // the entry could not be added to one of the existing atlases,
+      // create a new atlas that is twice as big and try to add to this one.
+      var size;
+      if (isHitAtlas) {
+        size = Math.min(this.currentHitSize_ * 2, this.maxSize_);
+        this.currentHitSize_ = size;
+      } else {
+        size = Math.min(this.currentSize_ * 2, this.maxSize_);
+        this.currentSize_ = size;
+      }
+      atlas = new ol.style.Atlas(size, this.space_);
+      atlases.push(atlas);
+      // run the loop another time
+      ++ii;
+    }
+  }
+  return null;
+};
+
 goog.provide('ol.render.webgl.TextReplay');
 
 goog.require('ol');
+goog.require('ol.colorlike');
+goog.require('ol.dom');
+goog.require('ol.has');
+goog.require('ol.render.webgl');
+goog.require('ol.render.webgl.TextureReplay');
+goog.require('ol.style.AtlasManager');
+goog.require('ol.webgl.Buffer');
 
 
 if (ol.ENABLE_WEBGL) {
 
   /**
    * @constructor
-   * @abstract
+   * @extends {ol.render.webgl.TextureReplay}
    * @param {number} tolerance Tolerance.
    * @param {ol.Extent} maxExtent Max extent.
    * @struct
    */
-  ol.render.webgl.TextReplay = function(tolerance, maxExtent) {};
+  ol.render.webgl.TextReplay = function(tolerance, maxExtent) {
+    ol.render.webgl.TextureReplay.call(this, tolerance, maxExtent);
+
+    /**
+     * @private
+     * @type {Array.<HTMLCanvasElement>}
+     */
+    this.images_ = [];
+
+    /**
+     * @private
+     * @type {Array.<WebGLTexture>}
+     */
+    this.textures_ = [];
+
+    /**
+     * @private
+     * @type {HTMLCanvasElement}
+     */
+    this.measureCanvas_ = ol.dom.createCanvasContext2D(0, 0).canvas;
+
+    /**
+     * @private
+     * @type {{strokeColor: (ol.ColorLike|null),
+     *         lineCap: (string|undefined),
+     *         lineDash: Array.<number>,
+     *         lineDashOffset: (number|undefined),
+     *         lineJoin: (string|undefined),
+     *         lineWidth: number,
+     *         miterLimit: (number|undefined),
+     *         fillColor: (ol.ColorLike|null),
+     *         font: (string|undefined),
+     *         scale: (number|undefined)}}
+     */
+    this.state_ = {
+      strokeColor: null,
+      lineCap: undefined,
+      lineDash: null,
+      lineDashOffset: undefined,
+      lineJoin: undefined,
+      lineWidth: 0,
+      miterLimit: undefined,
+      fillColor: null,
+      font: undefined,
+      scale: undefined
+    };
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.text_ = '';
+
+    /**
+     * @private
+     * @type {number|undefined}
+     */
+    this.textAlign_ = undefined;
+
+    /**
+     * @private
+     * @type {number|undefined}
+     */
+    this.textBaseline_ = undefined;
+
+    /**
+     * @private
+     * @type {number|undefined}
+     */
+    this.offsetX_ = undefined;
+
+    /**
+     * @private
+     * @type {number|undefined}
+     */
+    this.offsetY_ = undefined;
+
+    /**
+     * @private
+     * @type {Object.<string, ol.WebglGlyphAtlas>}
+     */
+    this.atlases_ = {};
+
+    /**
+     * @private
+     * @type {ol.WebglGlyphAtlas|undefined}
+     */
+    this.currAtlas_ = undefined;
+
+    this.scale = 1;
+
+    this.opacity = 1;
+
+  };
+  ol.inherits(ol.render.webgl.TextReplay, ol.render.webgl.TextureReplay);
+
 
   /**
-   * @param {ol.style.Text} textStyle Text style.
+   * @inheritDoc
    */
-  ol.render.webgl.TextReplay.prototype.setTextStyle = function(textStyle) {};
+  ol.render.webgl.TextReplay.prototype.drawText = function(flatCoordinates, offset,
+      end, stride, geometry, feature) {
+    if (this.text_) {
+      this.startIndices.push(this.indices.length);
+      this.startIndicesFeature.push(feature);
 
-  /**
-   * @param {ol.webgl.Context} context Context.
-   * @param {ol.Coordinate} center Center.
-   * @param {number} resolution Resolution.
-   * @param {number} rotation Rotation.
-   * @param {ol.Size} size Size.
-   * @param {number} pixelRatio Pixel ratio.
-   * @param {number} opacity Global opacity.
-   * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
-   *  to skip.
-   * @param {function((ol.Feature|ol.render.Feature)): T|undefined} featureCallback Feature callback.
-   * @param {boolean} oneByOne Draw features one-by-one for the hit-detecion.
-   * @param {ol.Extent=} opt_hitExtent Hit extent: Only features intersecting
-   *  this extent are checked.
-   * @return {T|undefined} Callback result.
-   * @template T
-   */
-  ol.render.webgl.TextReplay.prototype.replay = function(context,
-      center, resolution, rotation, size, pixelRatio,
-      opacity, skippedFeaturesHash,
-      featureCallback, oneByOne, opt_hitExtent) {
-    return undefined;
+      var glyphAtlas = this.currAtlas_;
+      var lines = this.text_.split('\n');
+      var textSize = this.getTextSize_(lines);
+      var i, ii, j, jj, currX, currY, charArr, charInfo;
+      var anchorX = Math.round(textSize[0] * this.textAlign_ - this.offsetX_);
+      var anchorY = Math.round(textSize[1] * this.textBaseline_ - this.offsetY_);
+      var lineWidth = (this.state_.lineWidth / 2) * this.state_.scale;
+
+      for (i = 0, ii = lines.length; i < ii; ++i) {
+        currX = 0;
+        currY = glyphAtlas.height * i;
+        charArr = lines[i].split('');
+
+        for (j = 0, jj = charArr.length; j < jj; ++j) {
+          charInfo = glyphAtlas.atlas.getInfo(charArr[j]);
+
+          if (charInfo) {
+            var image = charInfo.image;
+
+            this.anchorX = anchorX - currX;
+            this.anchorY = anchorY - currY;
+            this.originX = j === 0 ? charInfo.offsetX - lineWidth : charInfo.offsetX;
+            this.originY = charInfo.offsetY;
+            this.height = glyphAtlas.height;
+            this.width = j === 0 || j === charArr.length - 1 ?
+              glyphAtlas.width[charArr[j]] + lineWidth : glyphAtlas.width[charArr[j]];
+            this.imageHeight = image.height;
+            this.imageWidth = image.width;
+
+            var currentImage;
+            if (this.images_.length === 0) {
+              this.images_.push(image);
+            } else {
+              currentImage = this.images_[this.images_.length - 1];
+              if (ol.getUid(currentImage) != ol.getUid(image)) {
+                this.groupIndices.push(this.indices.length);
+                this.images_.push(image);
+              }
+            }
+
+            this.drawText_(flatCoordinates, offset, end, stride);
+          }
+          currX += this.width;
+        }
+      }
+    }
   };
 
+
   /**
+   * @private
+   * @param {Array.<string>} lines Label to draw split to lines.
+   * @return {Array.<number>} Size of the label in pixels.
+   */
+  ol.render.webgl.TextReplay.prototype.getTextSize_ = function(lines) {
+    var self = this;
+    var glyphAtlas = this.currAtlas_;
+    var textHeight = lines.length * glyphAtlas.height;
+    //Split every line to an array of chars, sum up their width, and select the longest.
+    var textWidth = lines.map(function(str) {
+      var sum = 0;
+      var i, ii;
+      for (i = 0, ii = str.length; i < ii; ++i) {
+        var curr = str[i];
+        if (!glyphAtlas.width[curr]) {
+          self.addCharToAtlas_(curr);
+        }
+        sum += glyphAtlas.width[curr] ? glyphAtlas.width[curr] : 0;
+      }
+      return sum;
+    }).reduce(function(max, curr) {
+      return Math.max(max, curr);
+    });
+
+    return [textWidth, textHeight];
+  };
+
+
+  /**
+   * @private
    * @param {Array.<number>} flatCoordinates Flat coordinates.
    * @param {number} offset Offset.
    * @param {number} end End.
    * @param {number} stride Stride.
-   * @param {ol.geom.Geometry|ol.render.Feature} geometry Geometry.
-   * @param {ol.Feature|ol.render.Feature} feature Feature.
    */
-  ol.render.webgl.TextReplay.prototype.drawText = function(flatCoordinates, offset,
-      end, stride, geometry, feature) {};
+  ol.render.webgl.TextReplay.prototype.drawText_ = function(flatCoordinates, offset,
+      end, stride) {
+    var i, ii;
+    for (i = offset, ii = end; i < ii; i += stride) {
+      this.drawCoordinates(flatCoordinates, offset, end, stride);
+    }
+  };
+
 
   /**
-   * @abstract
-   * @param {ol.webgl.Context} context Context.
+   * @private
+   * @param {string} char Character.
    */
-  ol.render.webgl.TextReplay.prototype.finish = function(context) {};
+  ol.render.webgl.TextReplay.prototype.addCharToAtlas_ = function(char) {
+    if (char.length === 1) {
+      var glyphAtlas = this.currAtlas_;
+      var state = this.state_;
+      var mCtx = this.measureCanvas_.getContext('2d');
+      mCtx.font = state.font;
+      var width = Math.ceil(mCtx.measureText(char).width * state.scale);
+
+      var info = glyphAtlas.atlas.add(char, width, glyphAtlas.height,
+          function(ctx, x, y) {
+            //Parameterize the canvas
+            ctx.font = /** @type {string} */ (state.font);
+            ctx.fillStyle = state.fillColor;
+            ctx.strokeStyle = state.strokeColor;
+            ctx.lineWidth = state.lineWidth;
+            ctx.lineCap = /*** @type {string} */ (state.lineCap);
+            ctx.lineJoin = /** @type {string} */ (state.lineJoin);
+            ctx.miterLimit = /** @type {number} */ (state.miterLimit);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            if (ol.has.CANVAS_LINE_DASH && state.lineDash) {
+              //FIXME: use pixelRatio
+              ctx.setLineDash(state.lineDash);
+              ctx.lineDashOffset = /** @type {number} */ (state.lineDashOffset);
+            }
+            if (state.scale !== 1) {
+              //FIXME: use pixelRatio
+              ctx.setTransform(/** @type {number} */ (state.scale), 0, 0,
+                  /** @type {number} */ (state.scale), 0, 0);
+            }
+
+            //Draw the character on the canvas
+            if (state.strokeColor) {
+              ctx.strokeText(char, x, y);
+            }
+            if (state.fillColor) {
+              ctx.fillText(char, x, y);
+            }
+          });
+
+      if (info) {
+        glyphAtlas.width[char] = width;
+      }
+    }
+  };
+
 
   /**
-   * @param {ol.webgl.Context} context WebGL context.
-   * @return {function()} Delete resources function.
+   * @inheritDoc
    */
-  ol.render.webgl.TextReplay.prototype.getDeleteResourcesFunction = function(context) {
-    return ol.nullFunction;
+  ol.render.webgl.TextReplay.prototype.finish = function(context) {
+    var gl = context.getGL();
+
+    this.groupIndices.push(this.indices.length);
+    this.hitDetectionGroupIndices = this.groupIndices;
+
+    // create, bind, and populate the vertices buffer
+    this.verticesBuffer = new ol.webgl.Buffer(this.vertices);
+
+    // create, bind, and populate the indices buffer
+    this.indicesBuffer = new ol.webgl.Buffer(this.indices);
+
+    // create textures
+    /** @type {Object.<string, WebGLTexture>} */
+    var texturePerImage = {};
+
+    this.createTextures(this.textures_, this.images_, texturePerImage, gl);
+
+    this.state_ = {
+      strokeColor: null,
+      lineCap: undefined,
+      lineDash: null,
+      lineDashOffset: undefined,
+      lineJoin: undefined,
+      lineWidth: 0,
+      miterLimit: undefined,
+      fillColor: null,
+      font: undefined,
+      scale: undefined
+    };
+    this.text_ = '';
+    this.textAlign_ = undefined;
+    this.textBaseline_ = undefined;
+    this.offsetX_ = undefined;
+    this.offsetY_ = undefined;
+    this.images_ = null;
+    this.atlases_ = {};
+    this.currAtlas_ = undefined;
+    ol.render.webgl.TextureReplay.prototype.finish.call(this, context);
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.TextReplay.prototype.setTextStyle = function(textStyle) {
+    var state = this.state_;
+    var textFillStyle = textStyle.getFill();
+    var textStrokeStyle = textStyle.getStroke();
+    if (!textStyle || !textStyle.getText() || (!textFillStyle && !textStrokeStyle)) {
+      this.text_ = '';
+    } else {
+      if (!textFillStyle) {
+        state.fillColor = null;
+      } else {
+        var textFillStyleColor = textFillStyle.getColor();
+        state.fillColor = ol.colorlike.asColorLike(textFillStyleColor ?
+          textFillStyleColor : ol.render.webgl.defaultFillStyle);
+      }
+      if (!textStrokeStyle) {
+        state.strokeColor = null;
+        state.lineWidth = 0;
+      } else {
+        var textStrokeStyleColor = textStrokeStyle.getColor();
+        state.strokeColor = ol.colorlike.asColorLike(textStrokeStyleColor ?
+          textStrokeStyleColor : ol.render.webgl.defaultStrokeStyle);
+        state.lineWidth = textStrokeStyle.getWidth() || ol.render.webgl.defaultLineWidth;
+        state.lineCap = textStrokeStyle.getLineCap() || ol.render.webgl.defaultLineCap;
+        state.lineDashOffset = textStrokeStyle.getLineDashOffset() || ol.render.webgl.defaultLineDashOffset;
+        state.lineJoin = textStrokeStyle.getLineJoin() || ol.render.webgl.defaultLineJoin;
+        state.miterLimit = textStrokeStyle.getMiterLimit() || ol.render.webgl.defaultMiterLimit;
+        var lineDash = textStrokeStyle.getLineDash();
+        state.lineDash = lineDash ? lineDash.slice() : ol.render.webgl.defaultLineDash;
+      }
+      state.font = textStyle.getFont() || ol.render.webgl.defaultFont;
+      state.scale = textStyle.getScale() || 1;
+      this.text_ = /** @type {string} */ (textStyle.getText());
+      var textAlign = ol.render.webgl.TextReplay.Align_[textStyle.getTextAlign()];
+      var textBaseline = ol.render.webgl.TextReplay.Align_[textStyle.getTextBaseline()];
+      this.textAlign_ = textAlign === undefined ?
+        ol.render.webgl.defaultTextAlign : textAlign;
+      this.textBaseline_ = textBaseline === undefined ?
+        ol.render.webgl.defaultTextBaseline : textBaseline;
+      this.offsetX_ = textStyle.getOffsetX() || 0;
+      this.offsetY_ = textStyle.getOffsetY() || 0;
+      this.rotateWithView = !!textStyle.getRotateWithView();
+      this.rotation = textStyle.getRotation() || 0;
+
+      this.currAtlas_ = this.getAtlas_(state);
+    }
+  };
+
+
+  /**
+   * @private
+   * @param {Object} state Font attributes.
+   * @return {ol.WebglGlyphAtlas} Glyph atlas.
+   */
+  ol.render.webgl.TextReplay.prototype.getAtlas_ = function(state) {
+    var params = [];
+    var i;
+    for (i in state) {
+      if (state[i] || state[i] === 0) {
+        if (Array.isArray(state[i])) {
+          params = params.concat(state[i]);
+        } else {
+          params.push(state[i]);
+        }
+      }
+    }
+    var hash = this.calculateHash_(params);
+    if (!this.atlases_[hash]) {
+      var mCtx = this.measureCanvas_.getContext('2d');
+      mCtx.font = state.font;
+      var height = Math.ceil((mCtx.measureText('M').width * 1.5 +
+          state.lineWidth / 2) * state.scale);
+
+      this.atlases_[hash] = {
+        atlas: new ol.style.AtlasManager({
+          space: state.lineWidth + 1
+        }),
+        width: {},
+        height: height
+      };
+    }
+    return this.atlases_[hash];
+  };
+
+
+  /**
+   * @private
+   * @param {Array.<string|number>} params Array of parameters.
+   * @return {string} Hash string.
+   */
+  ol.render.webgl.TextReplay.prototype.calculateHash_ = function(params) {
+    //TODO: Create a more performant, reliable, general hash function.
+    var i, ii;
+    var hash = '';
+    for (i = 0, ii = params.length; i < ii; ++i) {
+      hash += params[i];
+    }
+    return hash;
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.TextReplay.prototype.getTextures = function(opt_all) {
+    return this.textures_;
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.TextReplay.prototype.getHitDetectionTextures = function() {
+    return this.textures_;
+  };
+
+
+  /**
+   * @enum {number}
+   * @private
+   */
+  ol.render.webgl.TextReplay.Align_ = {
+    left: 0,
+    end: 0,
+    center: 0.5,
+    right: 1,
+    start: 1,
+    top: 0,
+    middle: 0.5,
+    hanging: 0.2,
+    alphabetic: 0.8,
+    ideographic: 0.8,
+    bottom: 1
   };
 
 }
@@ -29663,8 +30783,42 @@ if (ol.ENABLE_WEBGL) {
      */
     this.strokeStyle_ = null;
 
+    /**
+     * @private
+     * @type {ol.style.Text}
+     */
+    this.textStyle_ = null;
+
   };
   ol.inherits(ol.render.webgl.Immediate, ol.render.VectorContext);
+
+
+  /**
+   * @param {ol.render.webgl.ReplayGroup} replayGroup Replay group.
+   * @param {Array.<number>} flatCoordinates Flat coordinates.
+   * @param {number} offset Offset.
+   * @param {number} end End.
+   * @param {number} stride Stride.
+   * @private
+   */
+  ol.render.webgl.Immediate.prototype.drawText_ = function(replayGroup,
+      flatCoordinates, offset, end, stride) {
+    var context = this.context_;
+    var replay = /** @type {ol.render.webgl.TextReplay} */ (
+      replayGroup.getReplay(0, ol.render.ReplayType.TEXT));
+    replay.setTextStyle(this.textStyle_);
+    replay.drawText(flatCoordinates, offset, end, stride, null, null);
+    replay.finish(context);
+    // default colors
+    var opacity = 1;
+    var skippedFeatures = {};
+    var featureCallback;
+    var oneByOne = false;
+    replay.replay(this.context_, this.center_, this.resolution_, this.rotation_,
+        this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
+        oneByOne);
+    replay.getDeleteResourcesFunction(context)();
+  };
 
 
   /**
@@ -29678,6 +30832,7 @@ if (ol.ENABLE_WEBGL) {
   ol.render.webgl.Immediate.prototype.setStyle = function(style) {
     this.setFillStrokeStyle(style.getFill(), style.getStroke());
     this.setImageStyle(style.getImage());
+    this.setTextStyle(style.getText());
   };
 
 
@@ -29756,7 +30911,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.ImageReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.IMAGE));
+      replayGroup.getReplay(0, ol.render.ReplayType.IMAGE));
     replay.setImageStyle(this.imageStyle_);
     replay.drawPoint(geometry, data);
     replay.finish(context);
@@ -29769,6 +30924,12 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      var flatCoordinates = geometry.getFlatCoordinates();
+      var stride = geometry.getStride();
+      this.drawText_(replayGroup, flatCoordinates, 0, flatCoordinates.length, stride);
+    }
   };
 
 
@@ -29779,7 +30940,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.ImageReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.IMAGE));
+      replayGroup.getReplay(0, ol.render.ReplayType.IMAGE));
     replay.setImageStyle(this.imageStyle_);
     replay.drawMultiPoint(geometry, data);
     replay.finish(context);
@@ -29791,6 +30952,12 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      var flatCoordinates = geometry.getFlatCoordinates();
+      var stride = geometry.getStride();
+      this.drawText_(replayGroup, flatCoordinates, 0, flatCoordinates.length, stride);
+    }
   };
 
 
@@ -29801,7 +30968,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.LineStringReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.LINE_STRING));
+      replayGroup.getReplay(0, ol.render.ReplayType.LINE_STRING));
     replay.setFillStrokeStyle(null, this.strokeStyle_);
     replay.drawLineString(geometry, data);
     replay.finish(context);
@@ -29813,6 +30980,11 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      var flatMidpoint = geometry.getFlatMidpoint();
+      this.drawText_(replayGroup, flatMidpoint, 0, 2, 2);
+    }
   };
 
 
@@ -29823,7 +30995,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.LineStringReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.LINE_STRING));
+      replayGroup.getReplay(0, ol.render.ReplayType.LINE_STRING));
     replay.setFillStrokeStyle(null, this.strokeStyle_);
     replay.drawMultiLineString(geometry, data);
     replay.finish(context);
@@ -29835,6 +31007,11 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      var flatMidpoints = geometry.getFlatMidpoints();
+      this.drawText_(replayGroup, flatMidpoints, 0, flatMidpoints.length, 2);
+    }
   };
 
 
@@ -29845,7 +31022,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.PolygonReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.POLYGON));
+      replayGroup.getReplay(0, ol.render.ReplayType.POLYGON));
     replay.setFillStrokeStyle(this.fillStyle_, this.strokeStyle_);
     replay.drawPolygon(geometry, data);
     replay.finish(context);
@@ -29857,6 +31034,11 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      var flatInteriorPoint = geometry.getFlatInteriorPoint();
+      this.drawText_(replayGroup, flatInteriorPoint, 0, 2, 2);
+    }
   };
 
 
@@ -29867,7 +31049,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.PolygonReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.POLYGON));
+      replayGroup.getReplay(0, ol.render.ReplayType.POLYGON));
     replay.setFillStrokeStyle(this.fillStyle_, this.strokeStyle_);
     replay.drawMultiPolygon(geometry, data);
     replay.finish(context);
@@ -29879,6 +31061,11 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      var flatInteriorPoints = geometry.getFlatInteriorPoints();
+      this.drawText_(replayGroup, flatInteriorPoints, 0, flatInteriorPoints.length, 2);
+    }
   };
 
 
@@ -29889,7 +31076,7 @@ if (ol.ENABLE_WEBGL) {
     var context = this.context_;
     var replayGroup = new ol.render.webgl.ReplayGroup(1, this.extent_);
     var replay = /** @type {ol.render.webgl.CircleReplay} */ (
-        replayGroup.getReplay(0, ol.render.ReplayType.CIRCLE));
+      replayGroup.getReplay(0, ol.render.ReplayType.CIRCLE));
     replay.setFillStrokeStyle(this.fillStyle_, this.strokeStyle_);
     replay.drawCircle(geometry, data);
     replay.finish(context);
@@ -29901,6 +31088,10 @@ if (ol.ENABLE_WEBGL) {
         this.size_, this.pixelRatio_, opacity, skippedFeatures, featureCallback,
         oneByOne);
     replay.getDeleteResourcesFunction(context)();
+
+    if (this.textStyle_) {
+      this.drawText_(replayGroup, geometry.getCenter(), 0, 2, 2);
+    }
   };
 
 
@@ -29918,6 +31109,14 @@ if (ol.ENABLE_WEBGL) {
   ol.render.webgl.Immediate.prototype.setFillStrokeStyle = function(fillStyle, strokeStyle) {
     this.fillStyle_ = fillStyle;
     this.strokeStyle_ = strokeStyle;
+  };
+
+
+  /**
+   * @inheritDoc
+   */
+  ol.render.webgl.Immediate.prototype.setTextStyle = function(textStyle) {
+    this.textStyle_ = textStyle;
   };
 
 }
@@ -30168,7 +31367,7 @@ if (ol.ENABLE_WEBGL) {
      * @type {HTMLCanvasElement}
      */
     this.canvas_ = /** @type {HTMLCanvasElement} */
-        (document.createElement('CANVAS'));
+      (document.createElement('CANVAS'));
     this.canvas_.style.width = '100%';
     this.canvas_.style.height = '100%';
     this.canvas_.style.display = 'block';
@@ -30591,7 +31790,7 @@ if (ol.ENABLE_WEBGL) {
     if (this.textureCache_.getCount() - this.textureCacheFrameMarkerCount_ >
         ol.WEBGL_TEXTURE_CACHE_HIGH_WATER_MARK) {
       frameState.postRenderFunctions.push(
-        /** @type {ol.PostRenderFunction} */ (this.expireCache_.bind(this))
+          /** @type {ol.PostRenderFunction} */ (this.expireCache_.bind(this))
       );
     }
 
@@ -30612,7 +31811,7 @@ if (ol.ENABLE_WEBGL) {
    * @inheritDoc
    */
   ol.renderer.webgl.Map.prototype.forEachFeatureAtCoordinate = function(coordinate, frameState, hitTolerance, callback, thisArg,
-          layerFilter, thisArg2) {
+      layerFilter, thisArg2) {
     var result;
 
     if (this.getGL().isContextLost()) {
@@ -30677,7 +31876,7 @@ if (ol.ENABLE_WEBGL) {
    * @inheritDoc
    */
   ol.renderer.webgl.Map.prototype.forEachLayerAtPixel = function(pixel, frameState, callback, thisArg,
-          layerFilter, thisArg2) {
+      layerFilter, thisArg2) {
     if (this.getGL().isContextLost()) {
       return false;
     }
@@ -30852,7 +32051,7 @@ ol.Map = function(options) {
    */
   this.loadTilesWhileAnimating_ =
       options.loadTilesWhileAnimating !== undefined ?
-          options.loadTilesWhileAnimating : false;
+        options.loadTilesWhileAnimating : false;
 
   /**
    * @type {boolean}
@@ -30860,14 +32059,14 @@ ol.Map = function(options) {
    */
   this.loadTilesWhileInteracting_ =
       options.loadTilesWhileInteracting !== undefined ?
-          options.loadTilesWhileInteracting : false;
+        options.loadTilesWhileInteracting : false;
 
   /**
    * @private
    * @type {number}
    */
   this.pixelRatio_ = options.pixelRatio !== undefined ?
-      options.pixelRatio : ol.has.DEVICE_PIXEL_RATIO;
+    options.pixelRatio : ol.has.DEVICE_PIXEL_RATIO;
 
   /**
    * @private
@@ -31249,7 +32448,7 @@ ol.Map.prototype.disposeInternal = function() {
 /**
  * Detect features that intersect a pixel on the viewport, and execute a
  * callback with each intersecting feature. Layers included in the detection can
- * be configured through `opt_layerFilter`.
+ * be configured through the `layerFilter` option in `opt_options`.
  * @param {ol.Pixel} pixel Pixel.
  * @param {function(this: S, (ol.Feature|ol.render.Feature),
  *     ol.layer.Layer): T} callback Feature callback. The callback will be
@@ -31282,6 +32481,25 @@ ol.Map.prototype.forEachFeatureAtPixel = function(pixel, callback, opt_options) 
 
 
 /**
+ * Get all features that intersect a pixel on the viewport.
+ * @param {ol.Pixel} pixel Pixel.
+ * @param {olx.AtPixelOptions=} opt_options Optional options.
+ * @return {Array.<ol.Feature|ol.render.Feature>} The detected features or
+ * `null` if none were found.
+ * @api
+ */
+ol.Map.prototype.getFeaturesAtPixel = function(pixel, opt_options) {
+  var features = null;
+  this.forEachFeatureAtPixel(pixel, function(feature) {
+    if (!features) {
+      features = [];
+    }
+    features.push(feature);
+  }, opt_options);
+  return features;
+};
+
+/**
  * Detect layers that have a color value at a pixel on the viewport, and
  * execute a callback with each matching layer. Layers included in the
  * detection can be configured through `opt_layerFilter`.
@@ -31311,7 +32529,7 @@ ol.Map.prototype.forEachLayerAtPixel = function(pixel, callback, opt_this, opt_l
   }
   var thisArg = opt_this !== undefined ? opt_this : null;
   var layerFilter = opt_layerFilter !== undefined ?
-      opt_layerFilter : ol.functions.TRUE;
+    opt_layerFilter : ol.functions.TRUE;
   var thisArg2 = opt_this2 !== undefined ? opt_this2 : null;
   return this.renderer_.forEachLayerAtPixel(
       pixel, this.frameState_, callback, thisArg,
@@ -31335,7 +32553,7 @@ ol.Map.prototype.hasFeatureAtPixel = function(pixel, opt_options) {
   var coordinate = this.getCoordinateFromPixel(pixel);
   opt_options = opt_options !== undefined ? opt_options : {};
   var layerFilter = opt_options.layerFilter !== undefined ?
-      opt_options.layerFilter : ol.functions.TRUE;
+    opt_options.layerFilter : ol.functions.TRUE;
   var hitTolerance = opt_options.hitTolerance !== undefined ?
     opt_options.hitTolerance * this.frameState_.pixelRatio : 0;
   return this.renderer_.hasFeatureAtCoordinate(
@@ -31381,7 +32599,7 @@ ol.Map.prototype.getEventPixel = function(event) {
  */
 ol.Map.prototype.getTarget = function() {
   return /** @type {Element|string|undefined} */ (
-      this.get(ol.MapProperty.TARGET));
+    this.get(ol.MapProperty.TARGET));
 };
 
 
@@ -31731,7 +32949,7 @@ ol.Map.prototype.handleTargetChanged_ = function() {
     targetElement.appendChild(this.viewport_);
 
     var keyboardEventTarget = !this.keyboardEventTarget_ ?
-        targetElement : this.keyboardEventTarget_;
+      targetElement : this.keyboardEventTarget_;
     this.keyHandlerKeys_ = [
       ol.events.listen(keyboardEventTarget, ol.events.EventType.KEYDOWN,
           this.handleBrowserEvent, this),
@@ -32095,8 +33313,8 @@ ol.Map.createOptionsInternal = function(options) {
   var keyboardEventTarget = null;
   if (options.keyboardEventTarget !== undefined) {
     keyboardEventTarget = typeof options.keyboardEventTarget === 'string' ?
-        document.getElementById(options.keyboardEventTarget) :
-        options.keyboardEventTarget;
+      document.getElementById(options.keyboardEventTarget) :
+      options.keyboardEventTarget;
   }
 
   /**
@@ -32122,13 +33340,13 @@ ol.Map.createOptionsInternal = function(options) {
   }
 
   var layerGroup = (options.layers instanceof ol.layer.Group) ?
-      options.layers : new ol.layer.Group({layers: options.layers});
+    options.layers : new ol.layer.Group({layers: options.layers});
   values[ol.MapProperty.LAYERGROUP] = layerGroup;
 
   values[ol.MapProperty.TARGET] = options.target;
 
   values[ol.MapProperty.VIEW] = options.view !== undefined ?
-      options.view : new ol.View();
+    options.view : new ol.View();
 
   /**
    * @type {function(new: ol.renderer.Map, Element, ol.Map)}
@@ -32290,7 +33508,7 @@ ol.Overlay = function(options) {
    * @type {boolean}
    */
   this.insertFirst_ = options.insertFirst !== undefined ?
-      options.insertFirst : true;
+    options.insertFirst : true;
 
   /**
    * @private
@@ -32317,14 +33535,14 @@ ol.Overlay = function(options) {
    * @type {olx.OverlayPanOptions}
    */
   this.autoPanAnimation_ = options.autoPanAnimation ||
-      /** @type {olx.OverlayPanOptions} */ ({});
+    /** @type {olx.OverlayPanOptions} */ ({});
 
   /**
    * @private
    * @type {number}
    */
   this.autoPanMargin_ = options.autoPanMargin !== undefined ?
-      options.autoPanMargin : 20;
+    options.autoPanMargin : 20;
 
   /**
    * @private
@@ -32375,8 +33593,8 @@ ol.Overlay = function(options) {
   this.setOffset(options.offset !== undefined ? options.offset : [0, 0]);
 
   this.setPositioning(options.positioning !== undefined ?
-      /** @type {ol.OverlayPositioning} */ (options.positioning) :
-      ol.OverlayPositioning.TOP_LEFT);
+    /** @type {ol.OverlayPositioning} */ (options.positioning) :
+    ol.OverlayPositioning.TOP_LEFT);
 
   if (options.position !== undefined) {
     this.setPosition(options.position);
@@ -32394,7 +33612,7 @@ ol.inherits(ol.Overlay, ol.Object);
  */
 ol.Overlay.prototype.getElement = function() {
   return /** @type {Element|undefined} */ (
-      this.get(ol.Overlay.Property_.ELEMENT));
+    this.get(ol.Overlay.Property_.ELEMENT));
 };
 
 
@@ -32416,7 +33634,7 @@ ol.Overlay.prototype.getId = function() {
  */
 ol.Overlay.prototype.getMap = function() {
   return /** @type {ol.Map|undefined} */ (
-      this.get(ol.Overlay.Property_.MAP));
+    this.get(ol.Overlay.Property_.MAP));
 };
 
 
@@ -32428,7 +33646,7 @@ ol.Overlay.prototype.getMap = function() {
  */
 ol.Overlay.prototype.getOffset = function() {
   return /** @type {Array.<number>} */ (
-      this.get(ol.Overlay.Property_.OFFSET));
+    this.get(ol.Overlay.Property_.OFFSET));
 };
 
 
@@ -32441,7 +33659,7 @@ ol.Overlay.prototype.getOffset = function() {
  */
 ol.Overlay.prototype.getPosition = function() {
   return /** @type {ol.Coordinate|undefined} */ (
-      this.get(ol.Overlay.Property_.POSITION));
+    this.get(ol.Overlay.Property_.POSITION));
 };
 
 
@@ -32454,7 +33672,7 @@ ol.Overlay.prototype.getPosition = function() {
  */
 ol.Overlay.prototype.getPositioning = function() {
   return /** @type {ol.OverlayPositioning} */ (
-      this.get(ol.Overlay.Property_.POSITIONING));
+    this.get(ol.Overlay.Property_.POSITIONING));
 };
 
 
@@ -32485,7 +33703,7 @@ ol.Overlay.prototype.handleMapChanged = function() {
         ol.MapEventType.POSTRENDER, this.render, this);
     this.updatePixelPosition();
     var container = this.stopEvent_ ?
-        map.getOverlayContainerStopEvent() : map.getOverlayContainer();
+      map.getOverlayContainerStopEvent() : map.getOverlayContainer();
     if (this.insertFirst_) {
       container.insertBefore(this.element_, container.childNodes[0] || null);
     } else {
@@ -32820,7 +34038,7 @@ ol.control.OverviewMap = function(opt_options) {
    * @type {boolean}
    */
   this.collapsible_ = options.collapsible !== undefined ?
-      options.collapsible : true;
+    options.collapsible : true;
 
   if (!this.collapsible_) {
     this.collapsed_ = false;
@@ -32858,7 +34076,7 @@ ol.control.OverviewMap = function(opt_options) {
   }
 
   var activeLabel = (this.collapsible_ && !this.collapsed_) ?
-      this.collapseLabel_ : this.label_;
+    this.collapseLabel_ : this.label_;
   var button = document.createElement('button');
   button.setAttribute('type', 'button');
   button.title = tipLabel;
@@ -33465,7 +34683,7 @@ ol.control.ScaleLine.LEADING_DIGITS = [1, 2, 5];
  */
 ol.control.ScaleLine.prototype.getUnits = function() {
   return /** @type {ol.control.ScaleLineUnits|undefined} */ (
-      this.get(ol.control.ScaleLine.Property_.UNITS));
+    this.get(ol.control.ScaleLine.Property_.UNITS));
 };
 
 
@@ -33521,17 +34739,22 @@ ol.control.ScaleLine.prototype.updateElement_ = function() {
 
   var center = viewState.center;
   var projection = viewState.projection;
-  var metersPerUnit = projection.getMetersPerUnit();
+  var units = this.getUnits();
+  var pointResolutionUnits = units == ol.control.ScaleLineUnits.DEGREES ?
+    ol.proj.Units.DEGREES :
+    ol.proj.Units.METERS;
   var pointResolution =
-      ol.proj.getPointResolution(projection, viewState.resolution, center) *
-      metersPerUnit;
+      ol.proj.getPointResolution(projection, viewState.resolution, center, pointResolutionUnits);
 
   var nominalCount = this.minWidth_ * pointResolution;
   var suffix = '';
-  var units = this.getUnits();
   if (units == ol.control.ScaleLineUnits.DEGREES) {
     var metersPerDegree = ol.proj.METERS_PER_UNIT[ol.proj.Units.DEGREES];
-    pointResolution /= metersPerDegree;
+    if (projection.getUnits() == ol.proj.Units.DEGREES) {
+      nominalCount *= metersPerDegree;
+    } else {
+      pointResolution /= metersPerDegree;
+    }
     if (nominalCount < metersPerDegree / 60) {
       suffix = '\u2033'; // seconds
       pointResolution *= 3600;
@@ -34027,16 +35250,16 @@ ol.control.ZoomToExtent = function(opt_options) {
   this.extent_ = options.extent ? options.extent : null;
 
   var className = options.className !== undefined ? options.className :
-      'ol-zoom-extent';
+    'ol-zoom-extent';
 
   var label = options.label !== undefined ? options.label : 'E';
   var tipLabel = options.tipLabel !== undefined ?
-      options.tipLabel : 'Fit to extent';
+    options.tipLabel : 'Fit to extent';
   var button = document.createElement('button');
   button.setAttribute('type', 'button');
   button.title = tipLabel;
   button.appendChild(
-    typeof label === 'string' ? document.createTextNode(label) : label
+      typeof label === 'string' ? document.createTextNode(label) : label
   );
 
   ol.events.listen(button, ol.events.EventType.CLICK,
@@ -34210,7 +35433,7 @@ ol.DeviceOrientation.prototype.orientationChange_ = function(originalEvent) {
  */
 ol.DeviceOrientation.prototype.getAlpha = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.DeviceOrientation.Property_.ALPHA));
+    this.get(ol.DeviceOrientation.Property_.ALPHA));
 };
 
 
@@ -34223,7 +35446,7 @@ ol.DeviceOrientation.prototype.getAlpha = function() {
  */
 ol.DeviceOrientation.prototype.getBeta = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.DeviceOrientation.Property_.BETA));
+    this.get(ol.DeviceOrientation.Property_.BETA));
 };
 
 
@@ -34236,7 +35459,7 @@ ol.DeviceOrientation.prototype.getBeta = function() {
  */
 ol.DeviceOrientation.prototype.getGamma = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.DeviceOrientation.Property_.GAMMA));
+    this.get(ol.DeviceOrientation.Property_.GAMMA));
 };
 
 
@@ -34249,7 +35472,7 @@ ol.DeviceOrientation.prototype.getGamma = function() {
  */
 ol.DeviceOrientation.prototype.getHeading = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.DeviceOrientation.Property_.HEADING));
+    this.get(ol.DeviceOrientation.Property_.HEADING));
 };
 
 
@@ -34261,7 +35484,7 @@ ol.DeviceOrientation.prototype.getHeading = function() {
  */
 ol.DeviceOrientation.prototype.getTracking = function() {
   return /** @type {boolean} */ (
-      this.get(ol.DeviceOrientation.Property_.TRACKING));
+    this.get(ol.DeviceOrientation.Property_.TRACKING));
 };
 
 
@@ -34622,7 +35845,7 @@ ol.style.RegularShape = function(options) {
    * @type {number}
    */
   this.radius_ = /** @type {number} */ (options.radius !== undefined ?
-      options.radius : options.radius1);
+    options.radius : options.radius1);
 
   /**
    * @private
@@ -34678,13 +35901,13 @@ ol.style.RegularShape = function(options) {
    * @type {boolean}
    */
   var snapToPixel = options.snapToPixel !== undefined ?
-      options.snapToPixel : true;
+    options.snapToPixel : true;
 
   /**
    * @type {boolean}
    */
   var rotateWithView = options.rotateWithView !== undefined ?
-      options.rotateWithView : false;
+    options.rotateWithView : false;
 
   ol.style.Image.call(this, {
     opacity: 1,
@@ -34877,6 +36100,7 @@ ol.style.RegularShape.prototype.render_ = function(atlasManager) {
   var lineJoin = '';
   var miterLimit = 0;
   var lineDash = null;
+  var lineDashOffset = 0;
   var strokeStyle;
   var strokeWidth = 0;
 
@@ -34891,8 +36115,10 @@ ol.style.RegularShape.prototype.render_ = function(atlasManager) {
       strokeWidth = ol.render.canvas.defaultLineWidth;
     }
     lineDash = this.stroke_.getLineDash();
+    lineDashOffset = this.stroke_.getLineDashOffset();
     if (!ol.has.CANVAS_LINE_DASH) {
       lineDash = null;
+      lineDashOffset = 0;
     }
     lineJoin = this.stroke_.getLineJoin();
     if (lineJoin === undefined) {
@@ -34917,6 +36143,7 @@ ol.style.RegularShape.prototype.render_ = function(atlasManager) {
     size: size,
     lineCap: lineCap,
     lineDash: lineDash,
+    lineDashOffset: lineDashOffset,
     lineJoin: lineJoin,
     miterLimit: miterLimit
   };
@@ -35002,7 +36229,7 @@ ol.style.RegularShape.prototype.draw_ = function(renderOptions, context, x, y) {
       angle0 = i * 2 * Math.PI / points - Math.PI / 2 + this.angle_;
       radiusC = i % 2 === 0 ? this.radius_ : radius2;
       context.lineTo(renderOptions.size / 2 + radiusC * Math.cos(angle0),
-                     renderOptions.size / 2 + radiusC * Math.sin(angle0));
+          renderOptions.size / 2 + radiusC * Math.sin(angle0));
     }
   }
 
@@ -35020,6 +36247,7 @@ ol.style.RegularShape.prototype.draw_ = function(renderOptions, context, x, y) {
     context.lineWidth = renderOptions.strokeWidth;
     if (renderOptions.lineDash) {
       context.setLineDash(renderOptions.lineDash);
+      context.lineDashOffset = renderOptions.lineDashOffset;
     }
     context.lineCap = renderOptions.lineCap;
     context.lineJoin = renderOptions.lineJoin;
@@ -35082,7 +36310,7 @@ ol.style.RegularShape.prototype.drawHitDetectionCanvas_ = function(renderOptions
       angle0 = i * 2 * Math.PI / points - Math.PI / 2 + this.angle_;
       radiusC = i % 2 === 0 ? this.radius_ : radius2;
       context.lineTo(renderOptions.size / 2 + radiusC * Math.cos(angle0),
-                     renderOptions.size / 2 + radiusC * Math.sin(angle0));
+          renderOptions.size / 2 + radiusC * Math.sin(angle0));
     }
   }
 
@@ -35093,6 +36321,7 @@ ol.style.RegularShape.prototype.drawHitDetectionCanvas_ = function(renderOptions
     context.lineWidth = renderOptions.strokeWidth;
     if (renderOptions.lineDash) {
       context.setLineDash(renderOptions.lineDash);
+      context.lineDashOffset = renderOptions.lineDashOffset;
     }
     context.stroke();
   }
@@ -35105,9 +36334,9 @@ ol.style.RegularShape.prototype.drawHitDetectionCanvas_ = function(renderOptions
  */
 ol.style.RegularShape.prototype.getChecksum = function() {
   var strokeChecksum = this.stroke_ ?
-      this.stroke_.getChecksum() : '-';
+    this.stroke_.getChecksum() : '-';
   var fillChecksum = this.fill_ ?
-      this.fill_.getChecksum() : '-';
+    this.fill_.getChecksum() : '-';
 
   var recalculate = !this.checksums_ ||
       (strokeChecksum != this.checksums_[1] ||
@@ -35266,13 +36495,13 @@ ol.style.Fill.prototype.setColor = function(color) {
 ol.style.Fill.prototype.getChecksum = function() {
   if (this.checksum_ === undefined) {
     if (
-        this.color_ instanceof CanvasPattern ||
+      this.color_ instanceof CanvasPattern ||
         this.color_ instanceof CanvasGradient
     ) {
       this.checksum_ = ol.getUid(this.color_).toString();
     } else {
       this.checksum_ = 'f' + (this.color_ ?
-          ol.color.asString(this.color_) : '-');
+        ol.color.asString(this.color_) : '-');
     }
   }
 
@@ -35333,6 +36562,12 @@ ol.style.Style = function(opt_options) {
 
   /**
    * @private
+   * @type {ol.StyleRenderFunction|null}
+   */
+  this.renderer_ = options.renderer !== undefined ? options.renderer : null;
+
+  /**
+   * @private
    * @type {ol.style.Stroke}
    */
   this.stroke_ = options.stroke !== undefined ? options.stroke : null;
@@ -35370,6 +36605,28 @@ ol.style.Style.prototype.clone = function() {
     text: this.getText() ? this.getText().clone() : undefined,
     zIndex: this.getZIndex()
   });
+};
+
+
+/**
+ * Get the custom renderer function that was configured with
+ * {@link #setRenderer} or the `renderer` constructor option.
+ * @return {ol.StyleRenderFunction|null} Custom renderer function.
+ * @api
+ */
+ol.style.Style.prototype.getRenderer = function() {
+  return this.renderer_;
+};
+
+
+/**
+ * Sets a custom renderer function for this style. When set, `fill`, `stroke`
+ * and `image` options of the style will be ignored.
+ * @param {ol.StyleRenderFunction|null} renderer Custom renderer function.
+ * @api
+ */
+ol.style.Style.prototype.setRenderer = function(renderer) {
+  this.renderer_ = renderer;
 };
 
 
@@ -35821,7 +37078,7 @@ ol.Feature.prototype.clone = function() {
  */
 ol.Feature.prototype.getGeometry = function() {
   return /** @type {ol.geom.Geometry|undefined} */ (
-      this.get(this.geometryName_));
+    this.get(this.geometryName_));
 };
 
 
@@ -35921,7 +37178,7 @@ ol.Feature.prototype.setGeometry = function(geometry) {
 ol.Feature.prototype.setStyle = function(style) {
   this.style_ = style;
   this.styleFunction_ = !style ?
-      undefined : ol.Feature.createStyleFunction(style);
+    undefined : ol.Feature.createStyleFunction(style);
   this.changed();
 };
 
@@ -36138,18 +37395,18 @@ ol.xml.parse = function(xml) {
  */
 ol.xml.makeArrayExtender = function(valueReader, opt_this) {
   return (
-      /**
-       * @param {Node} node Node.
-       * @param {Array.<*>} objectStack Object stack.
-       */
-      function(node, objectStack) {
-        var value = valueReader.call(opt_this, node, objectStack);
-        if (value !== undefined) {
-          var array = /** @type {Array.<*>} */
+    /**
+     * @param {Node} node Node.
+     * @param {Array.<*>} objectStack Object stack.
+     */
+    function(node, objectStack) {
+      var value = valueReader.call(opt_this, node, objectStack);
+      if (value !== undefined) {
+        var array = /** @type {Array.<*>} */
               (objectStack[objectStack.length - 1]);
-          ol.array.extend(array, value);
-        }
-      });
+        ol.array.extend(array, value);
+      }
+    });
 };
 
 
@@ -36163,18 +37420,18 @@ ol.xml.makeArrayExtender = function(valueReader, opt_this) {
  */
 ol.xml.makeArrayPusher = function(valueReader, opt_this) {
   return (
-      /**
-       * @param {Node} node Node.
-       * @param {Array.<*>} objectStack Object stack.
-       */
-      function(node, objectStack) {
-        var value = valueReader.call(opt_this !== undefined ? opt_this : this,
-            node, objectStack);
-        if (value !== undefined) {
-          var array = objectStack[objectStack.length - 1];
-          array.push(value);
-        }
-      });
+    /**
+     * @param {Node} node Node.
+     * @param {Array.<*>} objectStack Object stack.
+     */
+    function(node, objectStack) {
+      var value = valueReader.call(opt_this !== undefined ? opt_this : this,
+          node, objectStack);
+      if (value !== undefined) {
+        var array = objectStack[objectStack.length - 1];
+        array.push(value);
+      }
+    });
 };
 
 
@@ -36188,17 +37445,17 @@ ol.xml.makeArrayPusher = function(valueReader, opt_this) {
  */
 ol.xml.makeReplacer = function(valueReader, opt_this) {
   return (
-      /**
-       * @param {Node} node Node.
-       * @param {Array.<*>} objectStack Object stack.
-       */
-      function(node, objectStack) {
-        var value = valueReader.call(opt_this !== undefined ? opt_this : this,
-            node, objectStack);
-        if (value !== undefined) {
-          objectStack[objectStack.length - 1] = value;
-        }
-      });
+    /**
+     * @param {Node} node Node.
+     * @param {Array.<*>} objectStack Object stack.
+     */
+    function(node, objectStack) {
+      var value = valueReader.call(opt_this !== undefined ? opt_this : this,
+          node, objectStack);
+      if (value !== undefined) {
+        objectStack[objectStack.length - 1] = value;
+      }
+    });
 };
 
 
@@ -36213,27 +37470,27 @@ ol.xml.makeReplacer = function(valueReader, opt_this) {
  */
 ol.xml.makeObjectPropertyPusher = function(valueReader, opt_property, opt_this) {
   return (
-      /**
-       * @param {Node} node Node.
-       * @param {Array.<*>} objectStack Object stack.
-       */
-      function(node, objectStack) {
-        var value = valueReader.call(opt_this !== undefined ? opt_this : this,
-            node, objectStack);
-        if (value !== undefined) {
-          var object = /** @type {Object} */
+    /**
+     * @param {Node} node Node.
+     * @param {Array.<*>} objectStack Object stack.
+     */
+    function(node, objectStack) {
+      var value = valueReader.call(opt_this !== undefined ? opt_this : this,
+          node, objectStack);
+      if (value !== undefined) {
+        var object = /** @type {Object} */
               (objectStack[objectStack.length - 1]);
-          var property = opt_property !== undefined ?
-              opt_property : node.localName;
-          var array;
-          if (property in object) {
-            array = object[property];
-          } else {
-            array = object[property] = [];
-          }
-          array.push(value);
+        var property = opt_property !== undefined ?
+          opt_property : node.localName;
+        var array;
+        if (property in object) {
+          array = object[property];
+        } else {
+          array = object[property] = [];
         }
-      });
+        array.push(value);
+      }
+    });
 };
 
 
@@ -36247,21 +37504,21 @@ ol.xml.makeObjectPropertyPusher = function(valueReader, opt_property, opt_this) 
  */
 ol.xml.makeObjectPropertySetter = function(valueReader, opt_property, opt_this) {
   return (
-      /**
-       * @param {Node} node Node.
-       * @param {Array.<*>} objectStack Object stack.
-       */
-      function(node, objectStack) {
-        var value = valueReader.call(opt_this !== undefined ? opt_this : this,
-            node, objectStack);
-        if (value !== undefined) {
-          var object = /** @type {Object} */
+    /**
+     * @param {Node} node Node.
+     * @param {Array.<*>} objectStack Object stack.
+     */
+    function(node, objectStack) {
+      var value = valueReader.call(opt_this !== undefined ? opt_this : this,
+          node, objectStack);
+      if (value !== undefined) {
+        var object = /** @type {Object} */
               (objectStack[objectStack.length - 1]);
-          var property = opt_property !== undefined ?
-              opt_property : node.localName;
-          object[property] = value;
-        }
-      });
+        var property = opt_property !== undefined ?
+          opt_property : node.localName;
+        object[property] = value;
+      }
+    });
 };
 
 
@@ -36330,25 +37587,25 @@ ol.xml.makeArraySerializer = function(nodeWriter, opt_this) {
 ol.xml.makeSimpleNodeFactory = function(opt_nodeName, opt_namespaceURI) {
   var fixedNodeName = opt_nodeName;
   return (
-      /**
-       * @param {*} value Value.
-       * @param {Array.<*>} objectStack Object stack.
-       * @param {string=} opt_nodeName Node name.
-       * @return {Node} Node.
-       */
-      function(value, objectStack, opt_nodeName) {
-        var context = objectStack[objectStack.length - 1];
-        var node = context.node;
-        var nodeName = fixedNodeName;
-        if (nodeName === undefined) {
-          nodeName = opt_nodeName;
-        }
-        var namespaceURI = opt_namespaceURI;
-        if (opt_namespaceURI === undefined) {
-          namespaceURI = node.namespaceURI;
-        }
-        return ol.xml.createElementNS(namespaceURI, /** @type {string} */ (nodeName));
+    /**
+     * @param {*} value Value.
+     * @param {Array.<*>} objectStack Object stack.
+     * @param {string=} opt_nodeName Node name.
+     * @return {Node} Node.
+     */
+    function(value, objectStack, opt_nodeName) {
+      var context = objectStack[objectStack.length - 1];
+      var node = context.node;
+      var nodeName = fixedNodeName;
+      if (nodeName === undefined) {
+        nodeName = opt_nodeName;
       }
+      var namespaceURI = opt_namespaceURI;
+      if (opt_namespaceURI === undefined) {
+        namespaceURI = node.namespaceURI;
+      }
+      return ol.xml.createElementNS(namespaceURI, /** @type {string} */ (nodeName));
+    }
   );
 };
 
@@ -36530,7 +37787,7 @@ goog.require('ol.xml');
 /**
  * @param {string|ol.FeatureUrlFunction} url Feature URL service.
  * @param {ol.format.Feature} format Feature format.
- * @param {function(this:ol.VectorTile, Array.<ol.Feature>, ol.proj.Projection)|function(this:ol.source.Vector, Array.<ol.Feature>)} success
+ * @param {function(this:ol.VectorTile, Array.<ol.Feature>, ol.proj.Projection, ol.Extent)|function(this:ol.source.Vector, Array.<ol.Feature>)} success
  *     Function called with the loaded features and optionally with the data
  *     projection. Called with the vector tile or source as `this`.
  * @param {function(this:ol.VectorTile)|function(this:ol.source.Vector)} failure
@@ -36540,60 +37797,60 @@ goog.require('ol.xml');
  */
 ol.featureloader.loadFeaturesXhr = function(url, format, success, failure) {
   return (
+    /**
+     * @param {ol.Extent} extent Extent.
+     * @param {number} resolution Resolution.
+     * @param {ol.proj.Projection} projection Projection.
+     * @this {ol.source.Vector|ol.VectorTile}
+     */
+    function(extent, resolution, projection) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET',
+          typeof url === 'function' ? url(extent, resolution, projection) : url,
+          true);
+      if (format.getType() == ol.format.FormatType.ARRAY_BUFFER) {
+        xhr.responseType = 'arraybuffer';
+      }
       /**
-       * @param {ol.Extent} extent Extent.
-       * @param {number} resolution Resolution.
-       * @param {ol.proj.Projection} projection Projection.
-       * @this {ol.source.Vector|ol.VectorTile}
+       * @param {Event} event Event.
+       * @private
        */
-      function(extent, resolution, projection) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET',
-            typeof url === 'function' ? url(extent, resolution, projection) : url,
-            true);
-        if (format.getType() == ol.format.FormatType.ARRAY_BUFFER) {
-          xhr.responseType = 'arraybuffer';
-        }
-        /**
-         * @param {Event} event Event.
-         * @private
-         */
-        xhr.onload = function(event) {
-          // status will be 0 for file:// urls
-          if (!xhr.status || xhr.status >= 200 && xhr.status < 300) {
-            var type = format.getType();
-            /** @type {Document|Node|Object|string|undefined} */
-            var source;
-            if (type == ol.format.FormatType.JSON ||
+      xhr.onload = function(event) {
+        // status will be 0 for file:// urls
+        if (!xhr.status || xhr.status >= 200 && xhr.status < 300) {
+          var type = format.getType();
+          /** @type {Document|Node|Object|string|undefined} */
+          var source;
+          if (type == ol.format.FormatType.JSON ||
                 type == ol.format.FormatType.TEXT) {
-              source = xhr.responseText;
-            } else if (type == ol.format.FormatType.XML) {
-              source = xhr.responseXML;
-              if (!source) {
-                source = ol.xml.parse(xhr.responseText);
-              }
-            } else if (type == ol.format.FormatType.ARRAY_BUFFER) {
-              source = /** @type {ArrayBuffer} */ (xhr.response);
+            source = xhr.responseText;
+          } else if (type == ol.format.FormatType.XML) {
+            source = xhr.responseXML;
+            if (!source) {
+              source = ol.xml.parse(xhr.responseText);
             }
-            if (source) {
-              success.call(this, format.readFeatures(source,
-                  {featureProjection: projection}),
-                  format.readProjection(source));
-            } else {
-              failure.call(this);
-            }
+          } else if (type == ol.format.FormatType.ARRAY_BUFFER) {
+            source = /** @type {ArrayBuffer} */ (xhr.response);
+          }
+          if (source) {
+            success.call(this, format.readFeatures(source,
+                {featureProjection: projection}),
+            format.readProjection(source), format.getLastExtent());
           } else {
             failure.call(this);
           }
-        }.bind(this);
-        /**
-         * @private
-         */
-        xhr.onerror = function() {
+        } else {
           failure.call(this);
-        }.bind(this);
-        xhr.send();
-      });
+        }
+      }.bind(this);
+      /**
+       * @private
+       */
+      xhr.onerror = function() {
+        failure.call(this);
+      }.bind(this);
+      xhr.send();
+    });
 };
 
 
@@ -36667,7 +37924,7 @@ ol.format.Feature.prototype.getReadOptions = function(source, opt_options) {
   if (opt_options) {
     options = {
       dataProjection: opt_options.dataProjection ?
-          opt_options.dataProjection : this.readProjection(source),
+        opt_options.dataProjection : this.readProjection(source),
       featureProjection: opt_options.featureProjection
     };
   }
@@ -36689,6 +37946,15 @@ ol.format.Feature.prototype.adaptOptions = function(options) {
     dataProjection: this.defaultDataProjection,
     featureProjection: this.defaultFeatureProjection
   }, options);
+};
+
+
+/**
+ * Get the extent from the source of the last {@link readFeatures} call.
+ * @return {ol.Extent} Tile extent.
+ */
+ol.format.Feature.prototype.getLastExtent = function() {
+  return null;
 };
 
 
@@ -36786,9 +38052,9 @@ ol.format.Feature.prototype.writeGeometry = function(geometry, opt_options) {};
 ol.format.Feature.transformWithOptions = function(
     geometry, write, opt_options) {
   var featureProjection = opt_options ?
-      ol.proj.get(opt_options.featureProjection) : null;
+    ol.proj.get(opt_options.featureProjection) : null;
   var dataProjection = opt_options ?
-      ol.proj.get(opt_options.dataProjection) : null;
+    ol.proj.get(opt_options.dataProjection) : null;
   /**
    * @type {ol.geom.Geometry|ol.Extent}
    */
@@ -37912,7 +39178,7 @@ ol.geom.MultiPoint.prototype.getCoordinates = function() {
  */
 ol.geom.MultiPoint.prototype.getPoint = function(index) {
   var n = !this.flatCoordinates ?
-      0 : this.flatCoordinates.length / this.stride;
+    0 : this.flatCoordinates.length / this.stride;
   if (index < 0 || n <= index) {
     return null;
   }
@@ -38406,7 +39672,7 @@ ol.geom.MultiPolygon.prototype.setCoordinates = function(coordinates, opt_layout
     } else {
       var lastEnds = endss[endss.length - 1];
       this.flatCoordinates.length = lastEnds.length === 0 ?
-          0 : lastEnds[lastEnds.length - 1];
+        0 : lastEnds[lastEnds.length - 1];
     }
     this.changed();
   }
@@ -38535,8 +39801,8 @@ ol.format.EsriJSON.readGeometry_ = function(object, opt_options) {
   }
   var geometryReader = ol.format.EsriJSON.GEOMETRY_READERS_[type];
   return /** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(
-          geometryReader(object), false, opt_options));
+    ol.format.Feature.transformWithOptions(
+        geometryReader(object), false, opt_options));
 };
 
 
@@ -38573,9 +39839,11 @@ ol.format.EsriJSON.convertRings_ = function(rings, layout) {
     // loop over all outer rings and see if they contain our hole.
     for (i = outerRings.length - 1; i >= 0; i--) {
       var outerRing = outerRings[i][0];
-      if (ol.extent.containsExtent(new ol.geom.LinearRing(
-          outerRing).getExtent(),
-          new ol.geom.LinearRing(hole).getExtent())) {
+      var containsHole = ol.extent.containsExtent(
+          new ol.geom.LinearRing(outerRing).getExtent(),
+          new ol.geom.LinearRing(hole).getExtent()
+      );
+      if (containsHole) {
         // the hole is contained push it into our polygon
         outerRings[i].push(hole);
         matched = true;
@@ -38740,9 +40008,9 @@ ol.format.EsriJSON.getHasZM_ = function(geometry) {
   var layout = geometry.getLayout();
   return {
     hasZ: (layout === ol.geom.GeometryLayout.XYZ ||
-        layout === ol.geom.GeometryLayout.XYZM),
+      layout === ol.geom.GeometryLayout.XYZM),
     hasM: (layout === ol.geom.GeometryLayout.XYM ||
-        layout === ol.geom.GeometryLayout.XYZM)
+      layout === ol.geom.GeometryLayout.XYZM)
   };
 };
 
@@ -38754,7 +40022,7 @@ ol.format.EsriJSON.getHasZM_ = function(geometry) {
  * @return {EsriJSONPolyline} EsriJSON geometry.
  */
 ol.format.EsriJSON.writeLineStringGeometry_ = function(geometry, opt_options) {
-  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.LineString} */ (geometry));
+  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.LineString} */(geometry));
   return /** @type {EsriJSONPolyline} */ ({
     hasZ: hasZM.hasZ,
     hasM: hasZM.hasM,
@@ -38773,7 +40041,7 @@ ol.format.EsriJSON.writeLineStringGeometry_ = function(geometry, opt_options) {
  */
 ol.format.EsriJSON.writePolygonGeometry_ = function(geometry, opt_options) {
   // Esri geometries use the left-hand rule
-  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.Polygon} */ (geometry));
+  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.Polygon} */(geometry));
   return /** @type {EsriJSONPolygon} */ ({
     hasZ: hasZM.hasZ,
     hasM: hasZM.hasM,
@@ -38789,7 +40057,7 @@ ol.format.EsriJSON.writePolygonGeometry_ = function(geometry, opt_options) {
  * @return {EsriJSONPolyline} EsriJSON geometry.
  */
 ol.format.EsriJSON.writeMultiLineStringGeometry_ = function(geometry, opt_options) {
-  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.MultiLineString} */ (geometry));
+  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.MultiLineString} */(geometry));
   return /** @type {EsriJSONPolyline} */ ({
     hasZ: hasZM.hasZ,
     hasM: hasZM.hasM,
@@ -38805,7 +40073,7 @@ ol.format.EsriJSON.writeMultiLineStringGeometry_ = function(geometry, opt_option
  * @return {EsriJSONMultipoint} EsriJSON geometry.
  */
 ol.format.EsriJSON.writeMultiPointGeometry_ = function(geometry, opt_options) {
-  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.MultiPoint} */ (geometry));
+  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.MultiPoint} */(geometry));
   return /** @type {EsriJSONMultipoint} */ ({
     hasZ: hasZM.hasZ,
     hasM: hasZM.hasM,
@@ -38822,7 +40090,7 @@ ol.format.EsriJSON.writeMultiPointGeometry_ = function(geometry, opt_options) {
  */
 ol.format.EsriJSON.writeMultiPolygonGeometry_ = function(geometry,
     opt_options) {
-  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.MultiPolygon} */ (geometry));
+  var hasZM = ol.format.EsriJSON.getHasZM_(/** @type {ol.geom.MultiPolygon} */(geometry));
   var coordinates = /** @type {ol.geom.MultiPolygon} */ (geometry).getCoordinates(false);
   var output = [];
   for (var i = 0; i < coordinates.length; i++) {
@@ -38845,17 +40113,17 @@ ol.format.EsriJSON.writeMultiPolygonGeometry_ = function(geometry,
  */
 ol.format.EsriJSON.GEOMETRY_READERS_ = {};
 ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.POINT] =
-    ol.format.EsriJSON.readPointGeometry_;
+  ol.format.EsriJSON.readPointGeometry_;
 ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.LINE_STRING] =
-    ol.format.EsriJSON.readLineStringGeometry_;
+  ol.format.EsriJSON.readLineStringGeometry_;
 ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.POLYGON] =
-    ol.format.EsriJSON.readPolygonGeometry_;
+  ol.format.EsriJSON.readPolygonGeometry_;
 ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.MULTI_POINT] =
-    ol.format.EsriJSON.readMultiPointGeometry_;
+  ol.format.EsriJSON.readMultiPointGeometry_;
 ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.MULTI_LINE_STRING] =
-    ol.format.EsriJSON.readMultiLineStringGeometry_;
+  ol.format.EsriJSON.readMultiLineStringGeometry_;
 ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.MULTI_POLYGON] =
-    ol.format.EsriJSON.readMultiPolygonGeometry_;
+  ol.format.EsriJSON.readMultiPolygonGeometry_;
 
 
 /**
@@ -38865,17 +40133,17 @@ ol.format.EsriJSON.GEOMETRY_READERS_[ol.geom.GeometryType.MULTI_POLYGON] =
  */
 ol.format.EsriJSON.GEOMETRY_WRITERS_ = {};
 ol.format.EsriJSON.GEOMETRY_WRITERS_[ol.geom.GeometryType.POINT] =
-    ol.format.EsriJSON.writePointGeometry_;
+  ol.format.EsriJSON.writePointGeometry_;
 ol.format.EsriJSON.GEOMETRY_WRITERS_[ol.geom.GeometryType.LINE_STRING] =
-    ol.format.EsriJSON.writeLineStringGeometry_;
+  ol.format.EsriJSON.writeLineStringGeometry_;
 ol.format.EsriJSON.GEOMETRY_WRITERS_[ol.geom.GeometryType.POLYGON] =
-    ol.format.EsriJSON.writePolygonGeometry_;
+  ol.format.EsriJSON.writePolygonGeometry_;
 ol.format.EsriJSON.GEOMETRY_WRITERS_[ol.geom.GeometryType.MULTI_POINT] =
-    ol.format.EsriJSON.writeMultiPointGeometry_;
+  ol.format.EsriJSON.writeMultiPointGeometry_;
 ol.format.EsriJSON.GEOMETRY_WRITERS_[ol.geom.GeometryType.MULTI_LINE_STRING] =
-    ol.format.EsriJSON.writeMultiLineStringGeometry_;
+  ol.format.EsriJSON.writeMultiLineStringGeometry_;
 ol.format.EsriJSON.GEOMETRY_WRITERS_[ol.geom.GeometryType.MULTI_POLYGON] =
-    ol.format.EsriJSON.writeMultiPolygonGeometry_;
+  ol.format.EsriJSON.writeMultiPolygonGeometry_;
 
 
 /**
@@ -38918,9 +40186,9 @@ ol.format.EsriJSON.prototype.readFeatureFromObject = function(
   }
   feature.setGeometry(geometry);
   if (opt_options && opt_options.idField &&
-      esriJSONFeature.attributes[opt_options.idField]) {
+    esriJSONFeature.attributes[opt_options.idField]) {
     feature.setId(/** @type {number} */(
-        esriJSONFeature.attributes[opt_options.idField]));
+      esriJSONFeature.attributes[opt_options.idField]));
   }
   if (esriJSONFeature.attributes) {
     feature.setProperties(esriJSONFeature.attributes);
@@ -38938,7 +40206,7 @@ ol.format.EsriJSON.prototype.readFeaturesFromObject = function(
   var options = opt_options ? opt_options : {};
   if (esriJSONObject.features) {
     var esriJSONFeatureCollection = /** @type {EsriJSONFeatureCollection} */
-        (object);
+      (object);
     /** @type {Array.<ol.Feature>} */
     var features = [];
     var esriJSONFeatures = esriJSONFeatureCollection.features;
@@ -38973,7 +40241,7 @@ ol.format.EsriJSON.prototype.readGeometry;
 ol.format.EsriJSON.prototype.readGeometryFromObject = function(
     object, opt_options) {
   return ol.format.EsriJSON.readGeometry_(
-      /** @type {EsriJSONGeometry} */ (object), opt_options);
+      /** @type {EsriJSONGeometry} */(object), opt_options);
 };
 
 
@@ -39010,9 +40278,9 @@ ol.format.EsriJSON.prototype.readProjectionFromObject = function(object) {
  */
 ol.format.EsriJSON.writeGeometry_ = function(geometry, opt_options) {
   var geometryWriter = ol.format.EsriJSON.GEOMETRY_WRITERS_[geometry.getType()];
-  return geometryWriter(/** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(geometry, true, opt_options)),
-      opt_options);
+  return geometryWriter(/** @type {ol.geom.Geometry} */(
+    ol.format.Feature.transformWithOptions(geometry, true, opt_options)),
+  opt_options);
 };
 
 
@@ -39072,7 +40340,13 @@ ol.format.EsriJSON.prototype.writeFeatureObject = function(
   var geometry = feature.getGeometry();
   if (geometry) {
     object['geometry'] =
-        ol.format.EsriJSON.writeGeometry_(geometry, opt_options);
+      ol.format.EsriJSON.writeGeometry_(geometry, opt_options);
+    if (opt_options && opt_options.featureProjection) {
+      object['geometry']['spatialReference'] = /** @type {EsriJSONCRS} */({
+        wkid: ol.proj.get(
+            opt_options.featureProjection).getCode().split(':').pop()
+      });
+    }
   }
   var properties = feature.getProperties();
   delete properties[feature.getGeometryName()];
@@ -39080,12 +40354,6 @@ ol.format.EsriJSON.prototype.writeFeatureObject = function(
     object['attributes'] = properties;
   } else {
     object['attributes'] = {};
-  }
-  if (opt_options && opt_options.featureProjection) {
-    object['spatialReference'] = /** @type {EsriJSONCRS} */({
-      wkid: ol.proj.get(
-          opt_options.featureProjection).getCode().split(':').pop()
-    });
   }
   return object;
 };
@@ -39964,7 +41232,7 @@ ol.format.filter.between = function(propertyName, lowerBoundary, upperBoundary) 
 ol.format.filter.like = function(propertyName, pattern,
     opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase) {
   return new ol.format.filter.IsLike(propertyName, pattern,
-    opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase);
+      opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase);
 };
 
 
@@ -40348,7 +41616,7 @@ ol.format.GeoJSON = function(opt_options) {
    */
   this.defaultDataProjection = ol.proj.get(
       options.defaultDataProjection ?
-          options.defaultDataProjection : 'EPSG:4326');
+        options.defaultDataProjection : 'EPSG:4326');
 
 
   if (options.featureProjection) {
@@ -40378,8 +41646,8 @@ ol.format.GeoJSON.readGeometry_ = function(object, opt_options) {
   }
   var geometryReader = ol.format.GeoJSON.GEOMETRY_READERS_[object.type];
   return /** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(
-          geometryReader(object), false, opt_options));
+    ol.format.Feature.transformWithOptions(
+        geometryReader(object), false, opt_options));
 };
 
 
@@ -40472,8 +41740,8 @@ ol.format.GeoJSON.readPolygonGeometry_ = function(object) {
 ol.format.GeoJSON.writeGeometry_ = function(geometry, opt_options) {
   var geometryWriter = ol.format.GeoJSON.GEOMETRY_WRITERS_[geometry.getType()];
   return geometryWriter(/** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(geometry, true, opt_options)),
-      opt_options);
+    ol.format.Feature.transformWithOptions(geometry, true, opt_options)),
+  opt_options);
 };
 
 
@@ -41329,12 +42597,12 @@ ol.format.GMLBase.prototype.readFeaturesInternal = function(node, objectStack) {
       var parsers = {};
       for (i = 0, ii = featureTypes.length; i < ii; ++i) {
         var featurePrefix = featureTypes[i].indexOf(':') === -1 ?
-            defaultPrefix : featureTypes[i].split(':')[0];
+          defaultPrefix : featureTypes[i].split(':')[0];
         if (featurePrefix === p) {
           parsers[featureTypes[i].split(':').pop()] =
               (localName == 'featureMembers') ?
-              ol.xml.makeArrayPusher(this.readFeatureElement, this) :
-              ol.xml.makeReplacer(this.readFeatureElement, this);
+                ol.xml.makeArrayPusher(this.readFeatureElement, this) :
+                ol.xml.makeReplacer(this.readFeatureElement, this);
         }
       }
       parsersNS[featureNS[p]] = parsers;
@@ -41365,7 +42633,7 @@ ol.format.GMLBase.prototype.readGeometryElement = function(node, objectStack) {
       this.GEOMETRY_PARSERS_, node, objectStack, this);
   if (geometry) {
     return /** @type {ol.geom.Geometry} */ (
-        ol.format.Feature.transformWithOptions(geometry, false, context));
+      ol.format.Feature.transformWithOptions(geometry, false, context));
   } else {
     return undefined;
   }
@@ -41752,7 +43020,7 @@ ol.format.GMLBase.prototype.readFeaturesFromNode = function(node, opt_options) {
  */
 ol.format.GMLBase.prototype.readProjectionFromNode = function(node) {
   return ol.proj.get(this.srsName ? this.srsName :
-      node.firstElementChild.getAttribute('srsName'));
+    node.firstElementChild.getAttribute('srsName'));
 };
 
 goog.provide('ol.format.XSD');
@@ -41977,20 +43245,27 @@ ol.format.GML3 = function(opt_options) {
    * @type {boolean}
    */
   this.multiCurve_ = options.multiCurve !== undefined ?
-      options.multiCurve : true;
+    options.multiCurve : true;
 
   /**
    * @private
    * @type {boolean}
    */
   this.multiSurface_ = options.multiSurface !== undefined ?
-      options.multiSurface : true;
+    options.multiSurface : true;
 
   /**
    * @inheritDoc
    */
   this.schemaLocation = options.schemaLocation ?
-      options.schemaLocation : ol.format.GML3.schemaLocation_;
+    options.schemaLocation : ol.format.GML3.schemaLocation_;
+
+  /**
+   * @private
+   * @type {boolean}
+   */
+  this.hasZ = options.hasZ !== undefined ?
+    options.hasZ : false;
 
 };
 ol.inherits(ol.format.GML3, ol.format.GMLBase);
@@ -42526,8 +43801,8 @@ ol.format.GML3.prototype.getCoords_ = function(point, opt_srsName, opt_hasZ) {
     axisOrientation = ol.proj.get(opt_srsName).getAxisOrientation();
   }
   var coords = ((axisOrientation.substr(0, 2) === 'en') ?
-      point[0] + ' ' + point[1] :
-      point[1] + ' ' + point[0]);
+    point[0] + ' ' + point[1] :
+    point[1] + ' ' + point[0]);
   if (opt_hasZ) {
     // For newly created points, Z can be undefined.
     var z = point[2] || 0;
@@ -43247,7 +44522,7 @@ ol.format.GML2 = function(opt_options) {
    * @inheritDoc
    */
   this.schemaLocation = options.schemaLocation ?
-      options.schemaLocation : ol.format.GML2.schemaLocation_;
+    options.schemaLocation : ol.format.GML2.schemaLocation_;
 
 };
 ol.inherits(ol.format.GML2, ol.format.GMLBase);
@@ -43681,8 +44956,8 @@ ol.format.GML2.prototype.getCoords_ = function(point, opt_srsName, opt_hasZ) {
     axisOrientation = ol.proj.get(opt_srsName).getAxisOrientation();
   }
   var coords = ((axisOrientation.substr(0, 2) === 'en') ?
-      point[0] + ',' + point[1] :
-      point[1] + ',' + point[0]);
+    point[0] + ',' + point[1] :
+    point[1] + ',' + point[0]);
   if (opt_hasZ) {
     // For newly created points, Z can be undefined.
     var z = point[2] || 0;
@@ -44597,8 +45872,8 @@ ol.format.GPX.writeWptType_ = function(node, coordinate, objectStack) {
       // pass
   }
   var orderedKeys = (node.nodeName == 'rtept') ?
-      ol.format.GPX.RTEPT_TYPE_SEQUENCE_[namespaceURI] :
-      ol.format.GPX.WPT_TYPE_SEQUENCE_[namespaceURI];
+    ol.format.GPX.RTEPT_TYPE_SEQUENCE_[namespaceURI] :
+    ol.format.GPX.WPT_TYPE_SEQUENCE_[namespaceURI];
   var values = ol.xml.makeSequence(properties, orderedKeys);
   ol.xml.pushSerializeAndPop(/** @type {ol.XmlNodeStackItem} */
       ({node: node, 'properties': properties}),
@@ -44620,7 +45895,7 @@ ol.format.GPX.writeRte_ = function(node, feature, objectStack) {
   var geometry = feature.getGeometry();
   if (geometry) {
     geometry = /** @type {ol.geom.LineString} */
-        (ol.format.Feature.transformWithOptions(geometry, true, options));
+      (ol.format.Feature.transformWithOptions(geometry, true, options));
     context['geometryLayout'] = geometry.getLayout();
     properties['rtept'] = geometry.getCoordinates();
   }
@@ -44647,7 +45922,7 @@ ol.format.GPX.writeTrk_ = function(node, feature, objectStack) {
   var geometry = feature.getGeometry();
   if (geometry) {
     geometry = /** @type {ol.geom.MultiLineString} */
-        (ol.format.Feature.transformWithOptions(geometry, true, options));
+      (ol.format.Feature.transformWithOptions(geometry, true, options));
     properties['trkseg'] = geometry.getLineStrings();
   }
   var parentNode = objectStack[objectStack.length - 1].node;
@@ -44688,7 +45963,7 @@ ol.format.GPX.writeWpt_ = function(node, feature, objectStack) {
   var geometry = feature.getGeometry();
   if (geometry) {
     geometry = /** @type {ol.geom.Point} */
-        (ol.format.Feature.transformWithOptions(geometry, true, options));
+      (ol.format.Feature.transformWithOptions(geometry, true, options));
     context['geometryLayout'] = geometry.getLayout();
     ol.format.GPX.writeWptType_(node, geometry.getCoordinates(), objectStack);
   }
@@ -45162,7 +46437,7 @@ ol.format.IGC = function(opt_options) {
    * @type {ol.format.IGCZ}
    */
   this.altitudeMode_ = options.altitudeMode ?
-      options.altitudeMode : ol.format.IGCZ.NONE;
+    options.altitudeMode : ol.format.IGCZ.NONE;
 
 };
 ol.inherits(ol.format.IGC, ol.format.TextFeature);
@@ -45285,7 +46560,7 @@ ol.format.IGC.prototype.readFeatureFromText = function(text, opt_options) {
   }
   var lineString = new ol.geom.LineString(null);
   var layout = altitudeMode == ol.format.IGCZ.NONE ?
-      ol.geom.GeometryLayout.XYM : ol.geom.GeometryLayout.XYZM;
+    ol.geom.GeometryLayout.XYM : ol.geom.GeometryLayout.XYZM;
   lineString.setFlatCoordinates(layout, flatCoordinates);
   var feature = new ol.Feature(ol.format.Feature.transformWithOptions(
       lineString, false, opt_options));
@@ -45391,7 +46666,7 @@ goog.require('ol.style');
  * @extends {ol.events.EventTarget}
  */
 ol.style.IconImage = function(image, src, size, crossOrigin, imageState,
-                               color) {
+    color) {
 
   ol.events.EventTarget.call(this);
 
@@ -45416,8 +46691,8 @@ ol.style.IconImage = function(image, src, size, crossOrigin, imageState,
    * @type {HTMLCanvasElement}
    */
   this.canvas_ = color ?
-      /** @type {HTMLCanvasElement} */ (document.createElement('CANVAS')) :
-      null;
+    /** @type {HTMLCanvasElement} */ (document.createElement('CANVAS')) :
+    null;
 
   /**
    * @private
@@ -45472,7 +46747,7 @@ ol.inherits(ol.style.IconImage, ol.events.EventTarget);
  * @return {ol.style.IconImage} Icon image.
  */
 ol.style.IconImage.get = function(image, src, size, crossOrigin, imageState,
-                                   color) {
+    color) {
   var iconImageCache = ol.style.iconImageCache;
   var iconImage = iconImageCache.get(src, crossOrigin, color);
   if (!iconImage) {
@@ -45703,21 +46978,21 @@ ol.style.Icon = function(opt_options) {
    * @type {ol.style.IconOrigin}
    */
   this.anchorOrigin_ = options.anchorOrigin !== undefined ?
-      options.anchorOrigin : ol.style.IconOrigin.TOP_LEFT;
+    options.anchorOrigin : ol.style.IconOrigin.TOP_LEFT;
 
   /**
    * @private
    * @type {ol.style.IconAnchorUnits}
    */
   this.anchorXUnits_ = options.anchorXUnits !== undefined ?
-      options.anchorXUnits : ol.style.IconAnchorUnits.FRACTION;
+    options.anchorXUnits : ol.style.IconAnchorUnits.FRACTION;
 
   /**
    * @private
    * @type {ol.style.IconAnchorUnits}
    */
   this.anchorYUnits_ = options.anchorYUnits !== undefined ?
-      options.anchorYUnits : ol.style.IconAnchorUnits.FRACTION;
+    options.anchorYUnits : ol.style.IconAnchorUnits.FRACTION;
 
   /**
    * @private
@@ -45756,14 +47031,14 @@ ol.style.Icon = function(opt_options) {
    * @type {ol.ImageState}
    */
   var imageState = options.src !== undefined ?
-      ol.ImageState.IDLE : ol.ImageState.LOADED;
+    ol.ImageState.IDLE : ol.ImageState.LOADED;
 
   /**
    * @private
    * @type {ol.Color}
    */
   this.color_ = options.color !== undefined ? ol.color.asArray(options.color) :
-      null;
+    null;
 
   /**
    * @private
@@ -45783,7 +47058,7 @@ ol.style.Icon = function(opt_options) {
    * @type {ol.style.IconOrigin}
    */
   this.offsetOrigin_ = options.offsetOrigin !== undefined ?
-      options.offsetOrigin : ol.style.IconOrigin.TOP_LEFT;
+    options.offsetOrigin : ol.style.IconOrigin.TOP_LEFT;
 
   /**
    * @private
@@ -45806,7 +47081,7 @@ ol.style.Icon = function(opt_options) {
    * @type {boolean}
    */
   var rotateWithView = options.rotateWithView !== undefined ?
-      options.rotateWithView : false;
+    options.rotateWithView : false;
 
   /**
    * @type {number}
@@ -45822,7 +47097,7 @@ ol.style.Icon = function(opt_options) {
    * @type {boolean}
    */
   var snapToPixel = options.snapToPixel !== undefined ?
-      options.snapToPixel : true;
+    options.snapToPixel : true;
 
   ol.style.Image.call(this, {
     opacity: opacity,
@@ -46121,7 +47396,7 @@ ol.style.Text = function(opt_options) {
    * @type {ol.style.Fill}
    */
   this.fill_ = options.fill !== undefined ? options.fill :
-      new ol.style.Fill({color: ol.style.Text.DEFAULT_FILL_COLOR_});
+    new ol.style.Fill({color: ol.style.Text.DEFAULT_FILL_COLOR_});
 
   /**
    * @private
@@ -46462,21 +47737,21 @@ ol.format.KML = function(opt_options) {
    * @type {Array.<ol.style.Style>}
    */
   this.defaultStyle_ = options.defaultStyle ?
-      options.defaultStyle : ol.format.KML.DEFAULT_STYLE_ARRAY_;
+    options.defaultStyle : ol.format.KML.DEFAULT_STYLE_ARRAY_;
 
   /**
    * @private
    * @type {boolean}
    */
   this.extractStyles_ = options.extractStyles !== undefined ?
-      options.extractStyles : true;
+    options.extractStyles : true;
 
   /**
    * @private
    * @type {boolean}
    */
   this.writeStyles_ = options.writeStyles !== undefined ?
-      options.writeStyles : true;
+    options.writeStyles : true;
 
   /**
    * @private
@@ -46489,7 +47764,7 @@ ol.format.KML = function(opt_options) {
    * @type {boolean}
    */
   this.showPointNames_ = options.showPointNames !== undefined ?
-      options.showPointNames : true;
+    options.showPointNames : true;
 
 };
 ol.inherits(ol.format.KML, ol.format.XMLFeature);
@@ -46749,53 +48024,53 @@ ol.format.KML.createFeatureStyleFunction_ = function(style, styleUrl,
     defaultStyle, sharedStyles, showPointNames) {
 
   return (
-      /**
+  /**
        * @param {number} resolution Resolution.
        * @return {Array.<ol.style.Style>} Style.
        * @this {ol.Feature}
        */
-      function(resolution) {
-        var drawName = showPointNames;
-        /** @type {ol.style.Style|undefined} */
-        var nameStyle;
-        var name = '';
-        if (drawName) {
-          if (this.getGeometry()) {
-            drawName = (this.getGeometry().getType() ===
+    function(resolution) {
+      var drawName = showPointNames;
+      /** @type {ol.style.Style|undefined} */
+      var nameStyle;
+      var name = '';
+      if (drawName) {
+        if (this.getGeometry()) {
+          drawName = (this.getGeometry().getType() ===
                         ol.geom.GeometryType.POINT);
-          }
         }
+      }
 
-        if (drawName) {
-          name = /** @type {string} */ (this.get('name'));
-          drawName = drawName && name;
-        }
+      if (drawName) {
+        name = /** @type {string} */ (this.get('name'));
+        drawName = drawName && name;
+      }
 
-        if (style) {
-          if (drawName) {
-            nameStyle = ol.format.KML.createNameStyleFunction_(style[0],
-                name);
-            return style.concat(nameStyle);
-          }
-          return style;
-        }
-        if (styleUrl) {
-          var foundStyle = ol.format.KML.findStyle_(styleUrl, defaultStyle,
-              sharedStyles);
-          if (drawName) {
-            nameStyle = ol.format.KML.createNameStyleFunction_(foundStyle[0],
-                name);
-            return foundStyle.concat(nameStyle);
-          }
-          return foundStyle;
-        }
+      if (style) {
         if (drawName) {
-          nameStyle = ol.format.KML.createNameStyleFunction_(defaultStyle[0],
+          nameStyle = ol.format.KML.createNameStyleFunction_(style[0],
               name);
-          return defaultStyle.concat(nameStyle);
+          return style.concat(nameStyle);
         }
-        return defaultStyle;
-      });
+        return style;
+      }
+      if (styleUrl) {
+        var foundStyle = ol.format.KML.findStyle_(styleUrl, defaultStyle,
+            sharedStyles);
+        if (drawName) {
+          nameStyle = ol.format.KML.createNameStyleFunction_(foundStyle[0],
+              name);
+          return foundStyle.concat(nameStyle);
+        }
+        return foundStyle;
+      }
+      if (drawName) {
+        nameStyle = ol.format.KML.createNameStyleFunction_(defaultStyle[0],
+            name);
+        return defaultStyle.concat(nameStyle);
+      }
+      return defaultStyle;
+    });
 };
 
 
@@ -46945,7 +48220,7 @@ ol.format.KML.readStyleMapValue_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(undefined,
       ol.format.KML.STYLE_MAP_PARSERS_, node, objectStack);
 };
- /**
+/**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
  * @private
@@ -47203,7 +48478,7 @@ ol.format.KML.readGxTrack_ = function(node, objectStack) {
   var whens = gxTrackObject.whens;
   var i, ii;
   for (i = 0, ii = Math.min(flatCoordinates.length, whens.length); i < ii;
-       ++i) {
+    ++i) {
     flatCoordinates[4 * i + 3] = whens[i];
   }
   var lineString = new ol.geom.LineString(null);
@@ -47417,23 +48692,23 @@ ol.format.KML.readStyle_ = function(node, objectStack) {
   }
   var fillStyle = /** @type {ol.style.Fill} */
       ('fillStyle' in styleObject ?
-          styleObject['fillStyle'] : ol.format.KML.DEFAULT_FILL_STYLE_);
+        styleObject['fillStyle'] : ol.format.KML.DEFAULT_FILL_STYLE_);
   var fill = /** @type {boolean|undefined} */ (styleObject['fill']);
   if (fill !== undefined && !fill) {
     fillStyle = null;
   }
   var imageStyle = /** @type {ol.style.Image} */
       ('imageStyle' in styleObject ?
-          styleObject['imageStyle'] : ol.format.KML.DEFAULT_IMAGE_STYLE_);
+        styleObject['imageStyle'] : ol.format.KML.DEFAULT_IMAGE_STYLE_);
   if (imageStyle == ol.format.KML.DEFAULT_NO_IMAGE_STYLE_) {
     imageStyle = undefined;
   }
   var textStyle = /** @type {ol.style.Text} */
       ('textStyle' in styleObject ?
-          styleObject['textStyle'] : ol.format.KML.DEFAULT_TEXT_STYLE_);
+        styleObject['textStyle'] : ol.format.KML.DEFAULT_TEXT_STYLE_);
   var strokeStyle = /** @type {ol.style.Stroke} */
       ('strokeStyle' in styleObject ?
-          styleObject['strokeStyle'] : ol.format.KML.DEFAULT_STROKE_STYLE_);
+        styleObject['strokeStyle'] : ol.format.KML.DEFAULT_STROKE_STYLE_);
   var outline = /** @type {boolean|undefined} */
       (styleObject['outline']);
   if (outline !== undefined && !outline) {
@@ -47461,18 +48736,24 @@ ol.format.KML.setCommonGeometryProperties_ = function(multiGeometry,
     geometries) {
   var ii = geometries.length;
   var extrudes = new Array(geometries.length);
+  var tessellates = new Array(geometries.length);
   var altitudeModes = new Array(geometries.length);
-  var geometry, i, hasExtrude, hasAltitudeMode;
-  hasExtrude = hasAltitudeMode = false;
+  var geometry, i, hasExtrude, hasTessellate, hasAltitudeMode;
+  hasExtrude = hasTessellate = hasAltitudeMode = false;
   for (i = 0; i < ii; ++i) {
     geometry = geometries[i];
     extrudes[i] = geometry.get('extrude');
+    tessellates[i] = geometry.get('tessellate');
     altitudeModes[i] = geometry.get('altitudeMode');
     hasExtrude = hasExtrude || extrudes[i] !== undefined;
+    hasTessellate = hasTessellate || tessellates[i] !== undefined;
     hasAltitudeMode = hasAltitudeMode || altitudeModes[i];
   }
   if (hasExtrude) {
     multiGeometry.set('extrude', extrudes);
+  }
+  if (hasTessellate) {
+    multiGeometry.set('tessellate', tessellates);
   }
   if (hasAltitudeMode) {
     multiGeometry.set('altitudeMode', altitudeModes);
@@ -47488,13 +48769,13 @@ ol.format.KML.setCommonGeometryProperties_ = function(multiGeometry,
 ol.format.KML.DataParser_ = function(node, objectStack) {
   var name = node.getAttribute('name');
   ol.xml.parseNode(ol.format.KML.DATA_PARSERS_, node, objectStack);
-  var featureObject =
-    /** @type {Object} */ (objectStack[objectStack.length - 1]);
+  var featureObject = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   if (name !== null) {
     featureObject[name] = featureObject.value;
   } else if (featureObject.displayName !== null) {
     featureObject[featureObject.displayName] = featureObject.value;
   }
+  delete featureObject['value'];
 };
 
 
@@ -47767,6 +49048,7 @@ ol.format.KML.LOD_PARSERS_ = ol.xml.makeStructureNS(
 ol.format.KML.EXTRUDE_AND_ALTITUDE_MODE_PARSERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
       'extrude': ol.xml.makeObjectPropertySetter(ol.format.XSD.readBoolean),
+      'tessellate': ol.xml.makeObjectPropertySetter(ol.format.XSD.readBoolean),
       'altitudeMode': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString)
     });
 
@@ -48540,16 +49822,16 @@ ol.format.KML.writeDataNode_ = function(node, pair, objectStack) {
   if (typeof value == 'object') {
     if (value !== null && value.displayName) {
       ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
-        ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value.displayName], objectStack, ['displayName']);
+          ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value.displayName], objectStack, ['displayName']);
     }
 
     if (value !== null && value.value) {
       ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
-        ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value.value], objectStack, ['value']);
+          ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value.value], objectStack, ['value']);
     }
   } else {
     ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
-     ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value], objectStack, ['value']);
+        ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value], objectStack, ['value']);
   }
 };
 
@@ -48602,7 +49884,7 @@ ol.format.KML.writeExtendedData_ = function(node, namesAndValues, objectStack) {
 
   for (var i = 0; i < length; i++) {
     ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
-      ol.format.KML.DATA_NODE_FACTORY_, [{name: names[i], value: values[i]}], objectStack);
+        ol.format.KML.DATA_NODE_FACTORY_, [{name: names[i], value: values[i]}], objectStack);
   }
 };
 
@@ -48656,7 +49938,7 @@ ol.format.KML.writeIconStyle_ = function(node, style, objectStack) {
       iconProperties['y'] = iconImageSize[1] - (origin[1] + size[1]);
     }
 
-    if (anchor && anchor[0] !== 0 && anchor[1] !== size[1]) {
+    if (anchor && (anchor[0] !== size[0] / 2 || anchor[1] !== size[1] / 2)) {
       var /** @type {ol.KMLVec2_} */ hotSpot = {
         x: anchor[0],
         xunits: ol.style.IconAnchorUnits.PIXELS,
@@ -48816,7 +50098,7 @@ ol.format.KML.writePlacemark_ = function(node, feature, objectStack) {
     var sequence = ol.xml.makeSequence(properties, keys);
     var namesAndValues = {names: keys, values: sequence};
     ol.xml.pushSerializeAndPop(context, ol.format.KML.PLACEMARK_SERIALIZERS_,
-      ol.format.KML.EXTENDEDDATA_NODE_FACTORY_, [namesAndValues], objectStack);
+        ol.format.KML.EXTENDEDDATA_NODE_FACTORY_, [namesAndValues], objectStack);
   }
 
   var styleFunction = feature.getStyleFunction();
@@ -48864,10 +50146,16 @@ ol.format.KML.writePrimitiveGeometry_ = function(node, geometry, objectStack) {
   var /** @type {ol.XmlNodeStackItem} */ context = {node: node};
   context['layout'] = geometry.getLayout();
   context['stride'] = geometry.getStride();
-  ol.xml.pushSerializeAndPop(context,
-      ol.format.KML.PRIMITIVE_GEOMETRY_SERIALIZERS_,
-      ol.format.KML.COORDINATES_NODE_FACTORY_,
-      [flatCoordinates], objectStack);
+
+  // serialize properties (properties unknown to KML are not serialized)
+  var properties = geometry.getProperties();
+  properties.coordinates = flatCoordinates;
+
+  var parentNode = objectStack[objectStack.length - 1].node;
+  var orderedKeys = ol.format.KML.PRIMITIVE_GEOMETRY_SEQUENCE_[parentNode.namespaceURI];
+  var values = ol.xml.makeSequence(properties, orderedKeys);
+  ol.xml.pushSerializeAndPop(context, ol.format.KML.PRIMITIVE_GEOMETRY_SERIALIZERS_,
+      ol.xml.OBJECT_PROPERTY_NODE_FACTORY, values, objectStack, orderedKeys);
 };
 
 
@@ -49027,7 +50315,6 @@ ol.format.KML.GEOMETRY_TYPE_TO_NODENAME_ = {
   'MultiPolygon': 'MultiGeometry',
   'GeometryCollection': 'MultiGeometry'
 };
-
 
 /**
  * @const
@@ -49206,11 +50493,25 @@ ol.format.KML.PLACEMARK_SERIALIZERS_ = ol.xml.makeStructureNS(
 
 /**
  * @const
+ * @type {Object.<string, Array.<string>>}
+ * @private
+ */
+ol.format.KML.PRIMITIVE_GEOMETRY_SEQUENCE_ = ol.xml.makeStructureNS(
+    ol.format.KML.NAMESPACE_URIS_, [
+      'extrude', 'tessellate', 'altitudeMode', 'coordinates'
+    ]);
+
+
+/**
+ * @const
  * @type {Object.<string, Object.<string, ol.XmlSerializer>>}
  * @private
  */
 ol.format.KML.PRIMITIVE_GEOMETRY_SERIALIZERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
+      'extrude': ol.xml.makeChildAppender(ol.format.XSD.writeBooleanTextNode),
+      'tessellate': ol.xml.makeChildAppender(ol.format.XSD.writeBooleanTextNode),
+      'altitudeMode': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
       'coordinates': ol.xml.makeChildAppender(
           ol.format.KML.writeCoordinatesTextNode_)
     });
@@ -49320,16 +50621,6 @@ ol.format.KML.GEOMETRY_NODE_FACTORY_ = function(value, objectStack,
  * @private
  */
 ol.format.KML.COLOR_NODE_FACTORY_ = ol.xml.makeSimpleNodeFactory('color');
-
-
-/**
- * A factory for creating coordinates nodes.
- * @const
- * @type {function(*, Array.<*>, string=): (Node|undefined)}
- * @private
- */
-ol.format.KML.COORDINATES_NODE_FACTORY_ =
-    ol.xml.makeSimpleNodeFactory('coordinates');
 
 
 /**
@@ -50547,9 +51838,9 @@ ol.render.Feature.prototype.getEnds = function() {
 ol.render.Feature.prototype.getExtent = function() {
   if (!this.extent_) {
     this.extent_ = this.type_ === ol.geom.GeometryType.POINT ?
-        ol.extent.createOrUpdateFromCoordinate(this.flatCoordinates_) :
-        ol.extent.createOrUpdateFromFlatCoordinates(
-            this.flatCoordinates_, 0, this.flatCoordinates_.length, 2);
+      ol.extent.createOrUpdateFromCoordinate(this.flatCoordinates_) :
+      ol.extent.createOrUpdateFromFlatCoordinates(
+          this.flatCoordinates_, 0, this.flatCoordinates_.length, 2);
 
   }
   return this.extent_;
@@ -50684,7 +51975,7 @@ ol.format.MVT = function(opt_options) {
    *         (Array.<number>|Array.<Array.<number>>),Object.<string,*>,number)}
    */
   this.featureClass_ = options.featureClass ?
-      options.featureClass : ol.render.Feature;
+    options.featureClass : ol.render.Feature;
 
   /**
    * @private
@@ -50704,8 +51995,23 @@ ol.format.MVT = function(opt_options) {
    */
   this.layers_ = options.layers ? options.layers : null;
 
+  /**
+   * @private
+   * @type {ol.Extent}
+   */
+  this.extent_ = null;
+
 };
 ol.inherits(ol.format.MVT, ol.format.Feature);
+
+
+/**
+ * @inheritDoc
+ * @api
+ */
+ol.format.MVT.prototype.getLastExtent = function() {
+  return this.extent_;
+};
 
 
 /**
@@ -50759,7 +52065,7 @@ ol.format.MVT.prototype.readRenderFeature_ = function(rawFeature, layer) {
   var geometryType;
   if (type === 1) {
     geometryType = coords.length === 1 ?
-        ol.geom.GeometryType.POINT : ol.geom.GeometryType.MULTI_POINT;
+      ol.geom.GeometryType.POINT : ol.geom.GeometryType.MULTI_POINT;
   } else if (type === 2) {
     if (coords.length === 1) {
       geometryType = ol.geom.GeometryType.LINE_STRING;
@@ -50796,14 +52102,17 @@ ol.format.MVT.prototype.readFeatures = function(source, opt_options) {
     }
     layer = tile.layers[name];
 
+    var rawFeature;
     for (var i = 0, ii = layer.length; i < ii; ++i) {
+      rawFeature = layer.feature(i);
       if (featureClass === ol.render.Feature) {
-        feature = this.readRenderFeature_(layer.feature(i), name);
+        feature = this.readRenderFeature_(rawFeature, name);
       } else {
-        feature = this.readFeature_(layer.feature(i), name, opt_options);
+        feature = this.readFeature_(rawFeature, name, opt_options);
       }
       features.push(feature);
     }
+    this.extent_ = layer ? [0, 0, layer.extent, layer.extent] : null;
   }
 
   return features;
@@ -50873,7 +52182,7 @@ ol.format.MVT.readGeometry_ = function(rawFeature) {
   var geom;
   if (type === 1) {
     geom = coords.length === 1 ?
-        new ol.geom.Point(null) : new ol.geom.MultiPoint(null);
+      new ol.geom.Point(null) : new ol.geom.MultiPoint(null);
   } else if (type === 2) {
     if (coords.length === 1) {
       geom = new ol.geom.LineString(null);
@@ -51613,13 +52922,13 @@ ol.format.OWS.REQUEST_METHOD_PARSERS_ = ol.xml.makeStructureNS(
  */
 ol.format.OWS.SERVICE_CONTACT_PARSERS_ =
     ol.xml.makeStructureNS(
-    ol.format.OWS.NAMESPACE_URIS_, {
-      'IndividualName': ol.xml.makeObjectPropertySetter(
-          ol.format.XSD.readString),
-      'PositionName': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
-      'ContactInfo': ol.xml.makeObjectPropertySetter(
-          ol.format.OWS.readContactInfo_)
-    });
+        ol.format.OWS.NAMESPACE_URIS_, {
+          'IndividualName': ol.xml.makeObjectPropertySetter(
+              ol.format.XSD.readString),
+          'PositionName': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
+          'ContactInfo': ol.xml.makeObjectPropertySetter(
+              ol.format.OWS.readContactInfo_)
+        });
 
 
 /**
@@ -51629,12 +52938,12 @@ ol.format.OWS.SERVICE_CONTACT_PARSERS_ =
  */
 ol.format.OWS.SERVICE_IDENTIFICATION_PARSERS_ =
     ol.xml.makeStructureNS(
-    ol.format.OWS.NAMESPACE_URIS_, {
-      'Title': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
-      'ServiceTypeVersion': ol.xml.makeObjectPropertySetter(
-          ol.format.XSD.readString),
-      'ServiceType': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString)
-    });
+        ol.format.OWS.NAMESPACE_URIS_, {
+          'Title': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
+          'ServiceTypeVersion': ol.xml.makeObjectPropertySetter(
+              ol.format.XSD.readString),
+          'ServiceType': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString)
+        });
 
 
 /**
@@ -51644,12 +52953,12 @@ ol.format.OWS.SERVICE_IDENTIFICATION_PARSERS_ =
  */
 ol.format.OWS.SERVICE_PROVIDER_PARSERS_ =
     ol.xml.makeStructureNS(
-    ol.format.OWS.NAMESPACE_URIS_, {
-      'ProviderName': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
-      'ProviderSite': ol.xml.makeObjectPropertySetter(ol.format.XLink.readHref),
-      'ServiceContact': ol.xml.makeObjectPropertySetter(
-          ol.format.OWS.readServiceContact_)
-    });
+        ol.format.OWS.NAMESPACE_URIS_, {
+          'ProviderName': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
+          'ProviderSite': ol.xml.makeObjectPropertySetter(ol.format.XLink.readHref),
+          'ServiceContact': ol.xml.makeObjectPropertySetter(
+              ol.format.OWS.readServiceContact_)
+        });
 
 goog.provide('ol.geom.flat.flip');
 
@@ -51733,7 +53042,7 @@ ol.format.Polyline = function(opt_options) {
    * @type {ol.geom.GeometryLayout}
    */
   this.geometryLayout_ = options.geometryLayout ?
-      options.geometryLayout : ol.geom.GeometryLayout.XY;
+    options.geometryLayout : ol.geom.GeometryLayout.XY;
 };
 ol.inherits(ol.format.Polyline, ol.format.TextFeature);
 
@@ -52019,9 +53328,9 @@ ol.format.Polyline.prototype.readGeometryFromText = function(text, opt_options) 
       flatCoordinates, 0, flatCoordinates.length, stride);
 
   return /** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(
-          new ol.geom.LineString(coordinates, this.geometryLayout_), false,
-          this.adaptOptions(opt_options)));
+    ol.format.Feature.transformWithOptions(
+        new ol.geom.LineString(coordinates, this.geometryLayout_), false,
+        this.adaptOptions(opt_options)));
 };
 
 
@@ -52075,8 +53384,8 @@ ol.format.Polyline.prototype.writeGeometry;
  */
 ol.format.Polyline.prototype.writeGeometryText = function(geometry, opt_options) {
   geometry = /** @type {ol.geom.LineString} */
-      (ol.format.Feature.transformWithOptions(
-          geometry, true, this.adaptOptions(opt_options)));
+    (ol.format.Feature.transformWithOptions(
+        geometry, true, this.adaptOptions(opt_options)));
   var flatCoordinates = geometry.getFlatCoordinates();
   var stride = geometry.getStride();
   ol.geom.flat.flip.flipXY(
@@ -52131,7 +53440,7 @@ ol.format.TopoJSON = function(opt_options) {
    */
   this.defaultDataProjection = ol.proj.get(
       options.defaultDataProjection ?
-          options.defaultDataProjection : 'EPSG:4326');
+        options.defaultDataProjection : 'EPSG:4326');
 
 };
 ol.inherits(ol.format.TopoJSON, ol.format.JSONFeature);
@@ -52345,7 +53654,7 @@ ol.format.TopoJSON.readFeatureFromGeometry_ = function(object, arcs,
   }
   var feature = new ol.Feature();
   feature.setGeometry(/** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(geometry, false, opt_options)));
+    ol.format.Feature.transformWithOptions(geometry, false, opt_options)));
   if (object.id !== undefined) {
     feature.setId(object.id);
   }
@@ -52402,13 +53711,13 @@ ol.format.TopoJSON.prototype.readFeaturesFromObject = function(
       }
       if (topoJSONFeatures[objectName].type === 'GeometryCollection') {
         feature = /** @type {TopoJSONGeometryCollection} */
-            (topoJSONFeatures[objectName]);
+          (topoJSONFeatures[objectName]);
         features.push.apply(features,
             ol.format.TopoJSON.readFeaturesFromGeometryCollection_(
                 feature, arcs, scale, translate, property, objectName, opt_options));
       } else {
         feature = /** @type {TopoJSONGeometry} */
-            (topoJSONFeatures[objectName]);
+          (topoJSONFeatures[objectName]);
         features.push(ol.format.TopoJSON.readFeatureFromGeometry_(
             feature, arcs, scale, translate, property, objectName, opt_options));
       }
@@ -52593,15 +53902,15 @@ ol.format.WFS = function(opt_options) {
    * @type {ol.format.GMLBase}
    */
   this.gmlFormat_ = options.gmlFormat ?
-      options.gmlFormat : new ol.format.GML3();
+    options.gmlFormat : new ol.format.GML3();
 
   /**
    * @private
    * @type {string}
    */
   this.schemaLocation_ = options.schemaLocation ?
-      options.schemaLocation :
-          ol.format.WFS.SCHEMA_LOCATIONS[ol.format.WFS.DEFAULT_VERSION];
+    options.schemaLocation :
+    ol.format.WFS.SCHEMA_LOCATIONS[ol.format.WFS.DEFAULT_VERSION];
 
   ol.format.XMLFeature.call(this);
 };
@@ -52960,7 +54269,7 @@ ol.format.WFS.writeOgcFidFilter_ = function(node, fid, objectStack) {
  */
 ol.format.WFS.getTypeName_ = function(featurePrefix, featureType) {
   featurePrefix = featurePrefix ? featurePrefix :
-      ol.format.WFS.FEATURE_PREFIX;
+    ol.format.WFS.FEATURE_PREFIX;
   var prefix = featurePrefix + ':';
   // The featureType already contains the prefix.
   if (featureType.indexOf(prefix) === 0) {
@@ -53023,9 +54332,9 @@ ol.format.WFS.writeUpdate_ = function(node, feature, objectStack) {
     ol.xml.pushSerializeAndPop(/** @type {ol.XmlNodeStackItem} */ (
       {'gmlVersion': context['gmlVersion'], node: node,
         'hasZ': context['hasZ'], 'srsName': context['srsName']}),
-        ol.format.WFS.TRANSACTION_SERIALIZERS_,
-        ol.xml.makeSimpleNodeFactory('Property'), values,
-        objectStack);
+    ol.format.WFS.TRANSACTION_SERIALIZERS_,
+    ol.xml.makeSimpleNodeFactory('Property'), values,
+    objectStack);
     ol.format.WFS.writeOgcFidFilter_(node, fid, objectStack);
   }
 };
@@ -53234,12 +54543,14 @@ ol.format.WFS.writeDuringFilter_ = function(node, filter, objectStack) {
 ol.format.WFS.writeLogicalFilter_ = function(node, filter, objectStack) {
   /** @type {ol.XmlNodeStackItem} */
   var item = {node: node};
-  filter.conditions.forEach(function(condition) {
+  var conditions = filter.conditions;
+  for (var i = 0, ii = conditions.length; i < ii; ++i) {
+    var condition = conditions[i];
     ol.xml.pushSerializeAndPop(item,
         ol.format.WFS.GETFEATURE_SERIALIZERS_,
         ol.xml.makeSimpleNodeFactory(condition.getTagName()),
         [condition], objectStack);
-  });
+  }
 };
 
 
@@ -53510,7 +54821,7 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
   var objectStack = [];
   var node = ol.xml.createElementNS(ol.format.WFS.WFSNS, 'Transaction');
   var version = options.version ?
-        options.version : ol.format.WFS.DEFAULT_VERSION;
+    options.version : ol.format.WFS.DEFAULT_VERSION;
   var gmlVersion = version === '1.0.0' ? 2 : 3;
   node.setAttribute('service', 'WFS');
   node.setAttribute('version', version);
@@ -53526,9 +54837,10 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
   var schemaLocation = ol.format.WFS.SCHEMA_LOCATIONS[version];
   ol.xml.setAttributeNS(node, 'http://www.w3.org/2001/XMLSchema-instance',
       'xsi:schemaLocation', schemaLocation);
+  var featurePrefix = options.featurePrefix ? options.featurePrefix : ol.format.WFS.FEATURE_PREFIX;
   if (inserts) {
     obj = {node: node, 'featureNS': options.featureNS,
-      'featureType': options.featureType, 'featurePrefix': options.featurePrefix,
+      'featureType': options.featureType, 'featurePrefix': featurePrefix,
       'gmlVersion': gmlVersion, 'hasZ': options.hasZ, 'srsName': options.srsName};
     ol.obj.assign(obj, baseObj);
     ol.xml.pushSerializeAndPop(obj,
@@ -53538,7 +54850,7 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
   }
   if (updates) {
     obj = {node: node, 'featureNS': options.featureNS,
-      'featureType': options.featureType, 'featurePrefix': options.featurePrefix,
+      'featureType': options.featureType, 'featurePrefix': featurePrefix,
       'gmlVersion': gmlVersion, 'hasZ': options.hasZ, 'srsName': options.srsName};
     ol.obj.assign(obj, baseObj);
     ol.xml.pushSerializeAndPop(obj,
@@ -53548,7 +54860,7 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
   }
   if (deletes) {
     ol.xml.pushSerializeAndPop({node: node, 'featureNS': options.featureNS,
-      'featureType': options.featureType, 'featurePrefix': options.featurePrefix,
+      'featureType': options.featureType, 'featurePrefix': featurePrefix,
       'gmlVersion': gmlVersion, 'srsName': options.srsName},
     ol.format.WFS.TRANSACTION_SERIALIZERS_,
     ol.xml.makeSimpleNodeFactory('Delete'), deletes,
@@ -53556,7 +54868,7 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
   }
   if (options.nativeElements) {
     ol.xml.pushSerializeAndPop({node: node, 'featureNS': options.featureNS,
-      'featureType': options.featureType, 'featurePrefix': options.featurePrefix,
+      'featureType': options.featureType, 'featurePrefix': featurePrefix,
       'gmlVersion': gmlVersion, 'srsName': options.srsName},
     ol.format.WFS.TRANSACTION_SERIALIZERS_,
     ol.xml.makeSimpleNodeFactory('Native'), options.nativeElements,
@@ -53651,7 +54963,7 @@ ol.format.WKT = function(opt_options) {
    * @private
    */
   this.splitCollection_ = options.splitCollection !== undefined ?
-      options.splitCollection : false;
+    options.splitCollection : false;
 
 };
 ol.inherits(ol.format.WKT, ol.format.TextFeature);
@@ -53943,7 +55255,7 @@ ol.format.WKT.prototype.readGeometryFromText = function(text, opt_options) {
   var geometry = this.parse_(text);
   if (geometry) {
     return /** @type {ol.geom.Geometry} */ (
-        ol.format.Feature.transformWithOptions(geometry, false, opt_options));
+      ol.format.Feature.transformWithOptions(geometry, false, opt_options));
   } else {
     return null;
   }
@@ -54018,7 +55330,7 @@ ol.format.WKT.prototype.writeGeometry;
  */
 ol.format.WKT.prototype.writeGeometryText = function(geometry, opt_options) {
   return ol.format.WKT.encode_(/** @type {ol.geom.Geometry} */ (
-      ol.format.Feature.transformWithOptions(geometry, true, opt_options)));
+    ol.format.Feature.transformWithOptions(geometry, true, opt_options)));
 };
 
 
@@ -54148,7 +55460,7 @@ ol.format.WKT.Lexer.prototype.readNumber_ = function() {
     }
     c = this.nextChar_();
   } while (
-      this.isNumeric_(c, decimal) ||
+    this.isNumeric_(c, decimal) ||
       // if we haven't detected a scientific number before, 'e' or 'E'
       // hint that we should continue to read
       !scientificNotation && (c == 'e' || c == 'E') ||
@@ -54623,7 +55935,7 @@ ol.format.WMSCapabilities.prototype.readFromNode = function(node) {
  */
 ol.format.WMSCapabilities.readAttribution_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.ATTRIBUTION_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.ATTRIBUTION_PARSERS_, node, objectStack);
 };
 
 
@@ -54662,9 +55974,9 @@ ol.format.WMSCapabilities.readBoundingBox_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readEXGeographicBoundingBox_ = function(node, objectStack) {
   var geographicBoundingBox = ol.xml.pushParseAndPop(
-        {},
-        ol.format.WMSCapabilities.EX_GEOGRAPHIC_BOUNDING_BOX_PARSERS_,
-        node, objectStack);
+      {},
+      ol.format.WMSCapabilities.EX_GEOGRAPHIC_BOUNDING_BOX_PARSERS_,
+      node, objectStack);
   if (!geographicBoundingBox) {
     return undefined;
   }
@@ -54695,7 +56007,7 @@ ol.format.WMSCapabilities.readEXGeographicBoundingBox_ = function(node, objectSt
  */
 ol.format.WMSCapabilities.readCapability_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.CAPABILITY_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.CAPABILITY_PARSERS_, node, objectStack);
 };
 
 
@@ -54707,7 +56019,7 @@ ol.format.WMSCapabilities.readCapability_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readService_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.SERVICE_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.SERVICE_PARSERS_, node, objectStack);
 };
 
 
@@ -54719,8 +56031,8 @@ ol.format.WMSCapabilities.readService_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readContactInformation_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.CONTACT_INFORMATION_PARSERS_,
-        node, objectStack);
+      {}, ol.format.WMSCapabilities.CONTACT_INFORMATION_PARSERS_,
+      node, objectStack);
 };
 
 
@@ -54732,8 +56044,8 @@ ol.format.WMSCapabilities.readContactInformation_ = function(node, objectStack) 
  */
 ol.format.WMSCapabilities.readContactPersonPrimary_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.CONTACT_PERSON_PARSERS_,
-        node, objectStack);
+      {}, ol.format.WMSCapabilities.CONTACT_PERSON_PARSERS_,
+      node, objectStack);
 };
 
 
@@ -54745,8 +56057,8 @@ ol.format.WMSCapabilities.readContactPersonPrimary_ = function(node, objectStack
  */
 ol.format.WMSCapabilities.readContactAddress_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.CONTACT_ADDRESS_PARSERS_,
-        node, objectStack);
+      {}, ol.format.WMSCapabilities.CONTACT_ADDRESS_PARSERS_,
+      node, objectStack);
 };
 
 
@@ -54758,7 +56070,7 @@ ol.format.WMSCapabilities.readContactAddress_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readException_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        [], ol.format.WMSCapabilities.EXCEPTION_PARSERS_, node, objectStack);
+      [], ol.format.WMSCapabilities.EXCEPTION_PARSERS_, node, objectStack);
 };
 
 
@@ -54770,7 +56082,7 @@ ol.format.WMSCapabilities.readException_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readCapabilityLayer_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.LAYER_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.LAYER_PARSERS_, node, objectStack);
 };
 
 
@@ -54785,7 +56097,7 @@ ol.format.WMSCapabilities.readLayer_ = function(node, objectStack) {
         (objectStack[objectStack.length - 1]);
 
   var layerObject = ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.LAYER_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.LAYER_PARSERS_, node, objectStack);
 
   if (!layerObject) {
     return undefined;
@@ -54798,7 +56110,7 @@ ol.format.WMSCapabilities.readLayer_ = function(node, objectStack) {
   layerObject['queryable'] = queryable !== undefined ? queryable : false;
 
   var cascaded = ol.format.XSD.readNonNegativeIntegerString(
-        node.getAttribute('cascaded'));
+      node.getAttribute('cascaded'));
   if (cascaded === undefined) {
     cascaded = parentLayerObject['cascaded'];
   }
@@ -54831,7 +56143,7 @@ ol.format.WMSCapabilities.readLayer_ = function(node, objectStack) {
   }
   layerObject['fixedHeight'] = fixedHeight;
 
-    // See 7.2.4.8
+  // See 7.2.4.8
   var addKeys = ['Style', 'CRS', 'AuthorityURL'];
   addKeys.forEach(function(key) {
     if (key in parentLayerObject) {
@@ -54866,9 +56178,9 @@ ol.format.WMSCapabilities.readDimension_ = function(node, objectStack) {
     'unitSymbol': node.getAttribute('unitSymbol'),
     'default': node.getAttribute('default'),
     'multipleValues': ol.format.XSD.readBooleanString(
-          node.getAttribute('multipleValues')),
+        node.getAttribute('multipleValues')),
     'nearestValue': ol.format.XSD.readBooleanString(
-          node.getAttribute('nearestValue')),
+        node.getAttribute('nearestValue')),
     'current': ol.format.XSD.readBooleanString(node.getAttribute('current')),
     'values': ol.format.XSD.readString(node)
   };
@@ -54884,8 +56196,8 @@ ol.format.WMSCapabilities.readDimension_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readFormatOnlineresource_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.FORMAT_ONLINERESOURCE_PARSERS_,
-        node, objectStack);
+      {}, ol.format.WMSCapabilities.FORMAT_ONLINERESOURCE_PARSERS_,
+      node, objectStack);
 };
 
 
@@ -54897,7 +56209,7 @@ ol.format.WMSCapabilities.readFormatOnlineresource_ = function(node, objectStack
  */
 ol.format.WMSCapabilities.readRequest_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.REQUEST_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.REQUEST_PARSERS_, node, objectStack);
 };
 
 
@@ -54909,7 +56221,7 @@ ol.format.WMSCapabilities.readRequest_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readDCPType_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.DCPTYPE_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.DCPTYPE_PARSERS_, node, objectStack);
 };
 
 
@@ -54921,7 +56233,7 @@ ol.format.WMSCapabilities.readDCPType_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readHTTP_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.HTTP_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.HTTP_PARSERS_, node, objectStack);
 };
 
 
@@ -54933,7 +56245,7 @@ ol.format.WMSCapabilities.readHTTP_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readOperationType_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.OPERATIONTYPE_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.OPERATIONTYPE_PARSERS_, node, objectStack);
 };
 
 
@@ -55000,7 +56312,7 @@ ol.format.WMSCapabilities.readMetadataURL_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readStyle_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        {}, ol.format.WMSCapabilities.STYLE_PARSERS_, node, objectStack);
+      {}, ol.format.WMSCapabilities.STYLE_PARSERS_, node, objectStack);
 };
 
 
@@ -55012,7 +56324,7 @@ ol.format.WMSCapabilities.readStyle_ = function(node, objectStack) {
  */
 ol.format.WMSCapabilities.readKeywordList_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(
-        [], ol.format.WMSCapabilities.KEYWORDLIST_PARSERS_, node, objectStack);
+      [], ol.format.WMSCapabilities.KEYWORDLIST_PARSERS_, node, objectStack);
 };
 
 
@@ -55555,7 +56867,7 @@ ol.format.WMTSCapabilities.prototype.readFromNode = function(node) {
   }
   WMTSCapabilityObject['version'] = version;
   WMTSCapabilityObject = ol.xml.pushParseAndPop(WMTSCapabilityObject,
-        ol.format.WMTSCapabilities.PARSERS_, node, []);
+      ol.format.WMTSCapabilities.PARSERS_, node, []);
   return WMTSCapabilityObject ? WMTSCapabilityObject : null;
 };
 
@@ -55568,7 +56880,7 @@ ol.format.WMTSCapabilities.prototype.readFromNode = function(node) {
  */
 ol.format.WMTSCapabilities.readContents_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop({},
-        ol.format.WMTSCapabilities.CONTENTS_PARSERS_, node, objectStack);
+      ol.format.WMTSCapabilities.CONTENTS_PARSERS_, node, objectStack);
 };
 
 
@@ -55580,7 +56892,7 @@ ol.format.WMTSCapabilities.readContents_ = function(node, objectStack) {
  */
 ol.format.WMTSCapabilities.readLayer_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop({},
-        ol.format.WMTSCapabilities.LAYER_PARSERS_, node, objectStack);
+      ol.format.WMTSCapabilities.LAYER_PARSERS_, node, objectStack);
 };
 
 
@@ -55989,15 +57301,16 @@ ol.GeolocationProperty = {
 goog.provide('ol.Geolocation');
 
 goog.require('ol');
-goog.require('ol.Object');
 goog.require('ol.GeolocationProperty');
+goog.require('ol.Object');
+goog.require('ol.Sphere');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
 goog.require('ol.geom.Polygon');
 goog.require('ol.has');
 goog.require('ol.math');
 goog.require('ol.proj');
-goog.require('ol.sphere.WGS84');
+goog.require('ol.proj.EPSG4326');
 
 
 /**
@@ -56044,6 +57357,12 @@ ol.Geolocation = function(opt_options) {
    * @type {ol.TransformFunction}
    */
   this.transform_ = ol.proj.identityTransform;
+
+  /**
+   * @private
+   * @type {ol.Sphere}
+   */
+  this.sphere_ = new ol.Sphere(ol.proj.EPSG4326.RADIUS);
 
   /**
    * @private
@@ -56126,9 +57445,9 @@ ol.Geolocation.prototype.positionChange_ = function(position) {
       coords.altitude === null ? undefined : coords.altitude);
   this.set(ol.GeolocationProperty.ALTITUDE_ACCURACY,
       coords.altitudeAccuracy === null ?
-      undefined : coords.altitudeAccuracy);
+        undefined : coords.altitudeAccuracy);
   this.set(ol.GeolocationProperty.HEADING, coords.heading === null ?
-      undefined : ol.math.toRadians(coords.heading));
+    undefined : ol.math.toRadians(coords.heading));
   if (!this.position_) {
     this.position_ = [coords.longitude, coords.latitude];
   } else {
@@ -56140,7 +57459,7 @@ ol.Geolocation.prototype.positionChange_ = function(position) {
   this.set(ol.GeolocationProperty.SPEED,
       coords.speed === null ? undefined : coords.speed);
   var geometry = ol.geom.Polygon.circular(
-      ol.sphere.WGS84, this.position_, coords.accuracy);
+      this.sphere_, this.position_, coords.accuracy);
   geometry.applyTransform(this.transform_);
   this.set(ol.GeolocationProperty.ACCURACY_GEOMETRY, geometry);
   this.changed();
@@ -56172,7 +57491,7 @@ ol.Geolocation.prototype.positionError_ = function(error) {
  */
 ol.Geolocation.prototype.getAccuracy = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.GeolocationProperty.ACCURACY));
+    this.get(ol.GeolocationProperty.ACCURACY));
 };
 
 
@@ -56184,7 +57503,7 @@ ol.Geolocation.prototype.getAccuracy = function() {
  */
 ol.Geolocation.prototype.getAccuracyGeometry = function() {
   return /** @type {?ol.geom.Polygon} */ (
-      this.get(ol.GeolocationProperty.ACCURACY_GEOMETRY) || null);
+    this.get(ol.GeolocationProperty.ACCURACY_GEOMETRY) || null);
 };
 
 
@@ -56197,7 +57516,7 @@ ol.Geolocation.prototype.getAccuracyGeometry = function() {
  */
 ol.Geolocation.prototype.getAltitude = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.GeolocationProperty.ALTITUDE));
+    this.get(ol.GeolocationProperty.ALTITUDE));
 };
 
 
@@ -56210,7 +57529,7 @@ ol.Geolocation.prototype.getAltitude = function() {
  */
 ol.Geolocation.prototype.getAltitudeAccuracy = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.GeolocationProperty.ALTITUDE_ACCURACY));
+    this.get(ol.GeolocationProperty.ALTITUDE_ACCURACY));
 };
 
 
@@ -56222,7 +57541,7 @@ ol.Geolocation.prototype.getAltitudeAccuracy = function() {
  */
 ol.Geolocation.prototype.getHeading = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.GeolocationProperty.HEADING));
+    this.get(ol.GeolocationProperty.HEADING));
 };
 
 
@@ -56235,7 +57554,7 @@ ol.Geolocation.prototype.getHeading = function() {
  */
 ol.Geolocation.prototype.getPosition = function() {
   return /** @type {ol.Coordinate|undefined} */ (
-      this.get(ol.GeolocationProperty.POSITION));
+    this.get(ol.GeolocationProperty.POSITION));
 };
 
 
@@ -56248,7 +57567,7 @@ ol.Geolocation.prototype.getPosition = function() {
  */
 ol.Geolocation.prototype.getProjection = function() {
   return /** @type {ol.proj.Projection|undefined} */ (
-      this.get(ol.GeolocationProperty.PROJECTION));
+    this.get(ol.GeolocationProperty.PROJECTION));
 };
 
 
@@ -56261,7 +57580,7 @@ ol.Geolocation.prototype.getProjection = function() {
  */
 ol.Geolocation.prototype.getSpeed = function() {
   return /** @type {number|undefined} */ (
-      this.get(ol.GeolocationProperty.SPEED));
+    this.get(ol.GeolocationProperty.SPEED));
 };
 
 
@@ -56273,7 +57592,7 @@ ol.Geolocation.prototype.getSpeed = function() {
  */
 ol.Geolocation.prototype.getTracking = function() {
   return /** @type {boolean} */ (
-      this.get(ol.GeolocationProperty.TRACKING));
+    this.get(ol.GeolocationProperty.TRACKING));
 };
 
 
@@ -56288,7 +57607,7 @@ ol.Geolocation.prototype.getTracking = function() {
  */
 ol.Geolocation.prototype.getTrackingOptions = function() {
   return /** @type {GeolocationPositionOptions|undefined} */ (
-      this.get(ol.GeolocationProperty.TRACKING_OPTIONS));
+    this.get(ol.GeolocationProperty.TRACKING_OPTIONS));
 };
 
 
@@ -56714,7 +58033,7 @@ ol.geom.flat.geodesic.greatCircleArc = function(
         var lat = Math.asin(sinLat1 * cosD + cosLat1 * sinD * Math.cos(theta));
         var lon = ol.math.toRadians(lon1) +
             Math.atan2(Math.sin(theta) * sinD * cosLat1,
-                       cosD - sinLat1 * Math.sin(lat));
+                cosD - sinLat1 * Math.sin(lat));
         return [ol.math.toDegrees(lon), ol.math.toDegrees(lat)];
       }, ol.proj.getTransform(geoProjection, projection), squaredTolerance);
 };
@@ -56790,89 +58109,89 @@ goog.require('ol.style.Text');
 ol.Graticule = function(opt_options) {
   var options = opt_options || {};
 
- /**
-  * @type {ol.Map}
-  * @private
-  */
+  /**
+   * @type {ol.Map}
+   * @private
+   */
   this.map_ = null;
 
- /**
-  * @type {ol.proj.Projection}
-  * @private
-  */
+  /**
+   * @type {ol.proj.Projection}
+   * @private
+   */
   this.projection_ = null;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.maxLat_ = Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.maxLon_ = Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.minLat_ = -Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.minLon_ = -Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.maxLatP_ = Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.maxLonP_ = Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.minLatP_ = -Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.minLonP_ = -Infinity;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.targetSize_ = options.targetSize !== undefined ?
-     options.targetSize : 100;
+    options.targetSize : 100;
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.maxLines_ = options.maxLines !== undefined ? options.maxLines : 100;
 
- /**
-  * @type {Array.<ol.geom.LineString>}
-  * @private
-  */
+  /**
+   * @type {Array.<ol.geom.LineString>}
+   * @private
+   */
   this.meridians_ = [];
 
- /**
-  * @type {Array.<ol.geom.LineString>}
-  * @private
-  */
+  /**
+   * @type {Array.<ol.geom.LineString>}
+   * @private
+   */
   this.parallels_ = [];
 
   /**
@@ -56880,7 +58199,7 @@ ol.Graticule = function(opt_options) {
    * @private
    */
   this.strokeStyle_ = options.strokeStyle !== undefined ?
-     options.strokeStyle : ol.Graticule.DEFAULT_STROKE_STYLE_;
+    options.strokeStyle : ol.Graticule.DEFAULT_STROKE_STYLE_;
 
   /**
    * @type {ol.TransformFunction|undefined}
@@ -56920,14 +58239,14 @@ ol.Graticule = function(opt_options) {
      * @private
      */
     this.lonLabelFormatter_ = options.lonLabelFormatter == undefined ?
-        degreesToString.bind(this, 'EW') : options.lonLabelFormatter;
+      degreesToString.bind(this, 'EW') : options.lonLabelFormatter;
 
     /**
      * @type {function(number):string}
      * @private
      */
     this.latLabelFormatter_ = options.latLabelFormatter == undefined ?
-        degreesToString.bind(this, 'NS') : options.latLabelFormatter;
+      degreesToString.bind(this, 'NS') : options.latLabelFormatter;
 
     /**
      * Longitude label position in fractions (0..1) of view extent. 0 means
@@ -56936,7 +58255,7 @@ ol.Graticule = function(opt_options) {
      * @private
      */
     this.lonLabelPosition_ = options.lonLabelPosition == undefined ? 0 :
-        options.lonLabelPosition;
+      options.lonLabelPosition;
 
     /**
      * Latitude Label position in fractions (0..1) of view extent. 0 means left, 1
@@ -56945,41 +58264,41 @@ ol.Graticule = function(opt_options) {
      * @private
      */
     this.latLabelPosition_ = options.latLabelPosition == undefined ? 1 :
-        options.latLabelPosition;
+      options.latLabelPosition;
 
     /**
      * @type {ol.style.Text}
      * @private
      */
     this.lonLabelStyle_ = options.lonLabelStyle !== undefined ? options.lonLabelStyle :
-        new ol.style.Text({
-          font: '12px Calibri,sans-serif',
-          textBaseline: 'bottom',
-          fill: new ol.style.Fill({
-            color: 'rgba(0,0,0,1)'
-          }),
-          stroke: new ol.style.Stroke({
-            color: 'rgba(255,255,255,1)',
-            width: 3
-          })
-        });
+      new ol.style.Text({
+        font: '12px Calibri,sans-serif',
+        textBaseline: 'bottom',
+        fill: new ol.style.Fill({
+          color: 'rgba(0,0,0,1)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: 'rgba(255,255,255,1)',
+          width: 3
+        })
+      });
 
     /**
      * @type {ol.style.Text}
      * @private
      */
     this.latLabelStyle_ = options.latLabelStyle !== undefined ? options.latLabelStyle :
-        new ol.style.Text({
-          font: '12px Calibri,sans-serif',
-          textAlign: 'end',
-          fill: new ol.style.Fill({
-            color: 'rgba(0,0,0,1)'
-          }),
-          stroke: new ol.style.Stroke({
-            color: 'rgba(255,255,255,1)',
-            width: 3
-          })
-        });
+      new ol.style.Text({
+        font: '12px Calibri,sans-serif',
+        textAlign: 'end',
+        fill: new ol.style.Fill({
+          color: 'rgba(0,0,0,1)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: 'rgba(255,255,255,1)',
+          width: 3
+        })
+      });
 
     this.meridiansLabels_ = [];
     this.parallelsLabels_ = [];
@@ -57050,7 +58369,7 @@ ol.Graticule.prototype.getMeridianPoint_ = function(lineString, extent, index) {
       clampedBottom, clampedTop);
   var coordinate = [flatCoordinates[0], lat];
   var point = this.meridiansLabels_[index] !== undefined ?
-      this.meridiansLabels_[index].geom : new ol.geom.Point(null);
+    this.meridiansLabels_[index].geom : new ol.geom.Point(null);
   point.setCoordinates(coordinate);
   return point;
 };
@@ -57099,7 +58418,7 @@ ol.Graticule.prototype.getParallelPoint_ = function(lineString, extent, index) {
       clampedLeft, clampedRight);
   var coordinate = [lon, flatCoordinates[1]];
   var point = this.parallelsLabels_[index] !== undefined ?
-      this.parallelsLabels_[index].geom : new ol.geom.Point(null);
+    this.parallelsLabels_[index].geom : new ol.geom.Point(null);
   point.setCoordinates(coordinate);
   return point;
 };
@@ -57254,11 +58573,11 @@ ol.Graticule.prototype.getMap = function() {
  * @private
  */
 ol.Graticule.prototype.getMeridian_ = function(lon, minLat, maxLat,
-                                               squaredTolerance, index) {
+    squaredTolerance, index) {
   var flatCoordinates = ol.geom.flat.geodesic.meridian(lon,
-     minLat, maxLat, this.projection_, squaredTolerance);
+      minLat, maxLat, this.projection_, squaredTolerance);
   var lineString = this.meridians_[index] !== undefined ?
-     this.meridians_[index] : new ol.geom.LineString(null);
+    this.meridians_[index] : new ol.geom.LineString(null);
   lineString.setFlatCoordinates(ol.geom.GeometryLayout.XY, flatCoordinates);
   return lineString;
 };
@@ -57284,18 +58603,18 @@ ol.Graticule.prototype.getMeridians = function() {
  * @private
  */
 ol.Graticule.prototype.getParallel_ = function(lat, minLon, maxLon,
-                                               squaredTolerance, index) {
+    squaredTolerance, index) {
   var flatCoordinates = ol.geom.flat.geodesic.parallel(lat,
-     this.minLon_, this.maxLon_, this.projection_, squaredTolerance);
+      minLon, maxLon, this.projection_, squaredTolerance);
   var lineString = this.parallels_[index] !== undefined ?
-     this.parallels_[index] : new ol.geom.LineString(null);
+    this.parallels_[index] : new ol.geom.LineString(null);
   lineString.setFlatCoordinates(ol.geom.GeometryLayout.XY, flatCoordinates);
   return lineString;
 };
 
 
 /**
- * Get the list of parallels.  Pallels are lines of equal latitude.
+ * Get the list of parallels.  Parallels are lines of equal latitude.
  * @return {Array.<ol.geom.LineString>} The parallels.
  * @api
  */
@@ -57325,23 +58644,6 @@ ol.Graticule.prototype.handlePostCompose_ = function(e) {
 
   if (updateProjectionInfo) {
     this.updateProjectionInfo_(projection);
-  }
-
-  //Fix the extent if wrapped.
-  //(note: this is the same extent as vectorContext.extent_)
-  var offsetX = 0;
-  if (projection.canWrapX()) {
-    var projectionExtent = projection.getExtent();
-    var worldWidth = ol.extent.getWidth(projectionExtent);
-    var x = frameState.focus[0];
-    if (x < projectionExtent[0] || x > projectionExtent[2]) {
-      var worldsAway = Math.ceil((projectionExtent[0] - x) / worldWidth);
-      offsetX = worldWidth * worldsAway;
-      extent = [
-        extent[0] + offsetX, extent[1],
-        extent[2] + offsetX, extent[3]
-      ];
-    }
   }
 
   this.createGraticule_(extent, center, resolution, squaredTolerance);
@@ -57387,7 +58689,7 @@ ol.Graticule.prototype.updateProjectionInfo_ = function(projection) {
   var extent = projection.getExtent();
   var worldExtent = projection.getWorldExtent();
   var worldExtentP = ol.proj.transformExtent(worldExtent,
-     epsg4326Projection, projection);
+      epsg4326Projection, projection);
 
   var maxLat = worldExtent[3];
   var maxLon = worldExtent[2];
@@ -57411,13 +58713,13 @@ ol.Graticule.prototype.updateProjectionInfo_ = function(projection) {
 
 
   this.fromLonLatTransform_ = ol.proj.getTransform(
-     epsg4326Projection, projection);
+      epsg4326Projection, projection);
 
   this.toLonLatTransform_ = ol.proj.getTransform(
-     projection, epsg4326Projection);
+      projection, epsg4326Projection);
 
   this.projectionCenterLonLat_ = this.toLonLatTransform_(
-     ol.extent.getCenter(extent));
+      ol.extent.getCenter(extent));
 
   this.projection_ = projection;
 };
@@ -57750,7 +59052,7 @@ ol.ImageCanvas = function(extent, resolution, pixelRatio, attributions,
   this.loader_ = opt_loader !== undefined ? opt_loader : null;
 
   var state = opt_loader !== undefined ?
-      ol.ImageState.IDLE : ol.ImageState.LOADED;
+    ol.ImageState.IDLE : ol.ImageState.LOADED;
 
   ol.ImageBase.call(this, extent, resolution, pixelRatio, state, attributions);
 
@@ -57983,6 +59285,7 @@ goog.provide('ol.ImageTile');
 goog.require('ol');
 goog.require('ol.Tile');
 goog.require('ol.TileState');
+goog.require('ol.dom');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
 
@@ -58010,7 +59313,7 @@ ol.ImageTile = function(tileCoord, state, src, crossOrigin, tileLoadFunction) {
 
   /**
    * @private
-   * @type {Image}
+   * @type {Image|HTMLCanvasElement}
    */
   this.image_ = new Image();
   if (crossOrigin !== null) {
@@ -58039,6 +59342,7 @@ ol.inherits(ol.ImageTile, ol.Tile);
 ol.ImageTile.prototype.disposeInternal = function() {
   if (this.state == ol.TileState.LOADING) {
     this.unlistenImage_();
+    this.image_.src = ol.ImageTile.blankImage.toDataURL('image/png');
   }
   if (this.interimTile) {
     this.interimTile.dispose();
@@ -58074,8 +59378,8 @@ ol.ImageTile.prototype.getKey = function() {
  */
 ol.ImageTile.prototype.handleImageError_ = function() {
   this.state = ol.TileState.ERROR;
-  this.image_ = ol.ImageTile.blankImage;
   this.unlistenImage_();
+  this.image_ = ol.ImageTile.blankImage;
   this.changed();
 };
 
@@ -58128,10 +59432,14 @@ ol.ImageTile.prototype.unlistenImage_ = function() {
 
 /**
  * A blank image.
- * @type {Image}
+ * @type {HTMLCanvasElement}
  */
-ol.ImageTile.blankImage = new Image();
-ol.ImageTile.blankImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+ol.ImageTile.blankImage = (function() {
+  var ctx = ol.dom.createCanvasContext2D(1, 1);
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.fillRect(0, 0, 1, 1);
+  return ctx.canvas;
+})();
 
 // FIXME should handle all geo-referenced data, not just vector data
 
@@ -58169,20 +59477,26 @@ ol.interaction.DragAndDrop = function(opt_options) {
    * @type {Array.<function(new: ol.format.Feature)>}
    */
   this.formatConstructors_ = options.formatConstructors ?
-      options.formatConstructors : [];
+    options.formatConstructors : [];
 
   /**
    * @private
    * @type {ol.proj.Projection}
    */
   this.projection_ = options.projection ?
-      ol.proj.get(options.projection) : null;
+    ol.proj.get(options.projection) : null;
 
   /**
    * @private
    * @type {Array.<ol.EventsKey>}
    */
   this.dropListenKeys_ = null;
+
+  /**
+   * @private
+   * @type {ol.source.Vector}
+   */
+  this.source_ = options.source || null;
 
   /**
    * @private
@@ -58256,6 +59570,10 @@ ol.interaction.DragAndDrop.prototype.handleResult_ = function(file, event) {
     if (features && features.length > 0) {
       break;
     }
+  }
+  if (this.source_) {
+    this.source_.clear();
+    this.source_.addFeatures(features);
   }
   this.dispatchEvent(
       new ol.interaction.DragAndDrop.Event(
@@ -58443,7 +59761,7 @@ ol.interaction.DragRotateAndZoom = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.shiftKeyOnly;
+    options.condition : ol.events.condition.shiftKeyOnly;
 
   /**
    * @private
@@ -58583,15 +59901,16 @@ ol.render.canvas.Instruction = {
   BEGIN_PATH: 1,
   CIRCLE: 2,
   CLOSE_PATH: 3,
-  DRAW_IMAGE: 4,
-  DRAW_TEXT: 5,
-  END_GEOMETRY: 6,
-  FILL: 7,
-  MOVE_TO_LINE_TO: 8,
-  SET_FILL_STYLE: 9,
-  SET_STROKE_STYLE: 10,
-  SET_TEXT_STYLE: 11,
-  STROKE: 12
+  CUSTOM: 4,
+  DRAW_IMAGE: 5,
+  DRAW_TEXT: 6,
+  END_GEOMETRY: 7,
+  FILL: 8,
+  MOVE_TO_LINE_TO: 9,
+  SET_FILL_STYLE: 10,
+  SET_STROKE_STYLE: 11,
+  SET_TEXT_STYLE: 12,
+  STROKE: 13
 };
 
 goog.provide('ol.render.canvas.Replay');
@@ -58600,6 +59919,8 @@ goog.require('ol');
 goog.require('ol.array');
 goog.require('ol.extent');
 goog.require('ol.extent.Relationship');
+goog.require('ol.geom.GeometryType');
+goog.require('ol.geom.flat.inflate');
 goog.require('ol.geom.flat.transform');
 goog.require('ol.has');
 goog.require('ol.obj');
@@ -58681,6 +60002,12 @@ ol.render.canvas.Replay = function(tolerance, maxExtent, resolution, overlaps) {
    * @type {Array.<number>}
    */
   this.coordinates = [];
+
+  /**
+   * @private
+   * @type {Object.<number,ol.Coordinate|Array.<ol.Coordinate>|Array.<Array.<ol.Coordinate>>>}
+   */
+  this.coordinateCache_ = {};
 
   /**
    * @private
@@ -58771,6 +60098,75 @@ ol.render.canvas.Replay.prototype.appendFlatCoordinates = function(flatCoordinat
 
 
 /**
+ * @param {Array.<number>} flatCoordinates Flat coordinates.
+ * @param {number} offset Offset.
+ * @param {Array.<number>} ends Ends.
+ * @param {number} stride Stride.
+ * @param {Array.<number>} replayEnds Replay ends.
+ * @return {number} Offset.
+ */
+ol.render.canvas.Replay.prototype.drawCustomCoordinates_ = function(flatCoordinates, offset, ends, stride, replayEnds) {
+  for (var i = 0, ii = ends.length; i < ii; ++i) {
+    var end = ends[i];
+    var replayEnd = this.appendFlatCoordinates(flatCoordinates, offset, end, stride, false, false);
+    replayEnds.push(replayEnd);
+    offset = end;
+  }
+  return offset;
+};
+
+
+/**
+ * @inheritDoc.
+ */
+ol.render.canvas.Replay.prototype.drawCustom = function(geometry, feature, renderer) {
+  this.beginGeometry(geometry, feature);
+  var type = geometry.getType();
+  var stride = geometry.getStride();
+  var replayBegin = this.coordinates.length;
+  var flatCoordinates, replayEnd, replayEnds, replayEndss;
+  var offset;
+  if (type == ol.geom.GeometryType.MULTI_POLYGON) {
+    geometry = /** @type {ol.geom.MultiPolygon} */ (geometry);
+    flatCoordinates = geometry.getOrientedFlatCoordinates();
+    replayEndss = [];
+    var endss = geometry.getEndss();
+    offset = 0;
+    for (var i = 0, ii = endss.length; i < ii; ++i) {
+      var myEnds = [];
+      offset = this.drawCustomCoordinates_(flatCoordinates, offset, endss[i], stride, myEnds);
+      replayEndss.push(myEnds);
+    }
+    this.instructions.push([ol.render.canvas.Instruction.CUSTOM,
+      replayBegin, replayEndss, geometry, renderer, ol.geom.flat.inflate.coordinatesss]);
+  } else if (type == ol.geom.GeometryType.POLYGON || type == ol.geom.GeometryType.MULTI_LINE_STRING) {
+    replayEnds = [];
+    flatCoordinates = (type == ol.geom.GeometryType.POLYGON) ?
+      /** @type {ol.geom.Polygon} */ (geometry).getOrientedFlatCoordinates() :
+      geometry.getFlatCoordinates();
+    offset = this.drawCustomCoordinates_(flatCoordinates, 0,
+        /** @type {ol.geom.Polygon|ol.geom.MultiLineString} */ (geometry).getEnds(),
+        stride, replayEnds);
+    this.instructions.push([ol.render.canvas.Instruction.CUSTOM,
+      replayBegin, replayEnds, geometry, renderer, ol.geom.flat.inflate.coordinatess]);
+  } else if (type == ol.geom.GeometryType.LINE_STRING || type == ol.geom.GeometryType.MULTI_POINT) {
+    flatCoordinates = geometry.getFlatCoordinates();
+    replayEnd = this.appendFlatCoordinates(
+        flatCoordinates, 0, flatCoordinates.length, stride, false, false);
+    this.instructions.push([ol.render.canvas.Instruction.CUSTOM,
+      replayBegin, replayEnd, geometry, renderer, ol.geom.flat.inflate.coordinates]);
+  } else if (type == ol.geom.GeometryType.POINT) {
+    flatCoordinates = geometry.getFlatCoordinates();
+    this.coordinates.push(flatCoordinates[0], flatCoordinates[1]);
+    replayEnd = this.coordinates.length;
+    this.instructions.push([ol.render.canvas.Instruction.CUSTOM,
+      replayBegin, replayEnd, geometry, renderer]);
+  }
+  this.endGeometry(geometry, feature);
+};
+
+
+/**
  * @protected
  * @param {ol.geom.Geometry|ol.render.Feature} geometry Geometry.
  * @param {ol.Feature|ol.render.Feature} feature Feature.
@@ -58845,6 +60241,15 @@ ol.render.canvas.Replay.prototype.replay_ = function(
   var prevX, prevY, roundX, roundY;
   var pendingFill = 0;
   var pendingStroke = 0;
+  var coordinateCache = this.coordinateCache_;
+
+  var state = /** @type {olx.render.State} */ ({
+    context: context,
+    pixelRatio: pixelRatio,
+    resolution: this.resolution,
+    rotation: viewRotation
+  });
+
   // When the batch size gets too big, performance decreases. 200 is a good
   // balance between batch size and number of fill/stroke instructions.
   var batchSize =
@@ -58852,7 +60257,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
   while (i < ii) {
     var instruction = instructions[i];
     var type = /** @type {ol.render.canvas.Instruction} */ (instruction[0]);
-    var feature, fill, stroke, text, x, y;
+    var /** @type {ol.Feature|ol.render.Feature} */ feature, fill, stroke, text, x, y;
     switch (type) {
       case ol.render.canvas.Instruction.BEGIN_GEOMETRY:
         feature = /** @type {ol.Feature|ol.render.Feature} */ (instruction[1]);
@@ -58897,6 +60302,28 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         break;
       case ol.render.canvas.Instruction.CLOSE_PATH:
         context.closePath();
+        ++i;
+        break;
+      case ol.render.canvas.Instruction.CUSTOM:
+        d = /** @type {number} */ (instruction[1]);
+        dd = instruction[2];
+        var geometry = /** @type {ol.geom.SimpleGeometry} */ (instruction[3]);
+        var renderer = instruction[4];
+        var fn = instruction.length == 6 ? instruction[5] : undefined;
+        state.geometry = geometry;
+        state.feature = feature;
+        if (!(i in coordinateCache)) {
+          coordinateCache[i] = [];
+        }
+        var coords = coordinateCache[i];
+        if (fn) {
+          fn(pixelCoordinates, d, dd, 2, coords);
+        } else {
+          coords[0] = pixelCoordinates[d];
+          coords[1] = pixelCoordinates[d + 1];
+          coords.length = 2;
+        }
+        renderer(coords, state);
         ++i;
         break;
       case ol.render.canvas.Instruction.DRAW_IMAGE:
@@ -59010,8 +60437,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         break;
       case ol.render.canvas.Instruction.END_GEOMETRY:
         if (featureCallback !== undefined) {
-          feature =
-              /** @type {ol.Feature|ol.render.Feature} */ (instruction[1]);
+          feature = /** @type {ol.Feature|ol.render.Feature} */ (instruction[1]);
           var result = featureCallback(feature);
           if (result) {
             return result;
@@ -59069,7 +60495,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         break;
       case ol.render.canvas.Instruction.SET_STROKE_STYLE:
         var usePixelRatio = instruction[8] !== undefined ?
-            instruction[8] : true;
+          instruction[8] : true;
         var renderedPixelRatio = instruction[9];
 
         var lineWidth = /** @type {number} */ (instruction[2]);
@@ -59353,10 +60779,10 @@ ol.render.canvas.ImageReplay.prototype.drawPoint = function(pointGeometry, featu
   var stride = pointGeometry.getStride();
   var myBegin = this.coordinates.length;
   var myEnd = this.drawCoordinates_(
-        flatCoordinates, 0, flatCoordinates.length, stride);
+      flatCoordinates, 0, flatCoordinates.length, stride);
   this.instructions.push([
     ol.render.canvas.Instruction.DRAW_IMAGE, myBegin, myEnd, this.image_,
-      // Remaining arguments to DRAW_IMAGE are in alphabetical order
+    // Remaining arguments to DRAW_IMAGE are in alphabetical order
     this.anchorX_, this.anchorY_, this.height_, this.opacity_,
     this.originX_, this.originY_, this.rotateWithView_, this.rotation_,
     this.scale_, this.snapToPixel_, this.width_
@@ -59364,7 +60790,7 @@ ol.render.canvas.ImageReplay.prototype.drawPoint = function(pointGeometry, featu
   this.hitDetectionInstructions.push([
     ol.render.canvas.Instruction.DRAW_IMAGE, myBegin, myEnd,
     this.hitDetectionImage_,
-      // Remaining arguments to DRAW_IMAGE are in alphabetical order
+    // Remaining arguments to DRAW_IMAGE are in alphabetical order
     this.anchorX_, this.anchorY_, this.height_, this.opacity_,
     this.originX_, this.originY_, this.rotateWithView_, this.rotation_,
     this.scale_, this.snapToPixel_, this.width_
@@ -59385,10 +60811,10 @@ ol.render.canvas.ImageReplay.prototype.drawMultiPoint = function(multiPointGeome
   var stride = multiPointGeometry.getStride();
   var myBegin = this.coordinates.length;
   var myEnd = this.drawCoordinates_(
-        flatCoordinates, 0, flatCoordinates.length, stride);
+      flatCoordinates, 0, flatCoordinates.length, stride);
   this.instructions.push([
     ol.render.canvas.Instruction.DRAW_IMAGE, myBegin, myEnd, this.image_,
-      // Remaining arguments to DRAW_IMAGE are in alphabetical order
+    // Remaining arguments to DRAW_IMAGE are in alphabetical order
     this.anchorX_, this.anchorY_, this.height_, this.opacity_,
     this.originX_, this.originY_, this.rotateWithView_, this.rotation_,
     this.scale_, this.snapToPixel_, this.width_
@@ -59396,7 +60822,7 @@ ol.render.canvas.ImageReplay.prototype.drawMultiPoint = function(multiPointGeome
   this.hitDetectionInstructions.push([
     ol.render.canvas.Instruction.DRAW_IMAGE, myBegin, myEnd,
     this.hitDetectionImage_,
-      // Remaining arguments to DRAW_IMAGE are in alphabetical order
+    // Remaining arguments to DRAW_IMAGE are in alphabetical order
     this.anchorX_, this.anchorY_, this.height_, this.opacity_,
     this.originX_, this.originY_, this.rotateWithView_, this.rotation_,
     this.scale_, this.snapToPixel_, this.width_
@@ -59490,7 +60916,7 @@ ol.render.canvas.LineStringReplay = function(tolerance, maxExtent, resolution, o
    *         currentLineJoin: (string|undefined),
    *         currentLineWidth: (number|undefined),
    *         currentMiterLimit: (number|undefined),
-   *         lastStroke: number,
+   *         lastStroke: (number|undefined),
    *         strokeStyle: (ol.ColorLike|undefined),
    *         lineCap: (string|undefined),
    *         lineDash: Array.<number>,
@@ -59507,7 +60933,7 @@ ol.render.canvas.LineStringReplay = function(tolerance, maxExtent, resolution, o
     currentLineJoin: undefined,
     currentLineWidth: undefined,
     currentMiterLimit: undefined,
-    lastStroke: 0,
+    lastStroke: undefined,
     strokeStyle: undefined,
     lineCap: undefined,
     lineDash: null,
@@ -59575,10 +61001,11 @@ ol.render.canvas.LineStringReplay.prototype.setStrokeStyle_ = function() {
       state.currentLineJoin != lineJoin ||
       state.currentLineWidth != lineWidth ||
       state.currentMiterLimit != miterLimit) {
-    if (state.lastStroke != this.coordinates.length) {
+    if (state.lastStroke != undefined && state.lastStroke != this.coordinates.length) {
       this.instructions.push([ol.render.canvas.Instruction.STROKE]);
       state.lastStroke = this.coordinates.length;
     }
+    state.lastStroke = 0;
     this.instructions.push([
       ol.render.canvas.Instruction.SET_STROKE_STYLE,
       strokeStyle, lineWidth, lineCap, lineJoin, miterLimit, lineDash, lineDashOffset, true, 1
@@ -59661,7 +61088,7 @@ ol.render.canvas.LineStringReplay.prototype.drawMultiLineString = function(multi
  */
 ol.render.canvas.LineStringReplay.prototype.finish = function() {
   var state = this.state_;
-  if (state.lastStroke != this.coordinates.length) {
+  if (state.lastStroke != undefined && state.lastStroke != this.coordinates.length) {
     this.instructions.push([ol.render.canvas.Instruction.STROKE]);
   }
   this.reverseHitDetectionInstructions();
@@ -59675,25 +61102,25 @@ ol.render.canvas.LineStringReplay.prototype.finish = function() {
 ol.render.canvas.LineStringReplay.prototype.setFillStrokeStyle = function(fillStyle, strokeStyle) {
   var strokeStyleColor = strokeStyle.getColor();
   this.state_.strokeStyle = ol.colorlike.asColorLike(strokeStyleColor ?
-      strokeStyleColor : ol.render.canvas.defaultStrokeStyle);
+    strokeStyleColor : ol.render.canvas.defaultStrokeStyle);
   var strokeStyleLineCap = strokeStyle.getLineCap();
   this.state_.lineCap = strokeStyleLineCap !== undefined ?
-      strokeStyleLineCap : ol.render.canvas.defaultLineCap;
+    strokeStyleLineCap : ol.render.canvas.defaultLineCap;
   var strokeStyleLineDash = strokeStyle.getLineDash();
   this.state_.lineDash = strokeStyleLineDash ?
-      strokeStyleLineDash : ol.render.canvas.defaultLineDash;
+    strokeStyleLineDash : ol.render.canvas.defaultLineDash;
   var strokeStyleLineDashOffset = strokeStyle.getLineDashOffset();
   this.state_.lineDashOffset = strokeStyleLineDashOffset ?
-      strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset;
+    strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset;
   var strokeStyleLineJoin = strokeStyle.getLineJoin();
   this.state_.lineJoin = strokeStyleLineJoin !== undefined ?
-      strokeStyleLineJoin : ol.render.canvas.defaultLineJoin;
+    strokeStyleLineJoin : ol.render.canvas.defaultLineJoin;
   var strokeStyleWidth = strokeStyle.getWidth();
   this.state_.lineWidth = strokeStyleWidth !== undefined ?
-      strokeStyleWidth : ol.render.canvas.defaultLineWidth;
+    strokeStyleWidth : ol.render.canvas.defaultLineWidth;
   var strokeStyleMiterLimit = strokeStyle.getMiterLimit();
   this.state_.miterLimit = strokeStyleMiterLimit !== undefined ?
-      strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit;
+    strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit;
 
   if (this.state_.lineWidth > this.maxLineWidth) {
     this.maxLineWidth = this.state_.lineWidth;
@@ -59882,7 +61309,7 @@ ol.render.canvas.PolygonReplay.prototype.drawPolygon = function(polygonGeometry,
   this.hitDetectionInstructions.push([
     ol.render.canvas.Instruction.SET_FILL_STYLE,
     ol.color.asString(ol.render.canvas.defaultFillStyle)]
-                                    );
+  );
   if (state.strokeStyle !== undefined) {
     this.hitDetectionInstructions.push([
       ol.render.canvas.Instruction.SET_STROKE_STYLE,
@@ -59979,32 +61406,32 @@ ol.render.canvas.PolygonReplay.prototype.setFillStrokeStyle = function(fillStyle
   if (fillStyle) {
     var fillStyleColor = fillStyle.getColor();
     state.fillStyle = ol.colorlike.asColorLike(fillStyleColor ?
-        fillStyleColor : ol.render.canvas.defaultFillStyle);
+      fillStyleColor : ol.render.canvas.defaultFillStyle);
   } else {
     state.fillStyle = undefined;
   }
   if (strokeStyle) {
     var strokeStyleColor = strokeStyle.getColor();
     state.strokeStyle = ol.colorlike.asColorLike(strokeStyleColor ?
-        strokeStyleColor : ol.render.canvas.defaultStrokeStyle);
+      strokeStyleColor : ol.render.canvas.defaultStrokeStyle);
     var strokeStyleLineCap = strokeStyle.getLineCap();
     state.lineCap = strokeStyleLineCap !== undefined ?
-        strokeStyleLineCap : ol.render.canvas.defaultLineCap;
+      strokeStyleLineCap : ol.render.canvas.defaultLineCap;
     var strokeStyleLineDash = strokeStyle.getLineDash();
     state.lineDash = strokeStyleLineDash ?
-        strokeStyleLineDash.slice() : ol.render.canvas.defaultLineDash;
+      strokeStyleLineDash.slice() : ol.render.canvas.defaultLineDash;
     var strokeStyleLineDashOffset = strokeStyle.getLineDashOffset();
     state.lineDashOffset = strokeStyleLineDashOffset ?
-        strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset;
+      strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset;
     var strokeStyleLineJoin = strokeStyle.getLineJoin();
     state.lineJoin = strokeStyleLineJoin !== undefined ?
-        strokeStyleLineJoin : ol.render.canvas.defaultLineJoin;
+      strokeStyleLineJoin : ol.render.canvas.defaultLineJoin;
     var strokeStyleWidth = strokeStyle.getWidth();
     state.lineWidth = strokeStyleWidth !== undefined ?
-        strokeStyleWidth : ol.render.canvas.defaultLineWidth;
+      strokeStyleWidth : ol.render.canvas.defaultLineWidth;
     var strokeStyleMiterLimit = strokeStyle.getMiterLimit();
     state.miterLimit = strokeStyleMiterLimit !== undefined ?
-        strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit;
+      strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit;
 
     if (state.lineWidth > this.maxLineWidth) {
       this.maxLineWidth = state.lineWidth;
@@ -60310,7 +61737,7 @@ ol.render.canvas.TextReplay.prototype.setTextStyle = function(textStyle) {
     } else {
       var textFillStyleColor = textFillStyle.getColor();
       var fillStyle = ol.colorlike.asColorLike(textFillStyleColor ?
-          textFillStyleColor : ol.render.canvas.defaultFillStyle);
+        textFillStyleColor : ol.render.canvas.defaultFillStyle);
       if (!this.textFillState_) {
         this.textFillState_ = {
           fillStyle: fillStyle
@@ -60332,19 +61759,19 @@ ol.render.canvas.TextReplay.prototype.setTextStyle = function(textStyle) {
       var textStrokeStyleWidth = textStrokeStyle.getWidth();
       var textStrokeStyleMiterLimit = textStrokeStyle.getMiterLimit();
       var lineCap = textStrokeStyleLineCap !== undefined ?
-          textStrokeStyleLineCap : ol.render.canvas.defaultLineCap;
+        textStrokeStyleLineCap : ol.render.canvas.defaultLineCap;
       var lineDash = textStrokeStyleLineDash ?
-          textStrokeStyleLineDash.slice() : ol.render.canvas.defaultLineDash;
+        textStrokeStyleLineDash.slice() : ol.render.canvas.defaultLineDash;
       var lineDashOffset = textStrokeStyleLineDashOffset !== undefined ?
-          textStrokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset;
+        textStrokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset;
       var lineJoin = textStrokeStyleLineJoin !== undefined ?
-          textStrokeStyleLineJoin : ol.render.canvas.defaultLineJoin;
+        textStrokeStyleLineJoin : ol.render.canvas.defaultLineJoin;
       var lineWidth = textStrokeStyleWidth !== undefined ?
-          textStrokeStyleWidth : ol.render.canvas.defaultLineWidth;
+        textStrokeStyleWidth : ol.render.canvas.defaultLineWidth;
       var miterLimit = textStrokeStyleMiterLimit !== undefined ?
-          textStrokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit;
+        textStrokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit;
       var strokeStyle = ol.colorlike.asColorLike(textStrokeStyleColor ?
-          textStrokeStyleColor : ol.render.canvas.defaultStrokeStyle);
+        textStrokeStyleColor : ol.render.canvas.defaultStrokeStyle);
       if (!this.textStrokeState_) {
         this.textStrokeState_ = {
           lineCap: lineCap,
@@ -60376,11 +61803,11 @@ ol.render.canvas.TextReplay.prototype.setTextStyle = function(textStyle) {
     var textTextAlign = textStyle.getTextAlign();
     var textTextBaseline = textStyle.getTextBaseline();
     var font = textFont !== undefined ?
-        textFont : ol.render.canvas.defaultFont;
+      textFont : ol.render.canvas.defaultFont;
     var textAlign = textTextAlign !== undefined ?
-        textTextAlign : ol.render.canvas.defaultTextAlign;
+      textTextAlign : ol.render.canvas.defaultTextAlign;
     var textBaseline = textTextBaseline !== undefined ?
-        textTextBaseline : ol.render.canvas.defaultTextBaseline;
+      textTextBaseline : ol.render.canvas.defaultTextBaseline;
     if (!this.textState_) {
       this.textState_ = {
         font: font,
@@ -60411,6 +61838,7 @@ goog.require('ol.extent');
 goog.require('ol.geom.flat.transform');
 goog.require('ol.obj');
 goog.require('ol.render.ReplayGroup');
+goog.require('ol.render.canvas.Replay');
 goog.require('ol.render.canvas.ImageReplay');
 goog.require('ol.render.canvas.LineStringReplay');
 goog.require('ol.render.canvas.PolygonReplay');
@@ -60564,6 +61992,24 @@ ol.render.canvas.ReplayGroup.getCircleArray_ = function(radius) {
   ol.render.canvas.ReplayGroup.circleArrayCache_[radius] = arr;
   return arr;
 };
+
+
+/**
+ * @param {Array.<ol.render.ReplayType>} replays Replays.
+ * @return {boolean} Has replays of the provided types.
+ */
+ol.render.canvas.ReplayGroup.prototype.hasReplays = function(replays) {
+  for (var zIndex in this.replaysByZIndex_) {
+    var candidates = this.replaysByZIndex_[zIndex];
+    for (var i = 0, ii = replays.length; i < ii; ++i) {
+      if (replays[i] in candidates) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
 
 /**
  * FIXME empty description for jsdoc
@@ -60791,6 +62237,7 @@ ol.render.canvas.ReplayGroup.prototype.replayHitDetection_ = function(
  */
 ol.render.canvas.ReplayGroup.BATCH_CONSTRUCTORS_ = {
   'Circle': ol.render.canvas.PolygonReplay,
+  'Default': ol.render.canvas.Replay,
   'Image': ol.render.canvas.ImageReplay,
   'LineString': ol.render.canvas.LineStringReplay,
   'Polygon': ol.render.canvas.PolygonReplay,
@@ -60865,20 +62312,20 @@ ol.renderer.Layer.prototype.hasFeatureAtCoordinate = ol.functions.FALSE;
  */
 ol.renderer.Layer.prototype.createLoadedTileFinder = function(source, projection, tiles) {
   return (
-      /**
-       * @param {number} zoom Zoom level.
-       * @param {ol.TileRange} tileRange Tile range.
-       * @return {boolean} The tile range is fully loaded.
-       */
-      function(zoom, tileRange) {
-        function callback(tile) {
-          if (!tiles[zoom]) {
-            tiles[zoom] = {};
-          }
-          tiles[zoom][tile.tileCoord.toString()] = tile;
+    /**
+     * @param {number} zoom Zoom level.
+     * @param {ol.TileRange} tileRange Tile range.
+     * @return {boolean} The tile range is fully loaded.
+     */
+    function(zoom, tileRange) {
+      function callback(tile) {
+        if (!tiles[zoom]) {
+          tiles[zoom] = {};
         }
-        return source.forEachLoadedTile(projection, zoom, tileRange, callback);
-      });
+        tiles[zoom][tile.tileCoord.toString()] = tile;
+      }
+      return source.forEachLoadedTile(projection, zoom, tileRange, callback);
+    });
 };
 
 
@@ -60951,12 +62398,14 @@ ol.renderer.Layer.prototype.scheduleExpireCache = function(frameState, tileSourc
      */
     var postRenderFunction = function(tileSource, map, frameState) {
       var tileSourceKey = ol.getUid(tileSource).toString();
-      tileSource.expireCache(frameState.viewState.projection,
-                             frameState.usedTiles[tileSourceKey]);
+      if (tileSourceKey in frameState.usedTiles) {
+        tileSource.expireCache(frameState.viewState.projection,
+            frameState.usedTiles[tileSourceKey]);
+      }
     }.bind(null, tileSource);
 
     frameState.postRenderFunctions.push(
-      /** @type {ol.PostRenderFunction} */ (postRenderFunction)
+        /** @type {ol.PostRenderFunction} */ (postRenderFunction)
     );
   }
 };
@@ -61165,7 +62614,7 @@ ol.renderer.canvas.Layer.prototype.dispatchComposeEvent_ = function(type, contex
     var rotation = frameState.viewState.rotation;
     ol.render.canvas.rotateAtOffset(context, -rotation, width / 2, height / 2);
     var transform = opt_transform !== undefined ?
-        opt_transform : this.getTransform(frameState, 0);
+      opt_transform : this.getTransform(frameState, 0);
     var render = new ol.render.canvas.Immediate(
         context, frameState.pixelRatio, frameState.extent, transform,
         frameState.viewState.rotation);
@@ -61275,6 +62724,7 @@ goog.provide('ol.renderer.vector');
 
 goog.require('ol');
 goog.require('ol.ImageState');
+goog.require('ol.geom.GeometryType');
 goog.require('ol.render.ReplayType');
 
 
@@ -61384,9 +62834,34 @@ ol.renderer.vector.renderFeature_ = function(
     return;
   }
   var simplifiedGeometry = geometry.getSimplifiedGeometry(squaredTolerance);
-  var geometryRenderer =
-      ol.renderer.vector.GEOMETRY_RENDERERS_[simplifiedGeometry.getType()];
-  geometryRenderer(replayGroup, simplifiedGeometry, style, feature);
+  var renderer = style.getRenderer();
+  if (renderer) {
+    ol.renderer.vector.renderGeometry_(replayGroup, simplifiedGeometry, style, feature);
+  } else {
+    var geometryRenderer =
+        ol.renderer.vector.GEOMETRY_RENDERERS_[simplifiedGeometry.getType()];
+    geometryRenderer(replayGroup, simplifiedGeometry, style, feature);
+  }
+};
+
+
+/**
+ * @param {ol.render.ReplayGroup} replayGroup Replay group.
+ * @param {ol.geom.Geometry} geometry Geometry.
+ * @param {ol.style.Style} style Style.
+ * @param {ol.Feature|ol.render.Feature} feature Feature.
+ * @private
+ */
+ol.renderer.vector.renderGeometry_ = function(replayGroup, geometry, style, feature) {
+  if (geometry.getType() == ol.geom.GeometryType.GEOMETRY_COLLECTION) {
+    var geometries = /** @type {ol.geom.GeometryCollection} */ (geometry).getGeometries();
+    for (var i = 0, ii = geometries.length; i < ii; ++i) {
+      ol.renderer.vector.renderGeometry_(replayGroup, geometries[i], style, feature);
+    }
+    return;
+  }
+  var replay = replayGroup.getReplay(style.getZIndex(), ol.render.ReplayType.DEFAULT);
+  replay.drawCustom(/** @type {ol.geom.SimpleGeometry} */ (geometry), feature, style.getRenderer());
 };
 
 
@@ -61668,7 +63143,7 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
   var extent = frameState.extent;
   var pixelRatio = frameState.pixelRatio;
   var skippedFeatureUids = layerState.managed ?
-      frameState.skippedFeatureUids : {};
+    frameState.skippedFeatureUids : {};
   var viewState = frameState.viewState;
   var projection = viewState.projection;
   var rotation = viewState.rotation;
@@ -61691,7 +63166,9 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
     var drawOffsetX = 0;
     var drawOffsetY = 0;
     var replayContext;
-    if (layer.hasListener(ol.render.EventType.RENDER)) {
+    var transparentLayer = layerState.opacity !== 1;
+    var hasRenderListeners = layer.hasListener(ol.render.EventType.RENDER);
+    if (transparentLayer || hasRenderListeners) {
       var drawWidth = context.canvas.width;
       var drawHeight = context.canvas.height;
       if (rotation) {
@@ -61707,11 +63184,15 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
     } else {
       replayContext = context;
     }
-    // for performance reasons, context.save / context.restore is not used
-    // to save and restore the transformation matrix and the opacity.
-    // see http://jsperf.com/context-save-restore-versus-variable
+
     var alpha = replayContext.globalAlpha;
-    replayContext.globalAlpha = layerState.opacity;
+    if (!transparentLayer) {
+      // for performance reasons, context.save / context.restore is not used
+      // to save and restore the transformation matrix and the opacity.
+      // see http://jsperf.com/context-save-restore-versus-variable
+      replayContext.globalAlpha = layerState.opacity;
+    }
+
     if (replayContext != context) {
       replayContext.translate(drawOffsetX, drawOffsetY);
     }
@@ -61753,11 +63234,23 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
         width / 2, height / 2);
 
     if (replayContext != context) {
-      this.dispatchRenderEvent(replayContext, frameState, transform);
-      context.drawImage(replayContext.canvas, -drawOffsetX, -drawOffsetY);
+      if (hasRenderListeners) {
+        this.dispatchRenderEvent(replayContext, frameState, transform);
+      }
+      if (transparentLayer) {
+        var mainContextAlpha = context.globalAlpha;
+        context.globalAlpha = layerState.opacity;
+        context.drawImage(replayContext.canvas, -drawOffsetX, -drawOffsetY);
+        context.globalAlpha = mainContextAlpha;
+      } else {
+        context.drawImage(replayContext.canvas, -drawOffsetX, -drawOffsetY);
+      }
       replayContext.translate(-drawOffsetX, -drawOffsetY);
     }
-    replayContext.globalAlpha = alpha;
+
+    if (!transparentLayer) {
+      replayContext.globalAlpha = alpha;
+    }
   }
 
   if (clipped) {
@@ -61871,10 +63364,9 @@ ol.renderer.canvas.VectorLayer.prototype.prepareFrame = function(frameState, lay
 
   this.dirty_ = false;
 
-  var replayGroup =
-      new ol.render.canvas.ReplayGroup(
-          ol.renderer.vector.getTolerance(resolution, pixelRatio), extent,
-          resolution, vectorSource.getOverlaps(), vectorLayer.getRenderBuffer());
+  var replayGroup = new ol.render.canvas.ReplayGroup(
+      ol.renderer.vector.getTolerance(resolution, pixelRatio), extent,
+      resolution, vectorSource.getOverlaps(), vectorLayer.getRenderBuffer());
   vectorSource.loadFeatures(extent, resolution, projection);
   /**
    * @param {ol.Feature} feature Feature.
@@ -61896,7 +63388,7 @@ ol.renderer.canvas.VectorLayer.prototype.prepareFrame = function(frameState, lay
           feature, resolution, pixelRatio, styles, replayGroup);
       this.dirty_ = this.dirty_ || dirty;
     }
-  };
+  }.bind(this);
   if (vectorLayerRenderOrder) {
     /** @type {Array.<ol.Feature>} */
     var features = [];
@@ -61908,7 +63400,9 @@ ol.renderer.canvas.VectorLayer.prototype.prepareFrame = function(frameState, lay
           features.push(feature);
         }, this);
     features.sort(vectorLayerRenderOrder);
-    features.forEach(renderFeature, this);
+    for (var i = 0, ii = features.length; i < ii; ++i) {
+      renderFeature(features[i]);
+    }
   } else {
     vectorSource.forEachFeatureInExtent(extent, renderFeature, this);
   }
@@ -61994,8 +63488,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.renderer.webgl.defaultmapshader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
-      ol.renderer.webgl.defaultmapshader.Fragment.DEBUG_SOURCE :
-      ol.renderer.webgl.defaultmapshader.Fragment.OPTIMIZED_SOURCE;
+    ol.renderer.webgl.defaultmapshader.Fragment.DEBUG_SOURCE :
+    ol.renderer.webgl.defaultmapshader.Fragment.OPTIMIZED_SOURCE;
 
 
   ol.renderer.webgl.defaultmapshader.fragment = new ol.renderer.webgl.defaultmapshader.Fragment();
@@ -62031,8 +63525,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.renderer.webgl.defaultmapshader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
-      ol.renderer.webgl.defaultmapshader.Vertex.DEBUG_SOURCE :
-      ol.renderer.webgl.defaultmapshader.Vertex.OPTIMIZED_SOURCE;
+    ol.renderer.webgl.defaultmapshader.Vertex.DEBUG_SOURCE :
+    ol.renderer.webgl.defaultmapshader.Vertex.OPTIMIZED_SOURCE;
 
 
   ol.renderer.webgl.defaultmapshader.vertex = new ol.renderer.webgl.defaultmapshader.Vertex();
@@ -62200,7 +63694,7 @@ if (ol.ENABLE_WEBGL) {
       }.bind(null, gl, this.framebuffer, this.texture);
 
       frameState.postRenderFunctions.push(
-        /** @type {ol.PostRenderFunction} */ (postRenderFunction)
+          /** @type {ol.PostRenderFunction} */ (postRenderFunction)
       );
 
       var texture = ol.webgl.Context.createEmptyTexture(
@@ -62704,7 +64198,7 @@ goog.require('ol.style.Style');
  */
 ol.layer.Vector = function(opt_options) {
   var options = opt_options ?
-     opt_options : /** @type {olx.layer.VectorOptions} */ ({});
+    opt_options : /** @type {olx.layer.VectorOptions} */ ({});
 
   var baseOptions = ol.obj.assign({}, options);
 
@@ -62714,42 +64208,42 @@ ol.layer.Vector = function(opt_options) {
   delete baseOptions.updateWhileInteracting;
   ol.layer.Layer.call(this, /** @type {olx.layer.LayerOptions} */ (baseOptions));
 
- /**
-  * @type {number}
-  * @private
-  */
+  /**
+   * @type {number}
+   * @private
+   */
   this.renderBuffer_ = options.renderBuffer !== undefined ?
-     options.renderBuffer : 100;
+    options.renderBuffer : 100;
 
- /**
-  * User provided style.
-  * @type {ol.style.Style|Array.<ol.style.Style>|ol.StyleFunction}
-  * @private
-  */
+  /**
+   * User provided style.
+   * @type {ol.style.Style|Array.<ol.style.Style>|ol.StyleFunction}
+   * @private
+   */
   this.style_ = null;
 
- /**
-  * Style function for use within the library.
-  * @type {ol.StyleFunction|undefined}
-  * @private
-  */
+  /**
+   * Style function for use within the library.
+   * @type {ol.StyleFunction|undefined}
+   * @private
+   */
   this.styleFunction_ = undefined;
 
   this.setStyle(options.style);
 
- /**
-  * @type {boolean}
-  * @private
-  */
+  /**
+   * @type {boolean}
+   * @private
+   */
   this.updateWhileAnimating_ = options.updateWhileAnimating !== undefined ?
-     options.updateWhileAnimating : false;
+    options.updateWhileAnimating : false;
 
- /**
-  * @type {boolean}
-  * @private
-  */
+  /**
+   * @type {boolean}
+   * @private
+   */
   this.updateWhileInteracting_ = options.updateWhileInteracting !== undefined ?
-     options.updateWhileInteracting : false;
+    options.updateWhileInteracting : false;
 };
 ol.inherits(ol.layer.Vector, ol.layer.Layer);
 
@@ -62783,7 +64277,7 @@ ol.layer.Vector.prototype.getRenderBuffer = function() {
  */
 ol.layer.Vector.prototype.getRenderOrder = function() {
   return /** @type {ol.RenderOrderFunction|null|undefined} */ (
-      this.get(ol.layer.Vector.Property_.RENDER_ORDER));
+    this.get(ol.layer.Vector.Property_.RENDER_ORDER));
 };
 
 
@@ -62859,7 +64353,7 @@ ol.layer.Vector.prototype.setRenderOrder = function(renderOrder) {
 ol.layer.Vector.prototype.setStyle = function(style) {
   this.style_ = style !== undefined ? style : ol.style.Style.defaultFunction;
   this.styleFunction_ = style === null ?
-      undefined : ol.style.Style.createFunction(this.style_);
+    undefined : ol.style.Style.createFunction(this.style_);
   this.changed();
 };
 
@@ -62908,27 +64402,27 @@ ol.loadingstrategy.bbox = function(extent, resolution) {
  */
 ol.loadingstrategy.tile = function(tileGrid) {
   return (
-      /**
+  /**
        * @param {ol.Extent} extent Extent.
        * @param {number} resolution Resolution.
        * @return {Array.<ol.Extent>} Extents.
        */
-      function(extent, resolution) {
-        var z = tileGrid.getZForResolution(resolution);
-        var tileRange = tileGrid.getTileRangeForExtentAndZ(extent, z);
-        /** @type {Array.<ol.Extent>} */
-        var extents = [];
-        /** @type {ol.TileCoord} */
-        var tileCoord = [z, 0, 0];
-        for (tileCoord[1] = tileRange.minX; tileCoord[1] <= tileRange.maxX;
-             ++tileCoord[1]) {
-          for (tileCoord[2] = tileRange.minY; tileCoord[2] <= tileRange.maxY;
-               ++tileCoord[2]) {
-            extents.push(tileGrid.getTileCoordExtent(tileCoord));
-          }
+    function(extent, resolution) {
+      var z = tileGrid.getZForResolution(resolution);
+      var tileRange = tileGrid.getTileRangeForExtentAndZ(extent, z);
+      /** @type {Array.<ol.Extent>} */
+      var extents = [];
+      /** @type {ol.TileCoord} */
+      var tileCoord = [z, 0, 0];
+      for (tileCoord[1] = tileRange.minX; tileCoord[1] <= tileRange.maxX;
+        ++tileCoord[1]) {
+        for (tileCoord[2] = tileRange.minY; tileCoord[2] <= tileRange.maxY;
+          ++tileCoord[2]) {
+          extents.push(tileGrid.getTileCoordExtent(tileCoord));
         }
-        return extents;
-      });
+      }
+      return extents;
+    });
 };
 
 goog.provide('ol.source.Source');
@@ -62981,7 +64475,7 @@ ol.source.Source = function(options) {
    * @type {ol.source.State}
    */
   this.state_ = options.state !== undefined ?
-      options.state : ol.source.State.READY;
+    options.state : ol.source.State.READY;
 
   /**
    * @private
@@ -63256,7 +64750,7 @@ ol.source.Vector = function(opt_options) {
    * @type {ol.LoadingStrategy}
    */
   this.strategy_ = options.strategy !== undefined ? options.strategy :
-      ol.loadingstrategy.all;
+    ol.loadingstrategy.all;
 
   var useSpatialIndex =
       options.useSpatialIndex !== undefined ? options.useSpatialIndex : true;
@@ -63786,7 +65280,7 @@ ol.source.Vector.prototype.getClosestFeatureToCoordinate = function(coordinate, 
  * `useSpatialIndex` set to `false`.
  * @param {ol.Extent=} opt_extent Destination extent. If provided, no new extent
  *     will be created. Instead, that extent's coordinates will be overwritten.
- * @return {!ol.Extent} Extent.
+ * @return {ol.Extent} Extent.
  * @api
  */
 ol.source.Vector.prototype.getExtent = function(opt_extent) {
@@ -64127,8 +65621,8 @@ ol.interaction.Draw = function(options) {
    * @private
    */
   this.minPoints_ = options.minPoints ?
-      options.minPoints :
-      (this.mode_ === ol.interaction.Draw.Mode_.POLYGON ? 3 : 2);
+    options.minPoints :
+    (this.mode_ === ol.interaction.Draw.Mode_.POLYGON ? 3 : 2);
 
   /**
    * The number of points that can be drawn before a polygon ring or line string
@@ -64156,7 +65650,7 @@ ol.interaction.Draw = function(options) {
        */
       geometryFunction = function(coordinates, opt_geometry) {
         var circle = opt_geometry ? /** @type {ol.geom.Circle} */ (opt_geometry) :
-            new ol.geom.Circle([NaN, NaN]);
+          new ol.geom.Circle([NaN, NaN]);
         var squaredLength = ol.coordinate.squaredDistance(
             coordinates[0], coordinates[1]);
         circle.setCenterAndRadius(coordinates[0], Math.sqrt(squaredLength));
@@ -64251,7 +65745,7 @@ ol.interaction.Draw = function(options) {
    * @private
    */
   this.squaredClickTolerance_ = options.clickTolerance ?
-      options.clickTolerance * options.clickTolerance : 36;
+    options.clickTolerance * options.clickTolerance : 36;
 
   /**
    * Draw overlay where our sketch features are drawn.
@@ -64264,7 +65758,7 @@ ol.interaction.Draw = function(options) {
       wrapX: options.wrapX ? options.wrapX : false
     }),
     style: options.style ? options.style :
-        ol.interaction.Draw.getDefaultStyleFunction()
+      ol.interaction.Draw.getDefaultStyleFunction()
   });
 
   /**
@@ -64279,7 +65773,7 @@ ol.interaction.Draw = function(options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.noModifierKeys;
+    options.condition : ol.events.condition.noModifierKeys;
 
   /**
    * @private
@@ -64290,7 +65784,7 @@ ol.interaction.Draw = function(options) {
     this.freehandCondition_ = ol.events.condition.always;
   } else {
     this.freehandCondition_ = options.freehandCondition ?
-        options.freehandCondition : ol.events.condition.shiftKeyOnly;
+      options.freehandCondition : ol.events.condition.shiftKeyOnly;
   }
 
   ol.events.listen(this,
@@ -64423,8 +65917,8 @@ ol.interaction.Draw.prototype.handlePointerMove_ = function(event) {
     var dy = downPx[1] - clickPx[1];
     var squaredDistance = dx * dx + dy * dy;
     this.shouldHandle_ = this.freehand_ ?
-        squaredDistance > this.squaredClickTolerance_ :
-        squaredDistance <= this.squaredClickTolerance_;
+      squaredDistance > this.squaredClickTolerance_ :
+      squaredDistance <= this.squaredClickTolerance_;
   }
 
   if (this.finishCoordinate_) {
@@ -64789,23 +66283,23 @@ ol.interaction.Draw.prototype.updateState_ = function() {
  */
 ol.interaction.Draw.createRegularPolygon = function(opt_sides, opt_angle) {
   return (
-      /**
+  /**
        * @param {ol.Coordinate|Array.<ol.Coordinate>|Array.<Array.<ol.Coordinate>>} coordinates
        * @param {ol.geom.SimpleGeometry=} opt_geometry
        * @return {ol.geom.SimpleGeometry}
        */
-      function(coordinates, opt_geometry) {
-        var center = coordinates[0];
-        var end = coordinates[1];
-        var radius = Math.sqrt(
-            ol.coordinate.squaredDistance(center, end));
-        var geometry = opt_geometry ? /** @type {ol.geom.Polygon} */ (opt_geometry) :
-            ol.geom.Polygon.fromCircle(new ol.geom.Circle(center), opt_sides);
-        var angle = opt_angle ? opt_angle :
-            Math.atan((end[1] - center[1]) / (end[0] - center[0]));
-        ol.geom.Polygon.makeRegular(geometry, center, radius, angle);
-        return geometry;
-      }
+    function(coordinates, opt_geometry) {
+      var center = coordinates[0];
+      var end = coordinates[1];
+      var radius = Math.sqrt(
+          ol.coordinate.squaredDistance(center, end));
+      var geometry = opt_geometry ? /** @type {ol.geom.Polygon} */ (opt_geometry) :
+        ol.geom.Polygon.fromCircle(new ol.geom.Circle(center), opt_sides);
+      var angle = opt_angle ? opt_angle :
+        Math.atan((end[1] - center[1]) / (end[0] - center[0]));
+      ol.geom.Polygon.makeRegular(geometry, center, radius, angle);
+      return geometry;
+    }
   );
 };
 
@@ -64903,6 +66397,21 @@ ol.interaction.Draw.Event = function(type, feature) {
 };
 ol.inherits(ol.interaction.Draw.Event, ol.events.Event);
 
+goog.provide('ol.interaction.ExtentEventType');
+
+
+/**
+ * @enum {string}
+ */
+ol.interaction.ExtentEventType = {
+  /**
+   * Triggered after the extent is changed
+   * @event ol.interaction.Extent.Event#extentchanged
+   * @api
+   */
+  EXTENTCHANGED: 'extentchanged'
+};
+
 goog.provide('ol.interaction.Extent');
 
 goog.require('ol');
@@ -64915,6 +66424,7 @@ goog.require('ol.extent');
 goog.require('ol.geom.GeometryType');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
+goog.require('ol.interaction.ExtentEventType');
 goog.require('ol.interaction.Pointer');
 goog.require('ol.layer.Vector');
 goog.require('ol.source.Vector');
@@ -64981,10 +66491,6 @@ ol.interaction.Extent = function(opt_options) {
     opt_options = {};
   }
 
-  if (opt_options.extent) {
-    this.setExtent(opt_options.extent);
-  }
-
   /* Inherit ol.interaction.Pointer */
   ol.interaction.Pointer.call(this, {
     handleDownEvent: ol.interaction.Extent.handleDownEvent_,
@@ -65022,6 +66528,10 @@ ol.interaction.Extent = function(opt_options) {
     updateWhileAnimating: true,
     updateWhileInteracting: true
   });
+
+  if (opt_options.extent) {
+    this.setExtent(opt_options.extent);
+  }
 };
 
 ol.inherits(ol.interaction.Extent, ol.interaction.Pointer);
@@ -65088,13 +66598,13 @@ ol.interaction.Extent.handleDownEvent_ = function(mapBrowserEvent) {
     //snap to edge
     } else if (x !== null) {
       this.pointerHandler_ = ol.interaction.Extent.getEdgeHandler_(
-        getOpposingPoint([x, extent[1]]),
-        getOpposingPoint([x, extent[3]])
+          getOpposingPoint([x, extent[1]]),
+          getOpposingPoint([x, extent[3]])
       );
     } else if (y !== null) {
       this.pointerHandler_ = ol.interaction.Extent.getEdgeHandler_(
-        getOpposingPoint([extent[0], y]),
-        getOpposingPoint([extent[2], y])
+          getOpposingPoint([extent[0], y]),
+          getOpposingPoint([extent[2], y])
       );
     }
   //no snap - new bbox
@@ -65242,7 +66752,7 @@ ol.interaction.Extent.prototype.snapToVertex_ = function(pixel, map) {
       this.snappedToVertex_ = dist <= this.pixelTolerance_;
       if (this.snappedToVertex_) {
         vertex = squaredDist1 > squaredDist2 ?
-            closestSegment[1] : closestSegment[0];
+          closestSegment[1] : closestSegment[0];
       }
       return vertex;
     }
@@ -65350,34 +66860,22 @@ ol.interaction.Extent.prototype.setExtent = function(extent) {
  * this type.
  *
  * @constructor
+ * @implements {oli.ExtentEvent}
  * @param {ol.Extent} extent the new extent
  * @extends {ol.events.Event}
  */
 ol.interaction.Extent.Event = function(extent) {
-  ol.events.Event.call(this, ol.interaction.Extent.EventType_.EXTENTCHANGED);
+  ol.events.Event.call(this, ol.interaction.ExtentEventType.EXTENTCHANGED);
 
   /**
    * The current extent.
    * @type {ol.Extent}
    * @api
    */
-  this.extent_ = extent;
+  this.extent = extent;
+
 };
 ol.inherits(ol.interaction.Extent.Event, ol.events.Event);
-
-
-/**
- * @enum {string}
- * @private
- */
-ol.interaction.Extent.EventType_ = {
-  /**
-   * Triggered after the extent is changed
-   * @event ol.interaction.Extent.Event
-   * @api
-   */
-  EXTENTCHANGED: 'extentchanged'
-};
 
 goog.provide('ol.interaction.ModifyEventType');
 
@@ -65403,6 +66901,7 @@ ol.interaction.ModifyEventType = {
 goog.provide('ol.interaction.Modify');
 
 goog.require('ol');
+goog.require('ol.Collection');
 goog.require('ol.CollectionEventType');
 goog.require('ol.Feature');
 goog.require('ol.MapBrowserEventType');
@@ -65421,13 +66920,22 @@ goog.require('ol.interaction.ModifyEventType');
 goog.require('ol.interaction.Pointer');
 goog.require('ol.layer.Vector');
 goog.require('ol.source.Vector');
+goog.require('ol.source.VectorEventType');
 goog.require('ol.structs.RBush');
 goog.require('ol.style.Style');
 
-
 /**
  * @classdesc
- * Interaction for modifying feature geometries.
+ * Interaction for modifying feature geometries.  To modify features that have
+ * been added to an existing source, construct the modify interaction with the
+ * `source` option.  If you want to modify features in a collection (for example,
+ * the collection used by a select interaction), construct the interaction with
+ * the `features` option.  The interaction must be constructed with either a
+ * `source` or `features` option.
+ *
+ * By default, the interaction will allow deletion of vertices when the `alt`
+ * key is pressed.  To configure the interaction with a different condition
+ * for deletion, use the `deleteCondition` option.
  *
  * @constructor
  * @extends {ol.interaction.Pointer}
@@ -65449,7 +66957,7 @@ ol.interaction.Modify = function(options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.primaryAction;
+    options.condition : ol.events.condition.primaryAction;
 
 
   /**
@@ -65458,7 +66966,7 @@ ol.interaction.Modify = function(options) {
    * @return {boolean} Combined condition result.
    */
   this.defaultDeleteCondition_ = function(mapBrowserEvent) {
-    return ol.events.condition.noModifierKeys(mapBrowserEvent) &&
+    return ol.events.condition.altKeyOnly(mapBrowserEvent) &&
       ol.events.condition.singleClick(mapBrowserEvent);
   };
 
@@ -65467,14 +66975,14 @@ ol.interaction.Modify = function(options) {
    * @private
    */
   this.deleteCondition_ = options.deleteCondition ?
-      options.deleteCondition : this.defaultDeleteCondition_;
+    options.deleteCondition : this.defaultDeleteCondition_;
 
   /**
    * @type {ol.EventsConditionType}
    * @private
    */
   this.insertVertexCondition_ = options.insertVertexCondition ?
-      options.insertVertexCondition : ol.events.condition.always;
+    options.insertVertexCondition : ol.events.condition.always;
 
   /**
    * Editing vertex.
@@ -65522,7 +67030,7 @@ ol.interaction.Modify = function(options) {
    * @private
    */
   this.pixelTolerance_ = options.pixelTolerance !== undefined ?
-      options.pixelTolerance : 10;
+    options.pixelTolerance : 10;
 
   /**
    * @type {boolean}
@@ -65555,7 +67063,7 @@ ol.interaction.Modify = function(options) {
       wrapX: !!options.wrapX
     }),
     style: options.style ? options.style :
-        ol.interaction.Modify.getDefaultStyleFunction(),
+      ol.interaction.Modify.getDefaultStyleFunction(),
     updateWhileAnimating: true,
     updateWhileInteracting: true
   });
@@ -65577,11 +67085,33 @@ ol.interaction.Modify = function(options) {
     'GeometryCollection': this.writeGeometryCollectionGeometry_
   };
 
+
+  /**
+   * @type {ol.source.Vector}
+   * @private
+   */
+  this.source_ = null;
+
+  var features;
+  if (options.source) {
+    this.source_ = options.source;
+    features = new ol.Collection(this.source_.getFeatures());
+    ol.events.listen(this.source_, ol.source.VectorEventType.ADDFEATURE,
+        this.handleSourceAdd_, this);
+    ol.events.listen(this.source_, ol.source.VectorEventType.REMOVEFEATURE,
+        this.handleSourceRemove_, this);
+  } else {
+    features = options.features;
+  }
+  if (!features) {
+    throw new Error('The modify interaction requires features or a source');
+  }
+
   /**
    * @type {ol.Collection.<ol.Feature>}
    * @private
    */
-  this.features_ = options.features;
+  this.features_ = features;
 
   this.features_.forEach(this.addFeature_, this);
   ol.events.listen(this.features_, ol.CollectionEventType.ADD,
@@ -65700,6 +67230,28 @@ ol.interaction.Modify.prototype.setActive = function(active) {
 ol.interaction.Modify.prototype.setMap = function(map) {
   this.overlay_.setMap(map);
   ol.interaction.Pointer.prototype.setMap.call(this, map);
+};
+
+
+/**
+ * @param {ol.source.Vector.Event} event Event.
+ * @private
+ */
+ol.interaction.Modify.prototype.handleSourceAdd_ = function(event) {
+  if (event.feature) {
+    this.features_.push(event.feature);
+  }
+};
+
+
+/**
+ * @param {ol.source.Vector.Event} event Event.
+ * @private
+ */
+ol.interaction.Modify.prototype.handleSourceRemove_ = function(event) {
+  if (event.feature) {
+    this.features_.remove(event.feature);
+  }
 };
 
 
@@ -66227,7 +67779,7 @@ ol.interaction.Modify.prototype.handlePointerAtPixel_ = function(pixel, map) {
         this.snappedToVertex_ = dist <= this.pixelTolerance_;
         if (this.snappedToVertex_) {
           vertex = squaredDist1 > squaredDist2 ?
-              closestSegment[1] : closestSegment[0];
+            closestSegment[1] : closestSegment[0];
         }
         this.createOrUpdateVertexFeature_(vertex);
         var segment;
@@ -66629,28 +68181,28 @@ ol.interaction.Select = function(opt_options) {
    * @type {ol.EventsConditionType}
    */
   this.condition_ = options.condition ?
-      options.condition : ol.events.condition.singleClick;
+    options.condition : ol.events.condition.singleClick;
 
   /**
    * @private
    * @type {ol.EventsConditionType}
    */
   this.addCondition_ = options.addCondition ?
-      options.addCondition : ol.events.condition.never;
+    options.addCondition : ol.events.condition.never;
 
   /**
    * @private
    * @type {ol.EventsConditionType}
    */
   this.removeCondition_ = options.removeCondition ?
-      options.removeCondition : ol.events.condition.never;
+    options.removeCondition : ol.events.condition.never;
 
   /**
    * @private
    * @type {ol.EventsConditionType}
    */
   this.toggleCondition_ = options.toggleCondition ?
-      options.toggleCondition : ol.events.condition.shiftKeyOnly;
+    options.toggleCondition : ol.events.condition.shiftKeyOnly;
 
   /**
    * @private
@@ -66663,7 +68215,7 @@ ol.interaction.Select = function(opt_options) {
    * @type {ol.SelectFilterFunction}
    */
   this.filter_ = options.filter ? options.filter :
-      ol.functions.TRUE;
+    ol.functions.TRUE;
 
   /**
    * @private
@@ -66678,7 +68230,7 @@ ol.interaction.Select = function(opt_options) {
       wrapX: options.wrapX
     }),
     style: options.style ? options.style :
-        ol.interaction.Select.getDefaultStyleFunction(),
+      ol.interaction.Select.getDefaultStyleFunction(),
     updateWhileAnimating: true,
     updateWhileInteracting: true
   });
@@ -66800,18 +68352,19 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
     // the pixel.
     ol.obj.clear(this.featureLayerAssociation_);
     map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
-      (/**
-         * @param {ol.Feature|ol.render.Feature} feature Feature.
-         * @param {ol.layer.Layer} layer Layer.
-         * @return {boolean|undefined} Continue to iterate over the features.
-         */
-        function(feature, layer) {
-          if (this.filter_(feature, layer)) {
-            selected.push(feature);
-            this.addFeatureLayerAssociation_(feature, layer);
-            return !this.multi_;
-          }
-        }).bind(this), {
+        (
+          /**
+           * @param {ol.Feature|ol.render.Feature} feature Feature.
+           * @param {ol.layer.Layer} layer Layer.
+           * @return {boolean|undefined} Continue to iterate over the features.
+           */
+          function(feature, layer) {
+            if (this.filter_(feature, layer)) {
+              selected.push(feature);
+              this.addFeatureLayerAssociation_(feature, layer);
+              return !this.multi_;
+            }
+          }).bind(this), {
           layerFilter: this.layerFilter_,
           hitTolerance: this.hitTolerance_
         });
@@ -66833,25 +68386,26 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
   } else {
     // Modify the currently selected feature(s).
     map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
-      (/**
-         * @param {ol.Feature|ol.render.Feature} feature Feature.
-         * @param {ol.layer.Layer} layer Layer.
-         * @return {boolean|undefined} Continue to iterate over the features.
-         */
-        function(feature, layer) {
-          if (this.filter_(feature, layer)) {
-            if ((add || toggle) &&
+        (
+          /**
+           * @param {ol.Feature|ol.render.Feature} feature Feature.
+           * @param {ol.layer.Layer} layer Layer.
+           * @return {boolean|undefined} Continue to iterate over the features.
+           */
+          function(feature, layer) {
+            if (this.filter_(feature, layer)) {
+              if ((add || toggle) &&
                 !ol.array.includes(features.getArray(), feature)) {
-              selected.push(feature);
-              this.addFeatureLayerAssociation_(feature, layer);
-            } else if ((remove || toggle) &&
+                selected.push(feature);
+                this.addFeatureLayerAssociation_(feature, layer);
+              } else if ((remove || toggle) &&
                 ol.array.includes(features.getArray(), feature)) {
-              deselected.push(feature);
-              this.removeFeatureLayerAssociation_(feature);
+                deselected.push(feature);
+                this.removeFeatureLayerAssociation_(feature);
+              }
+              return !this.multi_;
             }
-            return !this.multi_;
-          }
-        }).bind(this), {
+          }).bind(this), {
           layerFilter: this.layerFilter_,
           hitTolerance: this.hitTolerance_
         });
@@ -67127,7 +68681,7 @@ ol.interaction.Snap = function(opt_options) {
    * @private
    */
   this.pixelTolerance_ = options.pixelTolerance !== undefined ?
-      options.pixelTolerance : 10;
+    options.pixelTolerance : 10;
 
   /**
    * @type {function(ol.SnapSegmentDataType, ol.SnapSegmentDataType): number}
@@ -67322,17 +68876,17 @@ ol.interaction.Snap.prototype.setMap = function(map) {
   if (map) {
     if (this.features_) {
       keys.push(
-        ol.events.listen(this.features_, ol.CollectionEventType.ADD,
-            this.handleFeatureAdd_, this),
-        ol.events.listen(this.features_, ol.CollectionEventType.REMOVE,
-            this.handleFeatureRemove_, this)
+          ol.events.listen(this.features_, ol.CollectionEventType.ADD,
+              this.handleFeatureAdd_, this),
+          ol.events.listen(this.features_, ol.CollectionEventType.REMOVE,
+              this.handleFeatureRemove_, this)
       );
     } else if (this.source_) {
       keys.push(
-        ol.events.listen(this.source_, ol.source.VectorEventType.ADDFEATURE,
-            this.handleFeatureAdd_, this),
-        ol.events.listen(this.source_, ol.source.VectorEventType.REMOVEFEATURE,
-            this.handleFeatureRemove_, this)
+          ol.events.listen(this.source_, ol.source.VectorEventType.ADDFEATURE,
+              this.handleFeatureAdd_, this),
+          ol.events.listen(this.source_, ol.source.VectorEventType.REMOVEFEATURE,
+              this.handleFeatureRemove_, this)
       );
     }
     features.forEach(this.forEachFeatureAdd_, this);
@@ -67391,7 +68945,7 @@ ol.interaction.Snap.prototype.snapTo = function(pixel, pixelCoordinate, map) {
       if (snappedToVertex) {
         snapped = true;
         vertex = squaredDist1 > squaredDist2 ?
-            closestSegment[1] : closestSegment[0];
+          closestSegment[1] : closestSegment[0];
         vertexPixel = map.getPixelFromCoordinate(vertex);
       }
     } else if (this.edge_) {
@@ -67414,7 +68968,7 @@ ol.interaction.Snap.prototype.snapTo = function(pixel, pixelCoordinate, map) {
           snappedToVertex = dist <= this.pixelTolerance_;
           if (snappedToVertex) {
             vertex = squaredDist1 > squaredDist2 ?
-                closestSegment[1] : closestSegment[0];
+              closestSegment[1] : closestSegment[0];
             vertexPixel = map.getPixelFromCoordinate(vertex);
           }
         }
@@ -67644,7 +69198,7 @@ ol.interaction.Snap.sortByDistance = function(a, b) {
   return ol.coordinate.squaredDistanceToSegment(
       this.pixelCoordinate_, a.segment) -
       ol.coordinate.squaredDistanceToSegment(
-      this.pixelCoordinate_, b.segment);
+          this.pixelCoordinate_, b.segment);
 };
 
 goog.provide('ol.interaction.TranslateEventType');
@@ -67927,13 +69481,12 @@ ol.interaction.Translate.prototype.handleActiveChanged_ = function() {
 ol.interaction.Translate.prototype.updateState_ = function(oldMap) {
   var map = this.getMap();
   var active = this.getActive();
-  if ((!map || !active)) {
-    if (!map) {
-      map = oldMap;
+  if (!map || !active) {
+    map = map || oldMap;
+    if (map) {
+      var elem = map.getViewport();
+      elem.classList.remove('ol-grab', 'ol-grabbing');
     }
-
-    var elem = map.getViewport();
-    elem.classList.remove('ol-grab', 'ol-grabbing');
   }
 };
 
@@ -68039,7 +69592,7 @@ ol.layer.Heatmap = function(opt_options) {
       this.handleGradientChanged_, this);
 
   this.setGradient(options.gradient ?
-      options.gradient : ol.layer.Heatmap.DEFAULT_GRADIENT);
+    options.gradient : ol.layer.Heatmap.DEFAULT_GRADIENT);
 
   this.setBlur(options.blur !== undefined ? options.blur : 15);
 
@@ -68163,7 +69716,7 @@ ol.layer.Heatmap.prototype.getBlur = function() {
  */
 ol.layer.Heatmap.prototype.getGradient = function() {
   return /** @type {Array.<string>} */ (
-      this.get(ol.layer.Heatmap.Property_.GRADIENT));
+    this.get(ol.layer.Heatmap.Property_.GRADIENT));
 };
 
 
@@ -68570,12 +70123,14 @@ ol.reproj.calculateSourceResolution = function(sourceProj, targetProj,
   // coordinates may be slightly different. We need to reverse-compensate this
   // in order to achieve optimal results.
 
-  var compensationFactor =
-      ol.proj.getPointResolution(sourceProj, sourceResolution, sourceCenter) /
-      sourceResolution;
-
-  if (isFinite(compensationFactor) && compensationFactor > 0) {
-    sourceResolution /= compensationFactor;
+  var sourceExtent = sourceProj.getExtent();
+  if (!sourceExtent || ol.extent.containsCoordinate(sourceExtent, sourceCenter)) {
+    var compensationFactor =
+        ol.proj.getPointResolution(sourceProj, sourceResolution, sourceCenter) /
+        sourceResolution;
+    if (isFinite(compensationFactor) && compensationFactor > 0) {
+      sourceResolution /= compensationFactor;
+    }
   }
 
   return sourceResolution;
@@ -68623,7 +70178,7 @@ ol.reproj.render = function(width, height, pixelRatio,
     triangulation, sources, gutter, opt_renderEdges) {
 
   var context = ol.dom.createCanvasContext2D(Math.round(pixelRatio * width),
-                                             Math.round(pixelRatio * height));
+      Math.round(pixelRatio * height));
 
   if (sources.length === 0) {
     return context.canvas;
@@ -68730,10 +70285,10 @@ ol.reproj.render = function(width, height, pixelRatio,
         affineCoefs[0], affineCoefs[2], affineCoefs[1], affineCoefs[3], u0, v0);
 
     context.translate(sourceDataExtent[0] - sourceNumericalShiftX,
-                      sourceDataExtent[3] - sourceNumericalShiftY);
+        sourceDataExtent[3] - sourceNumericalShiftY);
 
     context.scale(sourceResolution / pixelRatio,
-                  -sourceResolution / pixelRatio);
+        -sourceResolution / pixelRatio);
 
     context.drawImage(stitchContext.canvas, 0, 0);
     context.restore();
@@ -68859,14 +70414,14 @@ ol.reproj.Triangulation = function(sourceProj, targetProj, targetExtent,
    * @private
    */
   this.sourceWorldWidth_ = this.sourceProj_.getExtent() ?
-      ol.extent.getWidth(this.sourceProj_.getExtent()) : null;
+    ol.extent.getWidth(this.sourceProj_.getExtent()) : null;
 
   /**
    * @type {?number}
    * @private
    */
   this.targetWorldWidth_ = this.targetProj_.getExtent() ?
-      ol.extent.getWidth(this.targetProj_.getExtent()) : null;
+    ol.extent.getWidth(this.targetProj_.getExtent()) : null;
 
   var destinationTopLeft = ol.extent.getTopLeft(targetExtent);
   var destinationTopRight = ol.extent.getTopRight(targetExtent);
@@ -68896,8 +70451,8 @@ ol.reproj.Triangulation = function(sourceProj, targetProj, targetExtent,
       if (Math.max(triangle.source[0][0], triangle.source[1][0],
           triangle.source[2][0]) - leftBound > this.sourceWorldWidth_ / 2) {
         var newTriangle = [[triangle.source[0][0], triangle.source[0][1]],
-                           [triangle.source[1][0], triangle.source[1][1]],
-                           [triangle.source[2][0], triangle.source[2][1]]];
+          [triangle.source[1][0], triangle.source[1][1]],
+          [triangle.source[2][0], triangle.source[2][1]]];
         if ((newTriangle[0][0] - leftBound) > this.sourceWorldWidth_ / 2) {
           newTriangle[0][0] -= this.sourceWorldWidth_;
         }
@@ -68966,7 +70521,7 @@ ol.reproj.Triangulation.prototype.addQuad_ = function(a, b, c, d,
 
   var sourceQuadExtent = ol.extent.boundingExtent([aSrc, bSrc, cSrc, dSrc]);
   var sourceCoverageX = this.sourceWorldWidth_ ?
-      ol.extent.getWidth(sourceQuadExtent) / this.sourceWorldWidth_ : null;
+    ol.extent.getWidth(sourceQuadExtent) / this.sourceWorldWidth_ : null;
   var sourceWorldWidth = /** @type {number} */ (this.sourceWorldWidth_);
 
   // when the quad is wrapped in the source projection
@@ -69139,7 +70694,7 @@ ol.reproj.Image = function(sourceProj, targetProj,
   var maxTargetExtent = targetProj.getExtent();
 
   var limitedTargetExtent = maxTargetExtent ?
-      ol.extent.getIntersection(targetExtent, maxTargetExtent) : targetExtent;
+    ol.extent.getIntersection(targetExtent, maxTargetExtent) : targetExtent;
 
   var targetCenter = ol.extent.getCenter(limitedTargetExtent);
   var sourceResolution = ol.reproj.calculateSourceResolution(
@@ -69205,7 +70760,7 @@ ol.reproj.Image = function(sourceProj, targetProj,
   }
 
   ol.ImageBase.call(this, targetExtent, targetResolution, this.sourcePixelRatio_,
-            state, attributions);
+      state, attributions);
 };
 ol.inherits(ol.reproj.Image, ol.ImageBase);
 
@@ -69333,7 +70888,7 @@ ol.source.Image = function(options) {
    * @type {Array.<number>}
    */
   this.resolutions_ = options.resolutions !== undefined ?
-      options.resolutions : null;
+    options.resolutions : null;
 
 
   /**
@@ -69398,7 +70953,6 @@ ol.source.Image.prototype.getImage = function(extent, resolution, pixelRatio, pr
           ol.proj.equivalent(
               this.reprojectedImage_.getProjection(), projection) &&
           this.reprojectedImage_.getResolution() == resolution &&
-          this.reprojectedImage_.getPixelRatio() == pixelRatio &&
           ol.extent.equals(this.reprojectedImage_.getExtent(), extent)) {
         return this.reprojectedImage_;
       }
@@ -69576,7 +71130,7 @@ ol.source.ImageCanvas = function(options) {
    * @type {number}
    */
   this.ratio_ = options.ratio !== undefined ?
-      options.ratio : 1.5;
+    options.ratio : 1.5;
 
 };
 ol.inherits(ol.source.ImageCanvas, ol.source.Image);
@@ -69914,7 +71468,7 @@ ol.source.ImageVector.prototype.renderFeature_ = function(feature, resolution, p
 ol.source.ImageVector.prototype.setStyle = function(style) {
   this.style_ = style !== undefined ? style : ol.style.Style.defaultFunction;
   this.styleFunction_ = !style ?
-      undefined : ol.style.Style.createFunction(this.style_);
+    undefined : ol.style.Style.createFunction(this.style_);
   this.changed();
 };
 
@@ -70060,7 +71614,7 @@ if (ol.ENABLE_WEBGL) {
               }
             }.bind(null, gl, this.texture);
             frameState.postRenderFunctions.push(
-              /** @type {ol.PostRenderFunction} */ (postRenderFunction)
+                /** @type {ol.PostRenderFunction} */ (postRenderFunction)
             );
           }
         }
@@ -70103,7 +71657,7 @@ if (ol.ENABLE_WEBGL) {
    * @private
    */
   ol.renderer.webgl.ImageLayer.prototype.updateProjectionMatrix_ = function(canvasWidth, canvasHeight, pixelRatio,
-          viewCenter, viewResolution, viewRotation, imageExtent) {
+      viewCenter, viewResolution, viewRotation, imageExtent) {
 
     var canvasExtentWidth = canvasWidth * viewResolution;
     var canvasExtentHeight = canvasHeight * viewResolution;
@@ -70437,9 +71991,14 @@ ol.renderer.canvas.TileLayer.prototype.prepareFrame = function(frameState, layer
   for (x = tileRange.minX; x <= tileRange.maxX; ++x) {
     for (y = tileRange.minY; y <= tileRange.maxY; ++y) {
       tile = tileSource.getTile(z, x, y, pixelRatio, projection);
-      // When useInterimTilesOnError is false, we consider the error tile as loaded.
-      if (tile.getState() == ol.TileState.ERROR && !this.getLayer().getUseInterimTilesOnError()) {
-        tile.setState(ol.TileState.LOADED);
+      if (tile.getState() == ol.TileState.ERROR) {
+        if (!tileLayer.getUseInterimTilesOnError()) {
+          // When useInterimTilesOnError is false, we consider the error tile as loaded.
+          tile.setState(ol.TileState.LOADED);
+        } else if (tileLayer.getPreload() > 0) {
+          // Preloaded tiles for lower resolutions might have finished loading.
+          newTiles = true;
+        }
       }
       if (!this.isDrawableTile_(tile)) {
         tile = tile.getInterimTile();
@@ -70471,12 +72030,12 @@ ol.renderer.canvas.TileLayer.prototype.prepareFrame = function(frameState, layer
   var hints = frameState.viewHints;
   var animatingOrInteracting = hints[ol.ViewHint.ANIMATING] || hints[ol.ViewHint.INTERACTING];
   if (!(this.renderedResolution && Date.now() - frameState.time > 16 && animatingOrInteracting) && (
-        newTiles ||
+    newTiles ||
         !(this.renderedExtent_ && ol.extent.containsExtent(this.renderedExtent_, extent)) ||
         this.renderedRevision != sourceRevision ||
         oversampling != this.oversampling_ ||
         !animatingOrInteracting && renderedResolution != this.renderedResolution
-      )) {
+  )) {
 
     var context = this.context;
     if (context) {
@@ -70562,7 +72121,7 @@ ol.renderer.canvas.TileLayer.prototype.drawTileImage = function(tile, frameState
   if (!this.getLayer().getSource().getOpaque(frameState.viewState.projection)) {
     this.context.clearRect(x, y, w, h);
   }
-  var image = tile.getImage();
+  var image = tile.getImage(this.getLayer());
   if (image) {
     this.context.drawImage(image, gutter, gutter,
         image.width - 2 * gutter, image.height - 2 * gutter, x, y, w, h);
@@ -70633,8 +72192,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.renderer.webgl.tilelayershader.Fragment.SOURCE = ol.DEBUG_WEBGL ?
-      ol.renderer.webgl.tilelayershader.Fragment.DEBUG_SOURCE :
-      ol.renderer.webgl.tilelayershader.Fragment.OPTIMIZED_SOURCE;
+    ol.renderer.webgl.tilelayershader.Fragment.DEBUG_SOURCE :
+    ol.renderer.webgl.tilelayershader.Fragment.OPTIMIZED_SOURCE;
 
 
   ol.renderer.webgl.tilelayershader.fragment = new ol.renderer.webgl.tilelayershader.Fragment();
@@ -70670,8 +72229,8 @@ if (ol.ENABLE_WEBGL) {
    * @type {string}
    */
   ol.renderer.webgl.tilelayershader.Vertex.SOURCE = ol.DEBUG_WEBGL ?
-      ol.renderer.webgl.tilelayershader.Vertex.DEBUG_SOURCE :
-      ol.renderer.webgl.tilelayershader.Vertex.OPTIMIZED_SOURCE;
+    ol.renderer.webgl.tilelayershader.Vertex.DEBUG_SOURCE :
+    ol.renderer.webgl.tilelayershader.Vertex.OPTIMIZED_SOURCE;
 
 
   ol.renderer.webgl.tilelayershader.vertex = new ol.renderer.webgl.tilelayershader.Vertex();
@@ -70817,24 +72376,24 @@ if (ol.ENABLE_WEBGL) {
     var mapRenderer = this.mapRenderer;
 
     return (
-        /**
-         * @param {number} zoom Zoom level.
-         * @param {ol.TileRange} tileRange Tile range.
-         * @return {boolean} The tile range is fully loaded.
-         */
-        function(zoom, tileRange) {
-          function callback(tile) {
-            var loaded = mapRenderer.isTileTextureLoaded(tile);
-            if (loaded) {
-              if (!tiles[zoom]) {
-                tiles[zoom] = {};
-              }
-              tiles[zoom][tile.tileCoord.toString()] = tile;
+      /**
+       * @param {number} zoom Zoom level.
+       * @param {ol.TileRange} tileRange Tile range.
+       * @return {boolean} The tile range is fully loaded.
+       */
+      function(zoom, tileRange) {
+        function callback(tile) {
+          var loaded = mapRenderer.isTileTextureLoaded(tile);
+          if (loaded) {
+            if (!tiles[zoom]) {
+              tiles[zoom] = {};
             }
-            return loaded;
+            tiles[zoom][tile.tileCoord.toString()] = tile;
           }
-          return source.forEachLoadedTile(projection, zoom, tileRange, callback);
-        });
+          return loaded;
+        }
+        return source.forEachLoadedTile(projection, zoom, tileRange, callback);
+      });
   };
 
 
@@ -71134,7 +72693,7 @@ ol.layer.Tile = function(opt_options) {
 
   this.setPreload(options.preload !== undefined ? options.preload : 0);
   this.setUseInterimTilesOnError(options.useInterimTilesOnError !== undefined ?
-      options.useInterimTilesOnError : true);
+    options.useInterimTilesOnError : true);
 };
 ol.inherits(ol.layer.Tile, ol.layer.Layer);
 
@@ -71193,7 +72752,7 @@ ol.layer.Tile.prototype.setPreload = function(preload) {
  */
 ol.layer.Tile.prototype.getUseInterimTilesOnError = function() {
   return /** @type {boolean} */ (
-      this.get(ol.layer.TileProperty.USE_INTERIM_TILES_ON_ERROR));
+    this.get(ol.layer.TileProperty.USE_INTERIM_TILES_ON_ERROR));
 };
 
 
@@ -71244,6 +72803,7 @@ goog.require('ol.render.canvas.ReplayGroup');
 goog.require('ol.render.replay');
 goog.require('ol.renderer.canvas.TileLayer');
 goog.require('ol.renderer.vector');
+goog.require('ol.size');
 goog.require('ol.transform');
 
 
@@ -71292,7 +72852,8 @@ ol.inherits(ol.renderer.canvas.VectorTileLayer, ol.renderer.canvas.TileLayer);
  * @type {!Object.<string, Array.<ol.render.ReplayType>>}
  */
 ol.renderer.canvas.VectorTileLayer.IMAGE_REPLAYS = {
-  'image': ol.render.replay.ORDER,
+  'image': [ol.render.ReplayType.POLYGON, ol.render.ReplayType.CIRCLE,
+    ol.render.ReplayType.LINE_STRING, ol.render.ReplayType.IMAGE, ol.render.ReplayType.TEXT],
   'hybrid': [ol.render.ReplayType.POLYGON, ol.render.ReplayType.LINE_STRING]
 };
 
@@ -71302,7 +72863,8 @@ ol.renderer.canvas.VectorTileLayer.IMAGE_REPLAYS = {
  * @type {!Object.<string, Array.<ol.render.ReplayType>>}
  */
 ol.renderer.canvas.VectorTileLayer.VECTOR_REPLAYS = {
-  'hybrid': [ol.render.ReplayType.IMAGE, ol.render.ReplayType.TEXT],
+  'image': [ol.render.ReplayType.DEFAULT],
+  'hybrid': [ol.render.ReplayType.IMAGE, ol.render.ReplayType.TEXT, ol.render.ReplayType.DEFAULT],
   'vector': ol.render.replay.ORDER
 };
 
@@ -71342,30 +72904,30 @@ ol.renderer.canvas.VectorTileLayer.prototype.createReplayGroup_ = function(
   var renderOrder = /** @type {ol.RenderOrderFunction} */
       (layer.getRenderOrder()) || null;
 
-  var replayState = tile.getReplayState();
+  var replayState = tile.getReplayState(layer);
   if (!replayState.dirty && replayState.renderedRevision == revision &&
       replayState.renderedRenderOrder == renderOrder) {
     return;
   }
 
+  var source = /** @type {ol.source.VectorTile} */ (layer.getSource());
+  var sourceTileGrid = source.getTileGrid();
+  var tileGrid = source.getTileGridForProjection(projection);
+  var resolution = tileGrid.getResolution(tile.tileCoord[0]);
+  var tileExtent = tileGrid.getTileCoordExtent(tile.wrappedTileCoord);
+
   for (var t = 0, tt = tile.tileKeys.length; t < tt; ++t) {
     var sourceTile = tile.getTile(tile.tileKeys[t]);
-    sourceTile.replayGroup = null;
     replayState.dirty = false;
 
-    var source = /** @type {ol.source.VectorTile} */ (layer.getSource());
-    var sourceTileGrid = source.getTileGrid();
     var sourceTileCoord = sourceTile.tileCoord;
     var tileProjection = sourceTile.getProjection();
-    var tileGrid = source.getTileGridForProjection(projection);
-    var resolution = tileGrid.getResolution(tile.tileCoord[0]);
     var sourceTileResolution = sourceTileGrid.getResolution(sourceTile.tileCoord[0]);
-    var tileExtent = tileGrid.getTileCoordExtent(tile.wrappedTileCoord);
     var sourceTileExtent = sourceTileGrid.getTileCoordExtent(sourceTileCoord);
     var sharedExtent = ol.extent.getIntersection(tileExtent, sourceTileExtent);
     var extent, reproject, tileResolution;
     if (tileProjection.getUnits() == ol.proj.Units.TILE_PIXELS) {
-      var tilePixelRatio = tileResolution = source.getTilePixelRatio();
+      var tilePixelRatio = tileResolution = this.getTilePixelRatio_(source, sourceTile);
       var transform = ol.transform.compose(this.tmpTransform_,
           0, 0,
           1 / sourceTileResolution * tilePixelRatio, -1 / sourceTileResolution * tilePixelRatio,
@@ -71426,7 +72988,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.createReplayGroup_ = function(
       renderFeature.call(this, feature);
     }
     replayGroup.finish();
-    sourceTile.setReplayGroup(tile.tileCoord.toString(), replayGroup);
+    sourceTile.setReplayGroup(layer, tile.tileCoord.toString(), replayGroup);
   }
   replayState.renderedRevision = revision;
   replayState.renderedRenderOrder = renderOrder;
@@ -71466,7 +73028,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.forEachFeatureAtCoordinate = functi
   var sourceTileGrid = source.getTileGrid();
   var bufferedExtent, found, tileSpaceCoordinate;
   var i, ii, origin, replayGroup;
-  var tile, tileCoord, tileExtent, tilePixelRatio, tileResolution;
+  var tile, tileCoord, tileExtent, tilePixelRatio, tileRenderResolution;
   for (i = 0, ii = renderedTiles.length; i < ii; ++i) {
     tile = renderedTiles[i];
     tileCoord = tile.tileCoord;
@@ -71481,17 +73043,19 @@ ol.renderer.canvas.VectorTileLayer.prototype.forEachFeatureAtCoordinate = functi
         var sourceTileCoord = sourceTile.tileCoord;
         var sourceTileExtent = sourceTileGrid.getTileCoordExtent(sourceTileCoord, this.tmpExtent);
         origin = ol.extent.getTopLeft(sourceTileExtent);
-        tilePixelRatio = source.getTilePixelRatio();
-        tileResolution = sourceTileGrid.getResolution(sourceTileCoord[0]) / tilePixelRatio;
+        tilePixelRatio = this.getTilePixelRatio_(source, sourceTile);
+        var sourceTileResolution = sourceTileGrid.getResolution(sourceTileCoord[0]);
+        tileRenderResolution = sourceTileResolution / tilePixelRatio;
         tileSpaceCoordinate = [
-          (coordinate[0] - origin[0]) / tileResolution,
-          (origin[1] - coordinate[1]) / tileResolution
+          (coordinate[0] - origin[0]) / tileRenderResolution,
+          (origin[1] - coordinate[1]) / tileRenderResolution
         ];
-        resolution = tilePixelRatio;
+        var upscaling = tileGrid.getResolution(tileCoord[0]) / sourceTileResolution;
+        resolution = tilePixelRatio * upscaling;
       } else {
         tileSpaceCoordinate = coordinate;
       }
-      replayGroup = sourceTile.getReplayGroup(tile.tileCoord);
+      replayGroup = sourceTile.getReplayGroup(layer, tile.tileCoord.toString());
       found = found || replayGroup.forEachFeatureAtCoordinate(
           tileSpaceCoordinate, resolution, rotation, hitTolerance, {},
           /**
@@ -71524,7 +73088,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.getReplayTransform_ = function(tile
     var tileGrid = source.getTileGrid();
     var tileCoord = tile.tileCoord;
     var tileResolution =
-        tileGrid.getResolution(tileCoord[0]) / source.getTilePixelRatio();
+        tileGrid.getResolution(tileCoord[0]) / this.getTilePixelRatio_(source, tile);
     var viewState = frameState.viewState;
     var pixelRatio = frameState.pixelRatio;
     var renderResolution = viewState.resolution / pixelRatio;
@@ -71547,6 +73111,18 @@ ol.renderer.canvas.VectorTileLayer.prototype.getReplayTransform_ = function(tile
 
 
 /**
+ * @private
+ * @param {ol.source.VectorTile} source Source.
+ * @param {ol.VectorTile} tile Tile.
+ * @return {number} The tile's pixel ratio.
+ */
+ol.renderer.canvas.VectorTileLayer.prototype.getTilePixelRatio_ = function(source, tile) {
+  return ol.extent.getWidth(tile.getExtent()) /
+        ol.size.toSize(source.getTileGrid().getTileSize(tile.tileCoord[0]))[0];
+};
+
+
+/**
  * Handle changes in image style state.
  * @param {ol.events.Event} event Image style change event.
  * @private
@@ -71561,64 +73137,65 @@ ol.renderer.canvas.VectorTileLayer.prototype.handleStyleImageChange_ = function(
  */
 ol.renderer.canvas.VectorTileLayer.prototype.postCompose = function(context, frameState, layerState) {
   var layer = this.getLayer();
-  var source = layer.getSource();
+  var source = /** @type {ol.source.VectorTile} */ (layer.getSource());
   var renderMode = layer.getRenderMode();
   var replays = ol.renderer.canvas.VectorTileLayer.VECTOR_REPLAYS[renderMode];
-  if (replays) {
-    var pixelRatio = frameState.pixelRatio;
-    var rotation = frameState.viewState.rotation;
-    var size = frameState.size;
-    var offsetX = Math.round(pixelRatio * size[0] / 2);
-    var offsetY = Math.round(pixelRatio * size[1] / 2);
-    var tiles = this.renderedTiles;
-    var tilePixelRatio = layer.getSource().getTilePixelRatio();
-    var sourceTileGrid = source.getTileGrid();
-    var tileGrid = source.getTileGridForProjection(frameState.viewState.projection);
-    var clips = [];
-    var zs = [];
-    for (var i = tiles.length - 1; i >= 0; --i) {
-      var tile = /** @type {ol.VectorImageTile} */ (tiles[i]);
-      if (tile.getState() == ol.TileState.ABORT) {
+  var pixelRatio = frameState.pixelRatio;
+  var rotation = frameState.viewState.rotation;
+  var size = frameState.size;
+  var offsetX = Math.round(pixelRatio * size[0] / 2);
+  var offsetY = Math.round(pixelRatio * size[1] / 2);
+  var tiles = this.renderedTiles;
+  var sourceTileGrid = source.getTileGrid();
+  var tileGrid = source.getTileGridForProjection(frameState.viewState.projection);
+  var clips = [];
+  var zs = [];
+  for (var i = tiles.length - 1; i >= 0; --i) {
+    var tile = /** @type {ol.VectorImageTile} */ (tiles[i]);
+    if (tile.getState() == ol.TileState.ABORT) {
+      continue;
+    }
+    var tileCoord = tile.tileCoord;
+    var worldOffset = tileGrid.getTileCoordExtent(tileCoord)[0] -
+        tileGrid.getTileCoordExtent(tile.wrappedTileCoord)[0];
+    for (var t = 0, tt = tile.tileKeys.length; t < tt; ++t) {
+      var sourceTile = tile.getTile(tile.tileKeys[t]);
+      var tilePixelRatio = this.getTilePixelRatio_(source, sourceTile);
+      var replayGroup = sourceTile.getReplayGroup(layer, tileCoord.toString());
+      if (renderMode != ol.layer.VectorTileRenderType.VECTOR && !replayGroup.hasReplays(replays)) {
         continue;
       }
-      var tileCoord = tile.tileCoord;
-      var worldOffset = tileGrid.getTileCoordExtent(tileCoord)[0] -
-          tileGrid.getTileCoordExtent(tile.wrappedTileCoord)[0];
-      for (var t = 0, tt = tile.tileKeys.length; t < tt; ++t) {
-        var sourceTile = tile.getTile(tile.tileKeys[t]);
-        var currentZ = sourceTile.tileCoord[0];
-        var sourceResolution = sourceTileGrid.getResolution(currentZ);
-        var transform = this.getReplayTransform_(sourceTile, frameState);
-        ol.transform.translate(transform, worldOffset * tilePixelRatio / sourceResolution, 0);
-        var replayGroup = sourceTile.getReplayGroup(tileCoord.toString());
-        var currentClip = replayGroup.getClipCoords(transform);
-        context.save();
-        context.globalAlpha = layerState.opacity;
-        ol.render.canvas.rotateAtOffset(context, -rotation, offsetX, offsetY);
-        // Create a clip mask for regions in this low resolution tile that are
-        // already filled by a higher resolution tile
-        for (var j = 0, jj = clips.length; j < jj; ++j) {
-          var clip = clips[j];
-          if (currentZ < zs[j]) {
-            context.beginPath();
-            // counter-clockwise (outer ring) for current tile
-            context.moveTo(currentClip[0], currentClip[1]);
-            context.lineTo(currentClip[2], currentClip[3]);
-            context.lineTo(currentClip[4], currentClip[5]);
-            context.lineTo(currentClip[6], currentClip[7]);
-            // clockwise (inner ring) for higher resolution tile
-            context.moveTo(clip[6], clip[7]);
-            context.lineTo(clip[4], clip[5]);
-            context.lineTo(clip[2], clip[3]);
-            context.lineTo(clip[0], clip[1]);
-            context.clip();
-          }
+      var currentZ = sourceTile.tileCoord[0];
+      var sourceResolution = sourceTileGrid.getResolution(currentZ);
+      var transform = this.getReplayTransform_(sourceTile, frameState);
+      ol.transform.translate(transform, worldOffset * tilePixelRatio / sourceResolution, 0);
+      var currentClip = replayGroup.getClipCoords(transform);
+      context.save();
+      context.globalAlpha = layerState.opacity;
+      ol.render.canvas.rotateAtOffset(context, -rotation, offsetX, offsetY);
+      // Create a clip mask for regions in this low resolution tile that are
+      // already filled by a higher resolution tile
+      for (var j = 0, jj = clips.length; j < jj; ++j) {
+        var clip = clips[j];
+        if (currentZ < zs[j]) {
+          context.beginPath();
+          // counter-clockwise (outer ring) for current tile
+          context.moveTo(currentClip[0], currentClip[1]);
+          context.lineTo(currentClip[2], currentClip[3]);
+          context.lineTo(currentClip[4], currentClip[5]);
+          context.lineTo(currentClip[6], currentClip[7]);
+          // clockwise (inner ring) for higher resolution tile
+          context.moveTo(clip[6], clip[7]);
+          context.lineTo(clip[4], clip[5]);
+          context.lineTo(clip[2], clip[3]);
+          context.lineTo(clip[0], clip[1]);
+          context.clip();
         }
-        replayGroup.replay(context, pixelRatio, transform, rotation, {}, replays);
-        context.restore();
-        clips.push(currentClip);
-        zs.push(currentZ);
       }
+      replayGroup.replay(context, pixelRatio, transform, rotation, {}, replays);
+      context.restore();
+      clips.push(currentClip);
+      zs.push(currentZ);
     }
   }
   ol.renderer.canvas.TileLayer.prototype.postCompose.apply(this, arguments);
@@ -71662,7 +73239,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.renderFeature = function(feature, s
 ol.renderer.canvas.VectorTileLayer.prototype.renderTileImage_ = function(
     tile, frameState, layerState) {
   var layer = this.getLayer();
-  var replayState = tile.getReplayState();
+  var replayState = tile.getReplayState(layer);
   var revision = layer.getRevision();
   var replays = ol.renderer.canvas.VectorTileLayer.IMAGE_REPLAYS[layer.getRenderMode()];
   if (replays && replayState.renderedTileRevision !== revision) {
@@ -71670,18 +73247,18 @@ ol.renderer.canvas.VectorTileLayer.prototype.renderTileImage_ = function(
     var tileCoord = tile.wrappedTileCoord;
     var z = tileCoord[0];
     var pixelRatio = frameState.pixelRatio;
-    var source = layer.getSource();
+    var source = /** @type {ol.source.VectorTile} */ (layer.getSource());
     var sourceTileGrid = source.getTileGrid();
     var tileGrid = source.getTileGridForProjection(frameState.viewState.projection);
     var resolution = tileGrid.getResolution(z);
-    var tilePixelRatio = source.getTilePixelRatio();
-    var context = tile.getContext();
+    var context = tile.getContext(layer);
     var size = source.getTilePixelSize(z, pixelRatio, frameState.viewState.projection);
     context.canvas.width = size[0];
     context.canvas.height = size[1];
     var tileExtent = tileGrid.getTileCoordExtent(tileCoord);
     for (var i = 0, ii = tile.tileKeys.length; i < ii; ++i) {
       var sourceTile = tile.getTile(tile.tileKeys[i]);
+      var tilePixelRatio = this.getTilePixelRatio_(source, sourceTile);
       var sourceTileCoord = sourceTile.tileCoord;
       var pixelScale = pixelRatio / resolution;
       var transform = ol.transform.reset(this.tmpTransform_);
@@ -71697,8 +73274,8 @@ ol.renderer.canvas.VectorTileLayer.prototype.renderTileImage_ = function(
         ol.transform.scale(transform, pixelScale, -pixelScale);
         ol.transform.translate(transform, -tileExtent[0], -tileExtent[3]);
       }
-      var replayGroup = sourceTile.getReplayGroup(tile.tileCoord.toString());
-      replayGroup.replay(context, pixelRatio, transform, 0, {}, replays);
+      var replayGroup = sourceTile.getReplayGroup(layer, tile.tileCoord.toString());
+      replayGroup.replay(context, pixelRatio, transform, 0, {}, replays, true);
     }
   }
 };
@@ -71738,13 +73315,13 @@ ol.layer.VectorTile = function(opt_options) {
 
   this.setPreload(options.preload ? options.preload : 0);
   this.setUseInterimTilesOnError(options.useInterimTilesOnError ?
-      options.useInterimTilesOnError : true);
+    options.useInterimTilesOnError : true);
 
   ol.asserts.assert(options.renderMode == undefined ||
       options.renderMode == ol.layer.VectorTileRenderType.IMAGE ||
       options.renderMode == ol.layer.VectorTileRenderType.HYBRID ||
       options.renderMode == ol.layer.VectorTileRenderType.VECTOR,
-      28); // `renderMode` must be `'image'`, `'hybrid'` or `'vector'`
+  28); // `renderMode` must be `'image'`, `'hybrid'` or `'vector'`
 
   /**
    * @private
@@ -71796,7 +73373,7 @@ ol.layer.VectorTile.prototype.getRenderMode = function() {
  */
 ol.layer.VectorTile.prototype.getUseInterimTilesOnError = function() {
   return /** @type {boolean} */ (
-      this.get(ol.layer.TileProperty.USE_INTERIM_TILES_ON_ERROR));
+    this.get(ol.layer.TileProperty.USE_INTERIM_TILES_ON_ERROR));
 };
 
 
@@ -71821,6 +73398,15 @@ ol.layer.VectorTile.prototype.setUseInterimTilesOnError = function(useInterimTil
   this.set(
       ol.layer.TileProperty.USE_INTERIM_TILES_ON_ERROR, useInterimTilesOnError);
 };
+
+
+/**
+ * Return the associated {@link ol.source.VectorTile vectortilesource} of the layer.
+ * @function
+ * @return {ol.source.VectorTile} Source.
+ * @api
+ */
+ol.layer.VectorTile.prototype.getSource;
 
 goog.provide('ol.net');
 
@@ -72025,7 +73611,7 @@ ol.reproj.Tile = function(sourceProj, sourceTileGrid,
   var maxSourceExtent = this.sourceTileGrid_.getExtent();
 
   var limitedTargetExtent = maxTargetExtent ?
-      ol.extent.getIntersection(targetExtent, maxTargetExtent) : targetExtent;
+    ol.extent.getIntersection(targetExtent, maxTargetExtent) : targetExtent;
 
   if (ol.extent.getArea(limitedTargetExtent) === 0) {
     // Tile is completely outside range -> EMPTY
@@ -72059,7 +73645,7 @@ ol.reproj.Tile = function(sourceProj, sourceTileGrid,
   }
 
   var errorThresholdInPixels = opt_errorThreshold !== undefined ?
-      opt_errorThreshold : ol.DEFAULT_RASTER_REPROJECTION_ERROR_THRESHOLD;
+    opt_errorThreshold : ol.DEFAULT_RASTER_REPROJECTION_ERROR_THRESHOLD;
 
   /**
    * @private
@@ -72245,31 +73831,31 @@ ol.TileUrlFunction.createFromTemplate = function(template, tileGrid) {
   var yRegEx = /\{y\}/g;
   var dashYRegEx = /\{-y\}/g;
   return (
-      /**
-       * @param {ol.TileCoord} tileCoord Tile Coordinate.
-       * @param {number} pixelRatio Pixel ratio.
-       * @param {ol.proj.Projection} projection Projection.
-       * @return {string|undefined} Tile URL.
-       */
-      function(tileCoord, pixelRatio, projection) {
-        if (!tileCoord) {
-          return undefined;
-        } else {
-          return template.replace(zRegEx, tileCoord[0].toString())
-              .replace(xRegEx, tileCoord[1].toString())
-              .replace(yRegEx, function() {
-                var y = -tileCoord[2] - 1;
-                return y.toString();
-              })
-              .replace(dashYRegEx, function() {
-                var z = tileCoord[0];
-                var range = tileGrid.getFullTileRange(z);
-                ol.asserts.assert(range, 55); // The {-y} placeholder requires a tile grid with extent
-                var y = range.getHeight() + tileCoord[2];
-                return y.toString();
-              });
-        }
-      });
+    /**
+     * @param {ol.TileCoord} tileCoord Tile Coordinate.
+     * @param {number} pixelRatio Pixel ratio.
+     * @param {ol.proj.Projection} projection Projection.
+     * @return {string|undefined} Tile URL.
+     */
+    function(tileCoord, pixelRatio, projection) {
+      if (!tileCoord) {
+        return undefined;
+      } else {
+        return template.replace(zRegEx, tileCoord[0].toString())
+            .replace(xRegEx, tileCoord[1].toString())
+            .replace(yRegEx, function() {
+              var y = -tileCoord[2] - 1;
+              return y.toString();
+            })
+            .replace(dashYRegEx, function() {
+              var z = tileCoord[0];
+              var range = tileGrid.getFullTileRange(z);
+              ol.asserts.assert(range, 55); // The {-y} placeholder requires a tile grid with extent
+              var y = range.getHeight() + tileCoord[2];
+              return y.toString();
+            });
+      }
+    });
 };
 
 
@@ -72298,21 +73884,21 @@ ol.TileUrlFunction.createFromTileUrlFunctions = function(tileUrlFunctions) {
     return tileUrlFunctions[0];
   }
   return (
-      /**
-       * @param {ol.TileCoord} tileCoord Tile Coordinate.
-       * @param {number} pixelRatio Pixel ratio.
-       * @param {ol.proj.Projection} projection Projection.
-       * @return {string|undefined} Tile URL.
-       */
-      function(tileCoord, pixelRatio, projection) {
-        if (!tileCoord) {
-          return undefined;
-        } else {
-          var h = ol.tilecoord.hash(tileCoord);
-          var index = ol.math.modulo(h, tileUrlFunctions.length);
-          return tileUrlFunctions[index](tileCoord, pixelRatio, projection);
-        }
-      });
+    /**
+     * @param {ol.TileCoord} tileCoord Tile Coordinate.
+     * @param {number} pixelRatio Pixel ratio.
+     * @param {ol.proj.Projection} projection Projection.
+     * @return {string|undefined} Tile URL.
+     */
+    function(tileCoord, pixelRatio, projection) {
+      if (!tileCoord) {
+        return undefined;
+      } else {
+        var h = ol.tilecoord.hash(tileCoord);
+        var index = ol.math.modulo(h, tileUrlFunctions.length);
+        return tileUrlFunctions[index](tileCoord, pixelRatio, projection);
+      }
+    });
 };
 
 
@@ -72453,7 +74039,7 @@ ol.source.Tile = function(options) {
    * @type {number}
    */
   this.tilePixelRatio_ = options.tilePixelRatio !== undefined ?
-      options.tilePixelRatio : 1;
+    options.tilePixelRatio : 1;
 
   /**
    * @protected
@@ -72652,12 +74238,11 @@ ol.source.Tile.prototype.getTileCacheForProjection = function(projection) {
 /**
  * Get the tile pixel ratio for this source. Subclasses may override this
  * method, which is meant to return a supported pixel ratio that matches the
- * provided `opt_pixelRatio` as close as possible. When no `opt_pixelRatio` is
- * provided, it is meant to return `this.tilePixelRatio_`.
- * @param {number=} opt_pixelRatio Pixel ratio.
+ * provided `pixelRatio` as close as possible.
+ * @param {number} pixelRatio Pixel ratio.
  * @return {number} Tile pixel ratio.
  */
-ol.source.Tile.prototype.getTilePixelRatio = function(opt_pixelRatio) {
+ol.source.Tile.prototype.getTilePixelRatio = function(pixelRatio) {
   return this.tilePixelRatio_;
 };
 
@@ -72691,7 +74276,7 @@ ol.source.Tile.prototype.getTilePixelSize = function(z, pixelRatio, projection) 
  */
 ol.source.Tile.prototype.getTileCoordForTileUrlFunction = function(tileCoord, opt_projection) {
   var projection = opt_projection !== undefined ?
-      opt_projection : this.getProjection();
+    opt_projection : this.getProjection();
   var tileGrid = this.getTileGridForProjection(projection);
   if (this.getWrapX() && projection.isGlobal()) {
     tileCoord = ol.tilegrid.wrapX(tileGrid, tileCoord, projection);
@@ -72819,8 +74404,8 @@ ol.source.UrlTile = function(options) {
    * @type {ol.TileUrlFunctionType}
    */
   this.tileUrlFunction = this.fixedTileUrlFunction ?
-      this.fixedTileUrlFunction.bind(this) :
-      ol.TileUrlFunction.nullTileUrlFunction;
+    this.fixedTileUrlFunction.bind(this) :
+    ol.TileUrlFunction.nullTileUrlFunction;
 
   /**
    * @protected
@@ -72941,8 +74526,8 @@ ol.source.UrlTile.prototype.setTileUrlFunction = function(tileUrlFunction, opt_k
 ol.source.UrlTile.prototype.setUrl = function(url) {
   var urls = this.urls = ol.TileUrlFunction.expandUrl(url);
   this.setTileUrlFunction(this.fixedTileUrlFunction ?
-      this.fixedTileUrlFunction.bind(this) :
-      ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), url);
+    this.fixedTileUrlFunction.bind(this) :
+    ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), url);
 };
 
 
@@ -72955,8 +74540,8 @@ ol.source.UrlTile.prototype.setUrls = function(urls) {
   this.urls = urls;
   var key = urls.join('\n');
   this.setTileUrlFunction(this.fixedTileUrlFunction ?
-      this.fixedTileUrlFunction.bind(this) :
-      ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), key);
+    this.fixedTileUrlFunction.bind(this) :
+    ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), key);
 };
 
 
@@ -73006,7 +74591,7 @@ ol.source.TileImage = function(options) {
     state: options.state,
     tileGrid: options.tileGrid,
     tileLoadFunction: options.tileLoadFunction ?
-        options.tileLoadFunction : ol.source.TileImage.defaultTileLoadFunction,
+      options.tileLoadFunction : ol.source.TileImage.defaultTileLoadFunction,
     tilePixelRatio: options.tilePixelRatio,
     tileUrlFunction: options.tileUrlFunction,
     url: options.url,
@@ -73027,7 +74612,7 @@ ol.source.TileImage = function(options) {
    *        ?string, ol.TileLoadFunctionType)}
    */
   this.tileClass = options.tileClass !== undefined ?
-      options.tileClass : ol.ImageTile;
+    options.tileClass : ol.ImageTile;
 
   /**
    * @protected
@@ -73188,7 +74773,7 @@ ol.source.TileImage.prototype.createTile_ = function(z, x, y, pixelRatio, projec
   var urlTileCoord = this.getTileCoordForTileUrlFunction(
       tileCoord, projection);
   var tileUrl = urlTileCoord ?
-      this.tileUrlFunction(urlTileCoord, pixelRatio, projection) : undefined;
+    this.tileUrlFunction(urlTileCoord, pixelRatio, projection) : undefined;
   var tile = new this.tileClass(
       tileCoord,
       tileUrl !== undefined ? ol.TileState.IDLE : ol.TileState.EMPTY,
@@ -73241,6 +74826,7 @@ ol.source.TileImage.prototype.getTile = function(z, x, y, pixelRatio, projection
 
       if (tile) {
         newTile.interimTile = tile;
+        newTile.refreshInterimChain();
         cache.replace(tileCoordKey, newTile);
       } else {
         cache.set(tileCoordKey, newTile);
@@ -73429,7 +75015,7 @@ ol.inherits(ol.source.BingMaps, ol.source.TileImage);
  */
 ol.source.BingMaps.TOS_ATTRIBUTION = new ol.Attribution({
   html: '<a class="ol-attribution-bing-tos" ' +
-      'href="http://www.microsoft.com/maps/product/terms.html">' +
+      'href="https://www.microsoft.com/maps/product/terms.html">' +
       'Terms of Use</a>'
 });
 
@@ -73480,12 +75066,12 @@ ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) 
   var sourceProjection = this.getProjection();
   var extent = ol.tilegrid.extentFromProjection(sourceProjection);
   var tileSize = resource.imageWidth == resource.imageHeight ?
-      resource.imageWidth : [resource.imageWidth, resource.imageHeight];
+    resource.imageWidth : [resource.imageWidth, resource.imageHeight];
   var tileGrid = ol.tilegrid.createXYZ({
     extent: extent,
     minZoom: resource.zoomMin,
     maxZoom: maxZoom,
-    tileSize: tileSize / this.getTilePixelRatio()
+    tileSize: tileSize / (this.hidpi_ ? 2 : 1)
   });
   this.tileGrid = tileGrid;
 
@@ -73498,26 +75084,26 @@ ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) 
             .replace('{subdomain}', subdomain)
             .replace('{culture}', culture);
         return (
-            /**
-             * @param {ol.TileCoord} tileCoord Tile coordinate.
-             * @param {number} pixelRatio Pixel ratio.
-             * @param {ol.proj.Projection} projection Projection.
-             * @return {string|undefined} Tile URL.
-             */
-            function(tileCoord, pixelRatio, projection) {
-              if (!tileCoord) {
-                return undefined;
-              } else {
-                ol.tilecoord.createOrUpdate(tileCoord[0], tileCoord[1],
-                    -tileCoord[2] - 1, quadKeyTileCoord);
-                var url = imageUrl;
-                if (hidpi) {
-                  url += '&dpi=d1&device=mobile';
-                }
-                return url.replace('{quadkey}', ol.tilecoord.quadKey(
-                    quadKeyTileCoord));
+          /**
+           * @param {ol.TileCoord} tileCoord Tile coordinate.
+           * @param {number} pixelRatio Pixel ratio.
+           * @param {ol.proj.Projection} projection Projection.
+           * @return {string|undefined} Tile URL.
+           */
+          function(tileCoord, pixelRatio, projection) {
+            if (!tileCoord) {
+              return undefined;
+            } else {
+              ol.tilecoord.createOrUpdate(tileCoord[0], tileCoord[1],
+                  -tileCoord[2] - 1, quadKeyTileCoord);
+              var url = imageUrl;
+              if (hidpi) {
+                url += '&dpi=d1&device=mobile';
               }
-            });
+              return url.replace('{quadkey}', ol.tilecoord.quadKey(
+                  quadKeyTileCoord));
+            }
+          });
       }));
 
   if (resource.imageryProviders) {
@@ -73588,15 +75174,15 @@ goog.require('ol.tilegrid');
 ol.source.XYZ = function(opt_options) {
   var options = opt_options || {};
   var projection = options.projection !== undefined ?
-      options.projection : 'EPSG:3857';
+    options.projection : 'EPSG:3857';
 
   var tileGrid = options.tileGrid !== undefined ? options.tileGrid :
-      ol.tilegrid.createXYZ({
-        extent: ol.tilegrid.extentFromProjection(projection),
-        maxZoom: options.maxZoom,
-        minZoom: options.minZoom,
-        tileSize: options.tileSize
-      });
+    ol.tilegrid.createXYZ({
+      extent: ol.tilegrid.extentFromProjection(projection),
+      maxZoom: options.maxZoom,
+      minZoom: options.minZoom,
+      tileSize: options.tileSize
+    });
 
   ol.source.TileImage.call(this, {
     attributions: options.attributions,
@@ -74074,7 +75660,7 @@ ol.source.ImageArcGISRest = function(opt_options) {
    * @type {ol.ImageLoadFunctionType}
    */
   this.imageLoadFunction_ = options.imageLoadFunction !== undefined ?
-      options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
+    options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
 
 
   /**
@@ -74226,8 +75812,8 @@ ol.source.ImageArcGISRest.prototype.getRequestUrl_ = function(extent, size, pixe
   var url = this.url_;
 
   var modifiedUrl = url
-   .replace(/MapServer\/?$/, 'MapServer/export')
-   .replace(/ImageServer\/?$/, 'ImageServer/exportImage');
+      .replace(/MapServer\/?$/, 'MapServer/export')
+      .replace(/ImageServer\/?$/, 'ImageServer/exportImage');
   if (modifiedUrl == url) {
     ol.asserts.assert(false, 50); // `options.featureTypes` should be an Array
   }
@@ -74323,7 +75909,7 @@ ol.source.ImageMapGuide = function(options) {
    * @type {number}
    */
   this.displayDpi_ = options.displayDpi !== undefined ?
-      options.displayDpi : 96;
+    options.displayDpi : 96;
 
   /**
    * @private
@@ -74342,7 +75928,7 @@ ol.source.ImageMapGuide = function(options) {
    * @type {ol.ImageLoadFunctionType}
    */
   this.imageLoadFunction_ = options.imageLoadFunction !== undefined ?
-      options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
+    options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
 
   /**
    * @private
@@ -74355,7 +75941,7 @@ ol.source.ImageMapGuide = function(options) {
    * @type {number}
    */
   this.metersPerUnit_ = options.metersPerUnit !== undefined ?
-      options.metersPerUnit : 1;
+    options.metersPerUnit : 1;
 
   /**
    * @private
@@ -74368,7 +75954,7 @@ ol.source.ImageMapGuide = function(options) {
    * @type {boolean}
    */
   this.useOverlay_ = options.useOverlay !== undefined ?
-      options.useOverlay : false;
+    options.useOverlay : false;
 
   /**
    * @private
@@ -74549,11 +76135,11 @@ ol.source.ImageStatic = function(options) {
   var imageExtent = options.imageExtent;
 
   var crossOrigin = options.crossOrigin !== undefined ?
-      options.crossOrigin : null;
+    options.crossOrigin : null;
 
   var /** @type {ol.ImageLoadFunctionType} */ imageLoadFunction =
       options.imageLoadFunction !== undefined ?
-      options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
+        options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
 
   ol.source.Image.call(this, {
     attributions: options.attributions,
@@ -74693,7 +76279,7 @@ ol.source.ImageWMS = function(opt_options) {
    * @type {ol.ImageLoadFunctionType}
    */
   this.imageLoadFunction_ = options.imageLoadFunction !== undefined ?
-      options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
+    options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
 
   /**
    * @private
@@ -74712,8 +76298,7 @@ ol.source.ImageWMS = function(opt_options) {
    * @private
    * @type {ol.source.WMSServerType|undefined}
    */
-  this.serverType_ =
-      /** @type {ol.source.WMSServerType|undefined} */ (options.serverType);
+  this.serverType_ = /** @type {ol.source.WMSServerType|undefined} */ (options.serverType);
 
   /**
    * @private
@@ -75030,10 +76615,10 @@ ol.source.OSM = function(opt_options) {
   }
 
   var crossOrigin = options.crossOrigin !== undefined ?
-      options.crossOrigin : 'anonymous';
+    options.crossOrigin : 'anonymous';
 
   var url = options.url !== undefined ?
-      options.url : 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    options.url : 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   ol.source.XYZ.call(this, {
     attributions: attributions,
@@ -75371,7 +76956,7 @@ ol.source.Raster = function(options) {
    * @type {ol.source.RasterOperationType}
    */
   this.operationType_ = options.operationType !== undefined ?
-      options.operationType : ol.source.RasterOperationType.PIXEL;
+    options.operationType : ol.source.RasterOperationType.PIXEL;
 
   /**
    * @private
@@ -75495,10 +77080,10 @@ ol.source.Raster.prototype.setOperation = function(operation, opt_lib) {
 ol.source.Raster.prototype.updateFrameState_ = function(extent, resolution, projection) {
 
   var frameState = /** @type {olx.FrameState} */ (
-      ol.obj.assign({}, this.frameState_));
+    ol.obj.assign({}, this.frameState_));
 
   frameState.viewState = /** @type {olx.ViewState} */ (
-      ol.obj.assign({}, frameState.viewState));
+    ol.obj.assign({}, frameState.viewState));
 
   var center = ol.extent.getCenter(extent);
 
@@ -75545,8 +77130,6 @@ ol.source.Raster.prototype.getImage = function(extent, resolution, pixelRatio, p
   var frameState = this.updateFrameState_(extent, resolution, projection);
   this.requestedFrameState_ = frameState;
 
-  frameState.tileQueue.loadMoreTiles(16, 16);
-
   // check if we can't reuse the existing ol.ImageCanvas
   if (this.renderedImageCanvas_) {
     var renderedResolution = this.renderedImageCanvas_.getResolution();
@@ -75560,6 +77143,7 @@ ol.source.Raster.prototype.getImage = function(extent, resolution, pixelRatio, p
     this.processSources_();
   }
 
+  frameState.tileQueue.loadMoreTiles(16, 16);
   return this.renderedImageCanvas_;
 };
 
@@ -75832,7 +77416,7 @@ ol.source.Stamen = function(options) {
   var layerConfig = ol.source.Stamen.LayerConfig[options.layer];
 
   var url = options.url !== undefined ? options.url :
-      'https://stamen-tiles-{a-d}.a.ssl.fastly.net/' + options.layer +
+    'https://stamen-tiles-{a-d}.a.ssl.fastly.net/' + options.layer +
       '/{z}/{x}/{y}.' + layerConfig.extension;
 
   ol.source.XYZ.call(this, {
@@ -75857,8 +77441,8 @@ ol.inherits(ol.source.Stamen, ol.source.XYZ);
  */
 ol.source.Stamen.ATTRIBUTIONS = [
   new ol.Attribution({
-    html: 'Map tiles by <a href="http://stamen.com/">Stamen Design</a>, ' +
-        'under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY' +
+    html: 'Map tiles by <a href="https://stamen.com/">Stamen Design</a>, ' +
+        'under <a href="https://creativecommons.org/licenses/by/3.0/">CC BY' +
         ' 3.0</a>.'
   }),
   ol.source.OSM.ATTRIBUTION
@@ -76029,7 +77613,7 @@ ol.source.TileArcGISRest.prototype.getParams = function() {
  * @private
  */
 ol.source.TileArcGISRest.prototype.getRequestUrl_ = function(tileCoord, tileSize, tileExtent,
-        pixelRatio, projection, params) {
+    pixelRatio, projection, params) {
 
   var urls = this.urls;
   if (!urls) {
@@ -76045,7 +77629,7 @@ ol.source.TileArcGISRest.prototype.getRequestUrl_ = function(tileCoord, tileSize
   params['IMAGESR'] = srid;
   params['DPI'] = Math.round(
       params['DPI'] ? params['DPI'] * pixelRatio : 90 * pixelRatio
-      );
+  );
 
   var url;
   if (urls.length == 1) {
@@ -76164,7 +77748,7 @@ ol.source.TileDebug.prototype.getTile = function(z, x, y) {
     var tileCoord = [z, x, y];
     var textTileCoord = this.getTileCoordForTileUrlFunction(tileCoord);
     var text = !textTileCoord ? '' :
-        this.getTileCoordForTileUrlFunction(textTileCoord).toString();
+      this.getTileCoordForTileUrlFunction(textTileCoord).toString();
     var tile = new ol.source.TileDebug.Tile_(tileCoord, tileSize, text);
     this.tileCache.set(tileCoordKey, tile);
     return tile;
@@ -76376,7 +77960,7 @@ ol.source.TileJSON.prototype.handleTileJSONResponse = function(tileJSON) {
 
   if (tileJSON.attribution !== undefined && !this.getAttributions()) {
     var attributionExtent = extent !== undefined ?
-        extent : epsg4326Projection.getExtent();
+      extent : epsg4326Projection.getExtent();
     /** @type {Object.<string, Array.<ol.TileRange>>} */
     var tileRanges = {};
     var z, zKey;
@@ -76443,7 +78027,7 @@ ol.source.TileUTFGrid = function(options) {
    * @type {boolean}
    */
   this.preemptive_ = options.preemptive !== undefined ?
-      options.preemptive : true;
+    options.preemptive : true;
 
   /**
    * @private
@@ -76604,7 +78188,7 @@ ol.source.TileUTFGrid.prototype.handleTileJSONResponse = function(tileJSON) {
 
   if (tileJSON.attribution !== undefined) {
     var attributionExtent = extent !== undefined ?
-        extent : epsg4326Projection.getExtent();
+      extent : epsg4326Projection.getExtent();
     /** @type {Object.<string, Array.<ol.TileRange>>} */
     var tileRanges = {};
     var z, zKey;
@@ -76938,6 +78522,7 @@ ol.source.TileWMS = function(opt_options) {
     opaque: !transparent,
     projection: options.projection,
     reprojectionErrorThreshold: options.reprojectionErrorThreshold,
+    tileClass: options.tileClass,
     tileGrid: options.tileGrid,
     tileLoadFunction: options.tileLoadFunction,
     url: options.url,
@@ -76967,8 +78552,7 @@ ol.source.TileWMS = function(opt_options) {
    * @private
    * @type {ol.source.WMSServerType|undefined}
    */
-  this.serverType_ =
-      /** @type {ol.source.WMSServerType|undefined} */ (options.serverType);
+  this.serverType_ = /** @type {ol.source.WMSServerType|undefined} */ (options.serverType);
 
   /**
    * @private
@@ -77096,7 +78680,7 @@ ol.source.TileWMS.prototype.getParams = function() {
  * @private
  */
 ol.source.TileWMS.prototype.getRequestUrl_ = function(tileCoord, tileSize, tileExtent,
-        pixelRatio, projection, params) {
+    pixelRatio, projection, params) {
 
   var urls = this.urls;
   if (!urls) {
@@ -77164,7 +78748,7 @@ ol.source.TileWMS.prototype.getRequestUrl_ = function(tileCoord, tileSize, tileE
  */
 ol.source.TileWMS.prototype.getTilePixelRatio = function(pixelRatio) {
   return (!this.hidpi_ || this.serverType_ === undefined) ? 1 :
-      /** @type {number} */ (pixelRatio);
+  /** @type {number} */ (pixelRatio);
 };
 
 
@@ -77319,9 +78903,9 @@ ol.VectorImageTile = function(tileCoord, state, src, format, tileLoadFunction,
 
   /**
    * @private
-   * @type {CanvasRenderingContext2D}
+   * @type {Object.<string, CanvasRenderingContext2D>}
    */
-  this.context_ = null;
+  this.context_ = {};
 
   /**
    * @private
@@ -77331,14 +78915,9 @@ ol.VectorImageTile = function(tileCoord, state, src, format, tileLoadFunction,
 
   /**
    * @private
-   * @type {ol.TileReplayState}
+   * @type {Object.<string, ol.TileReplayState>}
    */
-  this.replayState_ = {
-    dirty: false,
-    renderedRenderOrder: null,
-    renderedRevision: -1,
-    renderedTileRevision: -1
-  };
+  this.replayState_ = {};
 
   /**
    * @private
@@ -77434,31 +79013,44 @@ ol.VectorImageTile.prototype.disposeInternal = function() {
 
 
 /**
+ * @param {ol.layer.Layer} layer Layer.
  * @return {CanvasRenderingContext2D} The rendering context.
  */
-ol.VectorImageTile.prototype.getContext = function() {
-  if (!this.context_) {
-    this.context_ = ol.dom.createCanvasContext2D();
+ol.VectorImageTile.prototype.getContext = function(layer) {
+  var key = ol.getUid(layer).toString();
+  if (!(key in this.context_)) {
+    this.context_[key] = ol.dom.createCanvasContext2D();
   }
-  return this.context_;
+  return this.context_[key];
 };
 
 
 /**
  * Get the Canvas for this tile.
+ * @param {ol.layer.Layer} layer Layer.
  * @return {HTMLCanvasElement} Canvas.
  */
-ol.VectorImageTile.prototype.getImage = function() {
-  return this.replayState_.renderedTileRevision == -1 ?
-      null : this.context_.canvas;
+ol.VectorImageTile.prototype.getImage = function(layer) {
+  return this.getReplayState(layer).renderedTileRevision == -1 ?
+    null : this.getContext(layer).canvas;
 };
 
 
 /**
+ * @param {ol.layer.Layer} layer Layer.
  * @return {ol.TileReplayState} The replay state.
  */
-ol.VectorImageTile.prototype.getReplayState = function() {
-  return this.replayState_;
+ol.VectorImageTile.prototype.getReplayState = function(layer) {
+  var key = ol.getUid(layer).toString();
+  if (!(key in this.replayState_)) {
+    this.replayState_[key] = {
+      dirty: false,
+      renderedRenderOrder: null,
+      renderedRevision: -1,
+      renderedTileRevision: -1
+    };
+  }
+  return this.replayState_[key];
 };
 
 
@@ -77484,7 +79076,6 @@ ol.VectorImageTile.prototype.getTile = function(tileKey) {
  */
 ol.VectorImageTile.prototype.load = function() {
   var leftToLoad = 0;
-  var errors = false;
   if (this.state == ol.TileState.IDLE) {
     this.setState(ol.TileState.LOADING);
   }
@@ -77494,10 +79085,6 @@ ol.VectorImageTile.prototype.load = function() {
       if (sourceTile.state == ol.TileState.IDLE) {
         sourceTile.setLoader(this.loader_);
         sourceTile.load();
-      } else if (sourceTile.state == ol.TileState.ERROR) {
-        errors = true;
-      } else if (sourceTile.state == ol.TileState.EMPTY) {
-        ol.array.remove(this.tileKeys, sourceTileKey);
       }
       if (sourceTile.state == ol.TileState.LOADING) {
         var key = ol.events.listen(sourceTile, ol.events.EventType.CHANGE, function(e) {
@@ -77507,13 +79094,8 @@ ol.VectorImageTile.prototype.load = function() {
             --leftToLoad;
             ol.events.unlistenByKey(key);
             ol.array.remove(this.loadListenerKeys_, key);
-            if (state == ol.TileState.ERROR) {
-              ol.array.remove(this.tileKeys, sourceTileKey);
-              errors = true;
-            }
             if (leftToLoad == 0) {
-              this.setState(this.tileKeys.length > 0 ?
-                  ol.TileState.LOADED : ol.TileState.ERROR);
+              this.finishLoading_();
             }
           }
         }.bind(this));
@@ -77523,12 +79105,30 @@ ol.VectorImageTile.prototype.load = function() {
     }.bind(this));
   }
   if (leftToLoad == 0) {
-    setTimeout(function() {
-      this.setState(this.tileKeys.length > 0 ?
-          ol.TileState.LOADED :
-          (errors ? ol.TileState.ERROR : ol.TileState.EMPTY));
-    }.bind(this), 0);
+    setTimeout(this.finishLoading_.bind(this), 0);
   }
+};
+
+
+/**
+ * @private
+ */
+ol.VectorImageTile.prototype.finishLoading_ = function() {
+  var errors = false;
+  var loaded = this.tileKeys.length;
+  var state;
+  for (var i = loaded - 1; i >= 0; --i) {
+    state = this.getTile(this.tileKeys[i]).getState();
+    if (state != ol.TileState.LOADED) {
+      if (state == ol.TileState.ERROR) {
+        errors = true;
+      }
+      --loaded;
+    }
+  }
+  this.setState(loaded > 0 ?
+    ol.TileState.LOADED :
+    (errors ? ol.TileState.ERROR : ol.TileState.EMPTY));
 };
 
 
@@ -77539,7 +79139,7 @@ ol.VectorImageTile.prototype.load = function() {
  */
 ol.VectorImageTile.defaultLoadFunction = function(tile, url) {
   var loader = ol.featureloader.loadFeaturesXhr(
-      url, tile.getFormat(), tile.onLoad_.bind(tile), tile.onError_.bind(tile));
+      url, tile.getFormat(), tile.onLoad.bind(tile), tile.onError.bind(tile));
 
   tile.setLoader(loader);
 };
@@ -77571,6 +79171,12 @@ ol.VectorTile = function(tileCoord, state, src, format, tileLoadFunction) {
 
   /**
    * @private
+   * @type {ol.Extent}
+   */
+  this.extent_ = null;
+
+  /**
+   * @private
    * @type {ol.format.Feature}
    */
   this.format_ = format;
@@ -77594,6 +79200,10 @@ ol.VectorTile = function(tileCoord, state, src, format, tileLoadFunction) {
    */
   this.projection_;
 
+  /**
+   * @private
+   * @type {Object.<string, ol.render.ReplayGroup>}
+   */
   this.replayGroups_ = {};
 
   /**
@@ -77625,6 +79235,15 @@ ol.VectorTile.prototype.disposeInternal = function() {
 
 
 /**
+ * Gets the extent of the vector tile.
+ * @return {ol.Extent} The extent.
+ */
+ol.VectorTile.prototype.getExtent = function() {
+  return this.extent_ || ol.VectorTile.DEFAULT_EXTENT;
+};
+
+
+/**
  * Get the feature format assigned for reading this tile's features.
  * @return {ol.format.Feature} Feature format.
  * @api
@@ -77636,7 +79255,7 @@ ol.VectorTile.prototype.getFormat = function() {
 
 /**
  * Get the features for this tile. Geometries will be in the projection returned
- * by {@link #getProjection}.
+ * by {@link ol.VectorTile#getProjection}.
  * @return {Array.<ol.Feature|ol.render.Feature>} Features.
  * @api
  */
@@ -77654,7 +79273,8 @@ ol.VectorTile.prototype.getKey = function() {
 
 
 /**
- * Get the feature projection of features returned by {@link #getFeatures}.
+ * Get the feature projection of features returned by
+ * {@link ol.VectorTile#getFeatures}.
  * @return {ol.proj.Projection} Feature projection.
  * @api
  */
@@ -77663,8 +79283,13 @@ ol.VectorTile.prototype.getProjection = function() {
 };
 
 
-ol.VectorTile.prototype.getReplayGroup = function(key) {
-  return this.replayGroups_[key];
+/**
+ * @param {ol.layer.Layer} layer Layer.
+ * @param {string} key Key.
+ * @return {ol.render.ReplayGroup} Replay group.
+ */
+ol.VectorTile.prototype.getReplayGroup = function(layer, key) {
+  return this.replayGroups_[ol.getUid(layer) + ',' + key];
 };
 
 
@@ -77684,22 +79309,43 @@ ol.VectorTile.prototype.load = function() {
  * Handler for successful tile load.
  * @param {Array.<ol.Feature>} features The loaded features.
  * @param {ol.proj.Projection} dataProjection Data projection.
+ * @param {ol.Extent} extent Extent.
  */
-ol.VectorTile.prototype.onLoad_ = function(features, dataProjection) {
+ol.VectorTile.prototype.onLoad = function(features, dataProjection, extent) {
   this.setProjection(dataProjection);
   this.setFeatures(features);
+  this.setExtent(extent);
 };
 
 
 /**
  * Handler for tile load errors.
  */
-ol.VectorTile.prototype.onError_ = function() {
+ol.VectorTile.prototype.onError = function() {
   this.setState(ol.TileState.ERROR);
 };
 
 
 /**
+ * Function for use in an {@link ol.source.VectorTile}'s `tileLoadFunction`.
+ * Sets the extent of the vector tile. This is only required for tiles in
+ * projections with `tile-pixels` as units. The extent should be set to
+ * `[0, 0, tilePixelSize, tilePixelSize]`, where `tilePixelSize` is calculated
+ * by multiplying the tile size with the tile pixel ratio. For sources using
+ * {@link ol.format.MVT} as feature format, the
+ * {@link ol.format.MVT#getLastExtent} method will return the correct extent.
+ * The default is `[0, 0, 4096, 4096]`.
+ * @param {ol.Extent} extent The extent.
+ * @api
+ */
+ol.VectorTile.prototype.setExtent = function(extent) {
+  this.extent_ = extent;
+};
+
+
+/**
+ * Function for use in an {@link ol.source.VectorTile}'s `tileLoadFunction`.
+ * Sets the features for the tile.
  * @param {Array.<ol.Feature>} features Features.
  * @api
  */
@@ -77710,7 +79356,9 @@ ol.VectorTile.prototype.setFeatures = function(features) {
 
 
 /**
- * Set the projection of the features that were added with {@link #setFeatures}.
+ * Function for use in an {@link ol.source.VectorTile}'s `tileLoadFunction`.
+ * Sets the projection of the features that were added with
+ * {@link ol.VectorTile#setFeatures}.
  * @param {ol.proj.Projection} projection Feature projection.
  * @api
  */
@@ -77719,8 +79367,13 @@ ol.VectorTile.prototype.setProjection = function(projection) {
 };
 
 
-ol.VectorTile.prototype.setReplayGroup = function(key, replayGroup) {
-  this.replayGroups_[key] = replayGroup;
+/**
+ * @param {ol.layer.Layer} layer Layer.
+ * @param {string} key Key.
+ * @param {ol.render.ReplayGroup} replayGroup Replay group.
+ */
+ol.VectorTile.prototype.setReplayGroup = function(layer, key, replayGroup) {
+  this.replayGroups_[ol.getUid(layer) + ',' + key] = replayGroup;
 };
 
 
@@ -77732,6 +79385,13 @@ ol.VectorTile.prototype.setReplayGroup = function(key, replayGroup) {
 ol.VectorTile.prototype.setLoader = function(loader) {
   this.loader_ = loader;
 };
+
+
+/**
+ * @const
+ * @type {ol.Extent}
+ */
+ol.VectorTile.DEFAULT_EXTENT = [0, 0, 4096, 4096];
 
 goog.provide('ol.source.VectorTile');
 
@@ -77762,20 +79422,29 @@ goog.require('ol.source.UrlTile');
  * @api
  */
 ol.source.VectorTile = function(options) {
+  var projection = options.projection || 'EPSG:3857';
+
+  var extent = options.extent || ol.tilegrid.extentFromProjection(projection);
+
+  var tileGrid = options.tileGrid || ol.tilegrid.createXYZ({
+    extent: extent,
+    maxZoom: options.maxZoom || 22,
+    minZoom: options.minZoom,
+    tileSize: options.tileSize || 512
+  });
 
   ol.source.UrlTile.call(this, {
     attributions: options.attributions,
     cacheSize: options.cacheSize !== undefined ? options.cacheSize : 128,
-    extent: options.extent,
+    extent: extent,
     logo: options.logo,
     opaque: false,
-    projection: options.projection,
+    projection: projection,
     state: options.state,
-    tileGrid: options.tileGrid,
+    tileGrid: tileGrid,
     tileLoadFunction: options.tileLoadFunction ?
-        options.tileLoadFunction : ol.VectorImageTile.defaultLoadFunction,
+      options.tileLoadFunction : ol.VectorImageTile.defaultLoadFunction,
     tileUrlFunction: options.tileUrlFunction,
-    tilePixelRatio: options.tilePixelRatio,
     url: options.url,
     urls: options.urls,
     wrapX: options.wrapX === undefined ? true : options.wrapX
@@ -77840,7 +79509,7 @@ ol.source.VectorTile.prototype.getTile = function(z, x, y, pixelRatio, projectio
     var urlTileCoord = this.getTileCoordForTileUrlFunction(
         tileCoord, projection);
     var tileUrl = urlTileCoord ?
-        this.tileUrlFunction(urlTileCoord, pixelRatio, projection) : undefined;
+      this.tileUrlFunction(urlTileCoord, pixelRatio, projection) : undefined;
     var tile = new ol.VectorImageTile(
         tileCoord,
         tileUrl !== undefined ? ol.TileState.IDLE : ol.TileState.EMPTY,
@@ -77876,10 +79545,8 @@ ol.source.VectorTile.prototype.getTileGridForProjection = function(projection) {
 /**
  * @inheritDoc
  */
-ol.source.VectorTile.prototype.getTilePixelRatio = function(opt_pixelRatio) {
-  return opt_pixelRatio == undefined ?
-      ol.source.UrlTile.prototype.getTilePixelRatio.call(this, opt_pixelRatio) :
-      opt_pixelRatio;
+ol.source.VectorTile.prototype.getTilePixelRatio = function(pixelRatio) {
+  return pixelRatio;
 };
 
 
@@ -77973,7 +79640,7 @@ ol.tilegrid.WMTS.prototype.getMatrixIds = function() {
  * @api
  */
 ol.tilegrid.WMTS.createFromCapabilitiesMatrixSet = function(matrixSet, opt_extent,
- opt_matrixLimits) {
+    opt_matrixLimits) {
 
   /** @type {!Array.<number>} */
   var resolutions = [];
@@ -78034,7 +79701,7 @@ ol.tilegrid.WMTS.createFromCapabilitiesMatrixSet = function(matrixSet, opt_exten
       }
       resolutions.push(resolution);
       tileSizes.push(tileWidth == tileHeight ?
-          tileWidth : [tileWidth, tileHeight]);
+        tileWidth : [tileWidth, tileHeight]);
       // top-left origin, so height is negative
       sizes.push([elt['MatrixWidth'], -elt['MatrixHeight']]);
     }
@@ -78126,8 +79793,8 @@ ol.source.WMTS = function(options) {
    * @type {ol.source.WMTSRequestEncoding}
    */
   this.requestEncoding_ = options.requestEncoding !== undefined ?
-      /** @type {ol.source.WMTSRequestEncoding} */ (options.requestEncoding) :
-      ol.source.WMTSRequestEncoding.KVP;
+    /** @type {ol.source.WMTSRequestEncoding} */ (options.requestEncoding) :
+    ol.source.WMTSRequestEncoding.KVP;
 
   var requestEncoding = this.requestEncoding_;
 
@@ -78165,45 +79832,45 @@ ol.source.WMTS = function(options) {
     // special template params
 
     template = (requestEncoding == ol.source.WMTSRequestEncoding.KVP) ?
-        ol.uri.appendParams(template, context) :
-        template.replace(/\{(\w+?)\}/g, function(m, p) {
-          return (p.toLowerCase() in context) ? context[p.toLowerCase()] : m;
-        });
+      ol.uri.appendParams(template, context) :
+      template.replace(/\{(\w+?)\}/g, function(m, p) {
+        return (p.toLowerCase() in context) ? context[p.toLowerCase()] : m;
+      });
 
     return (
-        /**
-         * @param {ol.TileCoord} tileCoord Tile coordinate.
-         * @param {number} pixelRatio Pixel ratio.
-         * @param {ol.proj.Projection} projection Projection.
-         * @return {string|undefined} Tile URL.
-         */
-        function(tileCoord, pixelRatio, projection) {
-          if (!tileCoord) {
-            return undefined;
+      /**
+       * @param {ol.TileCoord} tileCoord Tile coordinate.
+       * @param {number} pixelRatio Pixel ratio.
+       * @param {ol.proj.Projection} projection Projection.
+       * @return {string|undefined} Tile URL.
+       */
+      function(tileCoord, pixelRatio, projection) {
+        if (!tileCoord) {
+          return undefined;
+        } else {
+          var localContext = {
+            'TileMatrix': tileGrid.getMatrixId(tileCoord[0]),
+            'TileCol': tileCoord[1],
+            'TileRow': -tileCoord[2] - 1
+          };
+          ol.obj.assign(localContext, dimensions);
+          var url = template;
+          if (requestEncoding == ol.source.WMTSRequestEncoding.KVP) {
+            url = ol.uri.appendParams(url, localContext);
           } else {
-            var localContext = {
-              'TileMatrix': tileGrid.getMatrixId(tileCoord[0]),
-              'TileCol': tileCoord[1],
-              'TileRow': -tileCoord[2] - 1
-            };
-            ol.obj.assign(localContext, dimensions);
-            var url = template;
-            if (requestEncoding == ol.source.WMTSRequestEncoding.KVP) {
-              url = ol.uri.appendParams(url, localContext);
-            } else {
-              url = url.replace(/\{(\w+?)\}/g, function(m, p) {
-                return localContext[p];
-              });
-            }
-            return url;
+            url = url.replace(/\{(\w+?)\}/g, function(m, p) {
+              return localContext[p];
+            });
           }
-        });
+          return url;
+        }
+      });
   }
 
   var tileUrlFunction = (urls && urls.length > 0) ?
-      ol.TileUrlFunction.createFromTileUrlFunctions(
-          urls.map(createFromWMTSTemplate)) :
-      ol.TileUrlFunction.nullTileUrlFunction;
+    ol.TileUrlFunction.createFromTileUrlFunctions(
+        urls.map(createFromWMTSTemplate)) :
+    ol.TileUrlFunction.nullTileUrlFunction;
 
   ol.source.TileImage.call(this, {
     attributions: options.attributions,
@@ -78387,9 +80054,9 @@ ol.source.WMTS.optionsFromCapabilities = function(wmtsCap, config) {
     idx = 0;
   }
   matrixSet = /** @type {string} */
-      (l['TileMatrixSetLink'][idx]['TileMatrixSet']);
+    (l['TileMatrixSetLink'][idx]['TileMatrixSet']);
   matrixLimits = /** @type {Array.<Object>} */
-      (l['TileMatrixSetLink'][idx]['TileMatrixSetLimits']);
+    (l['TileMatrixSetLink'][idx]['TileMatrixSetLimits']);
 
   var format = /** @type {string} */ (l['Format'][0]);
   if ('format' in config) {
@@ -78533,8 +80200,8 @@ ol.source.Zoomify = function(opt_options) {
 
   var size = options.size;
   var tierSizeCalculation = options.tierSizeCalculation !== undefined ?
-      options.tierSizeCalculation :
-      ol.source.Zoomify.TierSizeCalculation_.DEFAULT;
+    options.tierSizeCalculation :
+    ol.source.Zoomify.TierSizeCalculation_.DEFAULT;
 
   var imageWidth = size[0];
   var imageHeight = size[1];
@@ -78709,407 +80376,6 @@ ol.source.Zoomify.Tile_.prototype.getImage = function() {
 ol.source.Zoomify.TierSizeCalculation_ = {
   DEFAULT: 'default',
   TRUNCATED: 'truncated'
-};
-
-goog.provide('ol.style.Atlas');
-
-goog.require('ol.dom');
-
-
-/**
- * This class facilitates the creation of image atlases.
- *
- * Images added to an atlas will be rendered onto a single
- * atlas canvas. The distribution of images on the canvas is
- * managed with the bin packing algorithm described in:
- * http://www.blackpawn.com/texts/lightmaps/
- *
- * @constructor
- * @struct
- * @param {number} size The size in pixels of the sprite image.
- * @param {number} space The space in pixels between images.
- *    Because texture coordinates are float values, the edges of
- *    images might not be completely correct (in a way that the
- *    edges overlap when being rendered). To avoid this we add a
- *    padding around each image.
- */
-ol.style.Atlas = function(size, space) {
-
-  /**
-   * @private
-   * @type {number}
-   */
-  this.space_ = space;
-
-  /**
-   * @private
-   * @type {Array.<ol.AtlasBlock>}
-   */
-  this.emptyBlocks_ = [{x: 0, y: 0, width: size, height: size}];
-
-  /**
-   * @private
-   * @type {Object.<string, ol.AtlasInfo>}
-   */
-  this.entries_ = {};
-
-  /**
-   * @private
-   * @type {CanvasRenderingContext2D}
-   */
-  this.context_ = ol.dom.createCanvasContext2D(size, size);
-
-  /**
-   * @private
-   * @type {HTMLCanvasElement}
-   */
-  this.canvas_ = this.context_.canvas;
-};
-
-
-/**
- * @param {string} id The identifier of the entry to check.
- * @return {?ol.AtlasInfo} The atlas info.
- */
-ol.style.Atlas.prototype.get = function(id) {
-  return this.entries_[id] || null;
-};
-
-
-/**
- * @param {string} id The identifier of the entry to add.
- * @param {number} width The width.
- * @param {number} height The height.
- * @param {function(CanvasRenderingContext2D, number, number)} renderCallback
- *    Called to render the new image onto an atlas image.
- * @param {Object=} opt_this Value to use as `this` when executing
- *    `renderCallback`.
- * @return {?ol.AtlasInfo} The position and atlas image for the entry.
- */
-ol.style.Atlas.prototype.add = function(id, width, height, renderCallback, opt_this) {
-  var block, i, ii;
-  for (i = 0, ii = this.emptyBlocks_.length; i < ii; ++i) {
-    block = this.emptyBlocks_[i];
-    if (block.width >= width + this.space_ &&
-        block.height >= height + this.space_) {
-      // we found a block that is big enough for our entry
-      var entry = {
-        offsetX: block.x + this.space_,
-        offsetY: block.y + this.space_,
-        image: this.canvas_
-      };
-      this.entries_[id] = entry;
-
-      // render the image on the atlas image
-      renderCallback.call(opt_this, this.context_,
-          block.x + this.space_, block.y + this.space_);
-
-      // split the block after the insertion, either horizontally or vertically
-      this.split_(i, block, width + this.space_, height + this.space_);
-
-      return entry;
-    }
-  }
-
-  // there is no space for the new entry in this atlas
-  return null;
-};
-
-
-/**
- * @private
- * @param {number} index The index of the block.
- * @param {ol.AtlasBlock} block The block to split.
- * @param {number} width The width of the entry to insert.
- * @param {number} height The height of the entry to insert.
- */
-ol.style.Atlas.prototype.split_ = function(index, block, width, height) {
-  var deltaWidth = block.width - width;
-  var deltaHeight = block.height - height;
-
-  /** @type {ol.AtlasBlock} */
-  var newBlock1;
-  /** @type {ol.AtlasBlock} */
-  var newBlock2;
-
-  if (deltaWidth > deltaHeight) {
-    // split vertically
-    // block right of the inserted entry
-    newBlock1 = {
-      x: block.x + width,
-      y: block.y,
-      width: block.width - width,
-      height: block.height
-    };
-
-    // block below the inserted entry
-    newBlock2 = {
-      x: block.x,
-      y: block.y + height,
-      width: width,
-      height: block.height - height
-    };
-    this.updateBlocks_(index, newBlock1, newBlock2);
-  } else {
-    // split horizontally
-    // block right of the inserted entry
-    newBlock1 = {
-      x: block.x + width,
-      y: block.y,
-      width: block.width - width,
-      height: height
-    };
-
-    // block below the inserted entry
-    newBlock2 = {
-      x: block.x,
-      y: block.y + height,
-      width: block.width,
-      height: block.height - height
-    };
-    this.updateBlocks_(index, newBlock1, newBlock2);
-  }
-};
-
-
-/**
- * Remove the old block and insert new blocks at the same array position.
- * The new blocks are inserted at the same position, so that splitted
- * blocks (that are potentially smaller) are filled first.
- * @private
- * @param {number} index The index of the block to remove.
- * @param {ol.AtlasBlock} newBlock1 The 1st block to add.
- * @param {ol.AtlasBlock} newBlock2 The 2nd block to add.
- */
-ol.style.Atlas.prototype.updateBlocks_ = function(index, newBlock1, newBlock2) {
-  var args = [index, 1];
-  if (newBlock1.width > 0 && newBlock1.height > 0) {
-    args.push(newBlock1);
-  }
-  if (newBlock2.width > 0 && newBlock2.height > 0) {
-    args.push(newBlock2);
-  }
-  this.emptyBlocks_.splice.apply(this.emptyBlocks_, args);
-};
-
-goog.provide('ol.style.AtlasManager');
-
-goog.require('ol');
-goog.require('ol.style.Atlas');
-
-
-/**
- * Manages the creation of image atlases.
- *
- * Images added to this manager will be inserted into an atlas, which
- * will be used for rendering.
- * The `size` given in the constructor is the size for the first
- * atlas. After that, when new atlases are created, they will have
- * twice the size as the latest atlas (until `maxSize` is reached).
- *
- * If an application uses many images or very large images, it is recommended
- * to set a higher `size` value to avoid the creation of too many atlases.
- *
- * @constructor
- * @struct
- * @api
- * @param {olx.style.AtlasManagerOptions=} opt_options Options.
- */
-ol.style.AtlasManager = function(opt_options) {
-
-  var options = opt_options || {};
-
-  /**
-   * The size in pixels of the latest atlas image.
-   * @private
-   * @type {number}
-   */
-  this.currentSize_ = options.initialSize !== undefined ?
-      options.initialSize : ol.INITIAL_ATLAS_SIZE;
-
-  /**
-   * The maximum size in pixels of atlas images.
-   * @private
-   * @type {number}
-   */
-  this.maxSize_ = options.maxSize !== undefined ?
-      options.maxSize : ol.MAX_ATLAS_SIZE != -1 ?
-          ol.MAX_ATLAS_SIZE : ol.WEBGL_MAX_TEXTURE_SIZE !== undefined ?
-              ol.WEBGL_MAX_TEXTURE_SIZE : 2048;
-
-  /**
-   * The size in pixels between images.
-   * @private
-   * @type {number}
-   */
-  this.space_ = options.space !== undefined ? options.space : 1;
-
-  /**
-   * @private
-   * @type {Array.<ol.style.Atlas>}
-   */
-  this.atlases_ = [new ol.style.Atlas(this.currentSize_, this.space_)];
-
-  /**
-   * The size in pixels of the latest atlas image for hit-detection images.
-   * @private
-   * @type {number}
-   */
-  this.currentHitSize_ = this.currentSize_;
-
-  /**
-   * @private
-   * @type {Array.<ol.style.Atlas>}
-   */
-  this.hitAtlases_ = [new ol.style.Atlas(this.currentHitSize_, this.space_)];
-};
-
-
-/**
- * @param {string} id The identifier of the entry to check.
- * @return {?ol.AtlasManagerInfo} The position and atlas image for the
- *    entry, or `null` if the entry is not part of the atlas manager.
- */
-ol.style.AtlasManager.prototype.getInfo = function(id) {
-  /** @type {?ol.AtlasInfo} */
-  var info = this.getInfo_(this.atlases_, id);
-
-  if (!info) {
-    return null;
-  }
-  var hitInfo = /** @type {ol.AtlasInfo} */ (this.getInfo_(this.hitAtlases_, id));
-
-  return this.mergeInfos_(info, hitInfo);
-};
-
-
-/**
- * @private
- * @param {Array.<ol.style.Atlas>} atlases The atlases to search.
- * @param {string} id The identifier of the entry to check.
- * @return {?ol.AtlasInfo} The position and atlas image for the entry,
- *    or `null` if the entry is not part of the atlases.
- */
-ol.style.AtlasManager.prototype.getInfo_ = function(atlases, id) {
-  var atlas, info, i, ii;
-  for (i = 0, ii = atlases.length; i < ii; ++i) {
-    atlas = atlases[i];
-    info = atlas.get(id);
-    if (info) {
-      return info;
-    }
-  }
-  return null;
-};
-
-
-/**
- * @private
- * @param {ol.AtlasInfo} info The info for the real image.
- * @param {ol.AtlasInfo} hitInfo The info for the hit-detection
- *    image.
- * @return {?ol.AtlasManagerInfo} The position and atlas image for the
- *    entry, or `null` if the entry is not part of the atlases.
- */
-ol.style.AtlasManager.prototype.mergeInfos_ = function(info, hitInfo) {
-  return /** @type {ol.AtlasManagerInfo} */ ({
-    offsetX: info.offsetX,
-    offsetY: info.offsetY,
-    image: info.image,
-    hitImage: hitInfo.image
-  });
-};
-
-
-/**
- * Add an image to the atlas manager.
- *
- * If an entry for the given id already exists, the entry will
- * be overridden (but the space on the atlas graphic will not be freed).
- *
- * If `renderHitCallback` is provided, the image (or the hit-detection version
- * of the image) will be rendered into a separate hit-detection atlas image.
- *
- * @param {string} id The identifier of the entry to add.
- * @param {number} width The width.
- * @param {number} height The height.
- * @param {function(CanvasRenderingContext2D, number, number)} renderCallback
- *    Called to render the new image onto an atlas image.
- * @param {function(CanvasRenderingContext2D, number, number)=}
- *    opt_renderHitCallback Called to render a hit-detection image onto a hit
- *    detection atlas image.
- * @param {Object=} opt_this Value to use as `this` when executing
- *    `renderCallback` and `renderHitCallback`.
- * @return {?ol.AtlasManagerInfo}  The position and atlas image for the
- *    entry, or `null` if the image is too big.
- */
-ol.style.AtlasManager.prototype.add = function(id, width, height,
-        renderCallback, opt_renderHitCallback, opt_this) {
-  if (width + this.space_ > this.maxSize_ ||
-      height + this.space_ > this.maxSize_) {
-    return null;
-  }
-
-  /** @type {?ol.AtlasInfo} */
-  var info = this.add_(false,
-      id, width, height, renderCallback, opt_this);
-  if (!info) {
-    return null;
-  }
-
-  // even if no hit-detection entry is requested, we insert a fake entry into
-  // the hit-detection atlas, to make sure that the offset is the same for
-  // the original image and the hit-detection image.
-  var renderHitCallback = opt_renderHitCallback !== undefined ?
-      opt_renderHitCallback : ol.nullFunction;
-
-  var hitInfo = /** @type {ol.AtlasInfo} */ (this.add_(true,
-      id, width, height, renderHitCallback, opt_this));
-
-  return this.mergeInfos_(info, hitInfo);
-};
-
-
-/**
- * @private
- * @param {boolean} isHitAtlas If the hit-detection atlases are used.
- * @param {string} id The identifier of the entry to add.
- * @param {number} width The width.
- * @param {number} height The height.
- * @param {function(CanvasRenderingContext2D, number, number)} renderCallback
- *    Called to render the new image onto an atlas image.
- * @param {Object=} opt_this Value to use as `this` when executing
- *    `renderCallback` and `renderHitCallback`.
- * @return {?ol.AtlasInfo}  The position and atlas image for the entry,
- *    or `null` if the image is too big.
- */
-ol.style.AtlasManager.prototype.add_ = function(isHitAtlas, id, width, height,
-        renderCallback, opt_this) {
-  var atlases = (isHitAtlas) ? this.hitAtlases_ : this.atlases_;
-  var atlas, info, i, ii;
-  for (i = 0, ii = atlases.length; i < ii; ++i) {
-    atlas = atlases[i];
-    info = atlas.add(id, width, height, renderCallback, opt_this);
-    if (info) {
-      return info;
-    } else if (!info && i === ii - 1) {
-      // the entry could not be added to one of the existing atlases,
-      // create a new atlas that is twice as big and try to add to this one.
-      var size;
-      if (isHitAtlas) {
-        size = Math.min(this.currentHitSize_ * 2, this.maxSize_);
-        this.currentHitSize_ = size;
-      } else {
-        size = Math.min(this.currentSize_ * 2, this.maxSize_);
-        this.currentSize_ = size;
-      }
-      atlas = new ol.style.Atlas(size, this.space_);
-      atlases.push(atlas);
-      // run the loop another time
-      ++ii;
-    }
-  }
-  return null;
 };
 
 goog.provide('olgm.Abstract');
@@ -94028,6 +95294,11 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.Map.prototype,
+    'getFeaturesAtPixel',
+    ol.Map.prototype.getFeaturesAtPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
     'forEachLayerAtPixel',
     ol.Map.prototype.forEachLayerAtPixel);
 
@@ -94421,6 +95692,14 @@ goog.exportProperty(
     'haversineDistance',
     ol.Sphere.prototype.haversineDistance);
 
+goog.exportSymbol(
+    'ol.Sphere.getLength',
+    ol.Sphere.getLength);
+
+goog.exportSymbol(
+    'ol.Sphere.getArea',
+    ol.Sphere.getArea);
+
 goog.exportProperty(
     ol.Tile.prototype,
     'getTileCoord',
@@ -94449,6 +95728,11 @@ goog.exportProperty(
     ol.VectorTile.prototype,
     'getProjection',
     ol.VectorTile.prototype.getProjection);
+
+goog.exportProperty(
+    ol.VectorTile.prototype,
+    'setExtent',
+    ol.VectorTile.prototype.setExtent);
 
 goog.exportProperty(
     ol.VectorTile.prototype,
@@ -94578,6 +95862,11 @@ goog.exportProperty(
     ol.View.prototype,
     'getZoomForResolution',
     ol.View.prototype.getZoomForResolution);
+
+goog.exportProperty(
+    ol.View.prototype,
+    'getResolutionForZoom',
+    ol.View.prototype.getResolutionForZoom);
 
 goog.exportProperty(
     ol.View.prototype,
@@ -94975,6 +96264,16 @@ goog.exportProperty(
     ol.style.Style.prototype,
     'clone',
     ol.style.Style.prototype.clone);
+
+goog.exportProperty(
+    ol.style.Style.prototype,
+    'getRenderer',
+    ol.style.Style.prototype.getRenderer);
+
+goog.exportProperty(
+    ol.style.Style.prototype,
+    'setRenderer',
+    ol.style.Style.prototype.setRenderer);
 
 goog.exportProperty(
     ol.style.Style.prototype,
@@ -96059,6 +97358,11 @@ goog.exportProperty(
     'setUseInterimTilesOnError',
     ol.layer.VectorTile.prototype.setUseInterimTilesOnError);
 
+goog.exportProperty(
+    ol.layer.VectorTile.prototype,
+    'getSource',
+    ol.layer.VectorTile.prototype.getSource);
+
 goog.exportSymbol(
     'ol.interaction.DoubleClickZoom',
     ol.interaction.DoubleClickZoom);
@@ -96177,8 +97481,8 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.interaction.Extent.Event.prototype,
-    'extent_',
-    ol.interaction.Extent.Event.prototype.extent_);
+    'extent',
+    ol.interaction.Extent.Event.prototype.extent);
 
 goog.exportSymbol(
     'ol.interaction.Interaction',
@@ -97177,6 +98481,11 @@ goog.exportProperty(
 goog.exportSymbol(
     'ol.format.MVT',
     ol.format.MVT);
+
+goog.exportProperty(
+    ol.format.MVT.prototype,
+    'getLastExtent',
+    ol.format.MVT.prototype.getLastExtent);
 
 goog.exportProperty(
     ol.format.MVT.prototype,
@@ -103111,11 +104420,6 @@ goog.exportProperty(
     ol.layer.Tile.prototype,
     'un',
     ol.layer.Tile.prototype.un);
-
-goog.exportProperty(
-    ol.layer.VectorTile.prototype,
-    'getSource',
-    ol.layer.VectorTile.prototype.getSource);
 
 goog.exportProperty(
     ol.layer.VectorTile.prototype,
