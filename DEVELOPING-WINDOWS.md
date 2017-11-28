@@ -54,10 +54,10 @@ To install the Node.js dependencies run
         $ sudo make install
         $ sudo make altinstall
 
-* Install dos2unix to convert `setkey.sh` in a Unix format:
+* Install dos2unix to convert task files in a Unix format:
 
         $ sudo apt install dos2unix
-        $ dos2unix tasks/setkey.sh
+        $ dos2unix tasks/*.sh
 
  > If you use Visual Studio Code for development, [learn](https://code.visualstudio.com/docs/editor/integrated-terminal) how to set the Ubuntu Bash as your integrated terminal.
 

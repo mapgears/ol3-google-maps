@@ -25,7 +25,7 @@ olgm.layer.Google = function(opt_options) {
    * @private
    */
   this.mapTypeId_ = options.mapTypeId !== undefined ? options.mapTypeId :
-      google.maps.MapTypeId.ROADMAP;
+    google.maps.MapTypeId.ROADMAP;
 
   /**
    * @type {?Array.<google.maps.MapTypeStyle>}

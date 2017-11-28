@@ -222,14 +222,14 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var styles = wmsParams['STYLES'] ? wmsParams['STYLES'] : '';
   var format = wmsParams['FORMAT'] ? wmsParams['FORMAT'] : 'image/png';
   var transparent = wmsParams['TRANSPARENT'] ?
-      wmsParams['TRANSPARENT'] : 'TRUE';
+    wmsParams['TRANSPARENT'] : 'TRUE';
   var tiled = wmsParams['TILED'] ? wmsParams['TILED'] : 'FALSE';
 
   // Check whether or not we're using WMS 1.3.0
   var versionNumbers = version.split('.');
   var wms13 = (
-      parseInt(versionNumbers[0], 10) >= 1 &&
-      parseInt(versionNumbers[1], 10) >= 3);
+    parseInt(versionNumbers[0], 10) >= 1 &&
+    parseInt(versionNumbers[1], 10) >= 3);
   var referenceSystem = wms13 ? 'CRS' : 'SRS';
 
   url += '?SERVICE=WMS';

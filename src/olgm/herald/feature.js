@@ -118,7 +118,7 @@ olgm.herald.Feature.prototype.activate = function() {
 
     var image = style.getImage();
     var useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
-        this.mapIconOptions_.useCanvas : false;
+      this.mapIconOptions_.useCanvas : false;
     if (image && image instanceof ol.style.Icon && useCanvas) {
       this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
       if (this.visible_) {
@@ -145,7 +145,7 @@ olgm.herald.Feature.prototype.activate = function() {
   keys.push(this.feature_.on(
       'change:' + this.feature_.getGeometryName(),
       this.handleGeometryReplace_, this
-      ));
+  ));
 };
 
 

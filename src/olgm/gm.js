@@ -71,7 +71,7 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
  */
 olgm.gm.createLatLng = function(object, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
-      opt_ol3map.getView().getProjection() : 'EPSG:3857';
+    opt_ol3map.getView().getProjection() : 'EPSG:3857';
   var coordinates;
   if (object instanceof ol.geom.Point) {
     coordinates = object.getCoordinates();
@@ -91,7 +91,7 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
  */
 olgm.gm.coordinatesToLatLngs = function(coordinates, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
-  opt_ol3map.getView().getProjection() : 'EPSG:3857';
+    opt_ol3map.getView().getProjection() : 'EPSG:3857';
   var latLngs = [];
   var lonLatCoords;
   for (var i = 0, len = coordinates.length; i < len; i++) {
@@ -203,7 +203,7 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
     var gmIcon = {};
     var gmSymbol = {};
     var useCanvas = mapIconOptions.useCanvas !== undefined ?
-        mapIconOptions.useCanvas : false;
+      mapIconOptions.useCanvas : false;
 
     if (image instanceof ol.style.Circle ||
         image instanceof ol.style.RegularShape) {
@@ -218,12 +218,16 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
         var nbPoints = image.getPoints();
         var outerRadius = image.getRadius();
         var innerRadius = image.getRadius2() !== undefined ?
-            image.getRadius2() : image.getRadius();
+          image.getRadius2() : image.getRadius();
         var size = 0.1;
         var rotation = image.getRotation() + image.getAngle();
 
-        if (innerRadius == 0) {
+        if (innerRadius == 0 && image.getRadius2() === undefined) {
           nbPoints = nbPoints / 2;
+        }
+
+        if (innerRadius !== outerRadius) {
+          nbPoints = nbPoints * 2;
         }
 
         for (var i = 0; i < nbPoints; i++) {

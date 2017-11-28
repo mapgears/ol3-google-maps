@@ -54,17 +54,14 @@ ol.inherits(app.Drag, ol.interaction.Pointer);
 app.Drag.prototype.handleDownEvent = function(evt) {
   var map = evt.map;
 
-  var feature = map.forEachFeatureAtPixel(evt.pixel,
-      function(feature, layer) {
-        return feature;
-      });
+  var features = map.getFeaturesAtPixel(evt.pixel);
 
-  if (feature) {
+  if (features && features.length > 0) {
     this.coordinate_ = evt.coordinate;
-    this.feature_ = feature;
+    this.feature_ = features[0];
   }
 
-  return !!feature;
+  return features && features.length > 0;
 };
 
 
@@ -73,11 +70,6 @@ app.Drag.prototype.handleDownEvent = function(evt) {
  */
 app.Drag.prototype.handleDragEvent = function(evt) {
   var map = evt.map;
-
-  var feature = map.forEachFeatureAtPixel(evt.pixel,
-      function(feature, layer) {
-        return feature;
-      });
 
   var deltaX = evt.coordinate[0] - this.coordinate_[0];
   var deltaY = evt.coordinate[1] - this.coordinate_[1];
@@ -97,12 +89,9 @@ app.Drag.prototype.handleDragEvent = function(evt) {
 app.Drag.prototype.handleMoveEvent = function(evt) {
   if (this.cursor_) {
     var map = evt.map;
-    var feature = map.forEachFeatureAtPixel(evt.pixel,
-        function(feature, layer) {
-          return feature;
-        });
+    var features = map.getFeaturesAtPixel(evt.pixel);
     var element = evt.map.getTargetElement();
-    if (feature) {
+    if (features) {
       if (element.style.cursor != this.cursor_) {
         this.previousCursor_ = element.style.cursor;
         element.style.cursor = this.cursor_;
