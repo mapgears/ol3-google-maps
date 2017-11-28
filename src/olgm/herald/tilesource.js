@@ -1,9 +1,7 @@
 goog.provide('olgm.herald.TileSource');
 
-goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.extent');
-goog.require('ol.layer.Tile');
 goog.require('ol.proj');
 goog.require('ol.source.TileImage');
 goog.require('olgm');
@@ -43,9 +41,9 @@ olgm.herald.TileSource = function(ol3map, gmap) {
    * Accessing that pane means we can reorder the div for each tile layer
    * Google Maps is rendering.
    */
-  google.maps.event.addListenerOnce(gmap, 'idle', goog.bind(function() {
+  google.maps.event.addListenerOnce(gmap, 'idle', (function() {
     this.orderLayers();
-  }, this));
+  }).bind(this));
 
   olgm.herald.Source.call(this, ol3map, gmap);
 };
@@ -57,12 +55,11 @@ ol.inherits(olgm.herald.TileSource, olgm.herald.Source);
  * @override
  */
 olgm.herald.TileSource.prototype.watchLayer = function(layer) {
-  var tileLayer = /** {@type ol.layer.Tile} */ (layer);
-  goog.asserts.assertInstanceof(tileLayer, ol.layer.Tile);
+  var tileLayer = /** @type {ol.layer.Tile} */ (layer);
 
-  // Source required
+  // Source must be TileImage
   var source = tileLayer.getSource();
-  if (!source) {
+  if (!(source instanceof ol.source.TileImage)) {
     return;
   }
 
@@ -85,7 +82,7 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
 
   if (tileGrid) {
     var tileGridTileSize = tileGrid.getTileSize(0);
-    if (goog.isNumber(tileGridTileSize)) {
+    if (typeof tileGridTileSize === 'number') {
       tileSize = tileGridTileSize;
     }
   }
@@ -125,15 +122,13 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
  * coordinates and zoom level
  * @param {ol.layer.Tile} tileLayer layer to query
  * @param {google.maps.Point} coords coordinates of the tile
- * @param {Number} zoom current zoom level
+ * @param {number} zoom current zoom level
  * @return {string|undefined} url to the tile
  * @private
  */
 olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
     tileLayer, coords, zoom) {
-  var source = tileLayer.getSource();
-  goog.asserts.assertInstanceof(source, ol.source.TileImage);
-  goog.asserts.assertNumber(zoom);
+  var source = /** @type {ol.source.TileImage} */ (tileLayer.getSource());
 
   // Check if we're within the accepted resolutions
   var minResolution = tileLayer.getMinResolution();
@@ -179,8 +174,7 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
       /* Tiles have a size equal to 2^n. Find the difference between the n for
        * the current tileGrid versus the n for the expected tileGrid.
        */
-      var tileGridTileSize = tileGrid.getTileSize(zoom);
-      goog.asserts.assertNumber(tileGridTileSize);
+      var tileGridTileSize = /** @type {number} */ (tileGrid.getTileSize(zoom));
 
       var defaultTileSizeExponent = Math.log2(defaultTileSize);
       var tileSizeExponent = Math.log2(tileGridTileSize);
@@ -217,7 +211,6 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
 
   // TileJSON sources don't have their url function right away, try again
   if (result === undefined) {
-    goog.asserts.assertInstanceof(source, ol.source.TileImage);
     getTileUrlFunction = source.getTileUrlFunction();
     result = getTileUrlFunction(ol3Coords, 1, proj);
   }
@@ -232,8 +225,7 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
  * @override
  */
 olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
-  var tileLayer = /** {@type ol.layer.Tile} */ (layer);
-  goog.asserts.assertInstanceof(tileLayer, ol.layer.Tile);
+  var tileLayer = /** @type {ol.layer.Tile} */ (layer);
 
   var index = this.layers_.indexOf(tileLayer);
   if (index !== -1) {

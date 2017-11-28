@@ -1,11 +1,9 @@
 goog.provide('olgm.herald.View');
 
-goog.require('goog.asserts');
-goog.require('goog.events');
-goog.require('goog.events.EventType');
 goog.require('ol');
 goog.require('ol.proj');
 goog.require('olgm');
+goog.require('olgm.events');
 goog.require('olgm.herald.Herald');
 
 
@@ -56,19 +54,19 @@ olgm.herald.View.prototype.activate = function() {
   keys.push(view.on('change:rotation', this.setRotation, this));
 
   // listen to browser window resize
-  this.googListenerKeys.push(goog.events.listen(
+  this.olgmListenerKeys.push(olgm.events.listen(
       window,
-      goog.events.EventType.RESIZE,
+      'resize',
       this.handleWindowResize_,
-      false,
-      this));
+      this,
+      false));
 
   // Rotate and recenter the map after it's ready
-  google.maps.event.addListenerOnce(this.gmap, 'idle', goog.bind(function() {
+  google.maps.event.addListenerOnce(this.gmap, 'idle', (function() {
     this.setRotation();
     this.setCenter();
     this.setZoom();
-  }, this));
+  }).bind(this));
 };
 
 
@@ -87,9 +85,8 @@ olgm.herald.View.prototype.setCenter = function() {
   var view = this.ol3map.getView();
   var projection = view.getProjection();
   var center = view.getCenter();
-  if (goog.isArray(center)) {
+  if (Array.isArray(center)) {
     center = ol.proj.transform(center, projection, 'EPSG:4326');
-    goog.asserts.assertArray(center);
     this.gmap.setCenter(new google.maps.LatLng(center[1], center[0]));
   }
 };
@@ -165,7 +162,7 @@ olgm.herald.View.prototype.setRotation = function() {
  */
 olgm.herald.View.prototype.setZoom = function() {
   var resolution = this.ol3map.getView().getResolution();
-  if (goog.isNumber(resolution)) {
+  if (typeof resolution === 'number') {
     var zoom = olgm.getZoomFromResolution(resolution);
     this.gmap.setZoom(zoom);
   }
@@ -178,11 +175,11 @@ olgm.herald.View.prototype.setZoom = function() {
  * @private
  */
 olgm.herald.View.prototype.handleWindowResize_ = function() {
-  if (!goog.isNull(this.windowResizeTimerId_)) {
-    goog.global.clearTimeout(this.windowResizeTimerId_);
+  if (this.windowResizeTimerId_) {
+    window.clearTimeout(this.windowResizeTimerId_);
   }
   this.windowResizeTimerId_ = window.setTimeout(
-      goog.bind(this.setCenterAfterResize_, this),
+      this.setCenterAfterResize_.bind(this),
       100);
 };
 

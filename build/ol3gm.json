@@ -21,9 +21,6 @@
       "node_modules/openlayers/externs/closure-compiler.js",
       "externs/google_maps_api_v3_27.js"
     ],
-    "define": [
-      "goog.DEBUG=false"
-    ],
     "js": [
     ],
     "jscomp_error": [

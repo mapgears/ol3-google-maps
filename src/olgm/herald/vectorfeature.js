@@ -1,9 +1,6 @@
 goog.provide('olgm.herald.VectorFeature');
 
-goog.require('goog.asserts');
 goog.require('ol');
-goog.require('ol.Feature');
-goog.require('olgm');
 goog.require('olgm.herald.Feature');
 goog.require('olgm.herald.Herald');
 
@@ -111,8 +108,7 @@ olgm.herald.VectorFeature.prototype.setVisible = function(value) {
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
-  var feature = event.feature;
-  goog.asserts.assertInstanceof(feature, ol.Feature);
+  var feature = /** @type {ol.Feature} */ (event.feature);
   this.watchFeature_(feature);
 };
 
@@ -122,8 +118,7 @@ olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
  * @private
  */
 olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
-  var feature = event.feature;
-  goog.asserts.assertInstanceof(feature, ol.Feature);
+  var feature = /** @type {ol.Feature} */ (event.feature);
   this.unwatchFeature_(feature);
 };
 

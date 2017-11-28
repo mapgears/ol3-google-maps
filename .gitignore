@@ -3,6 +3,7 @@ _site
 api_key.txt
 build/jsdoc/info/conf-generated.json
 dist
+dist-package
 examples/example-list.js
 node_modules
 .vscode

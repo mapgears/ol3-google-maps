@@ -24,10 +24,10 @@ olgm.herald.Herald = function(ol3map, gmap) {
   this.listenerKeys = [];
 
   /**
-   * @type {Array.<goog.events.Key>}
+   * @type {Array.<ol.EventsKey>}
    * @protected
    */
-  this.googListenerKeys = [];
+  this.olgmListenerKeys = [];
 
   olgm.Abstract.call(this, ol3map, gmap);
 };
@@ -44,5 +44,5 @@ olgm.herald.Herald.prototype.activate = function() {};
  * Unregister all event listeners.
  */
 olgm.herald.Herald.prototype.deactivate = function() {
-  olgm.unlistenAllByKey(this.listenerKeys, this.googListenerKeys);
+  olgm.unlistenAllByKey(this.listenerKeys, this.olgmListenerKeys);
 };
