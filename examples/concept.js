@@ -279,6 +279,84 @@ poly2.setStyle(new ol.style.Style({
 }));
 vector.getSource().addFeature(poly2);
 
+//Add simple multi poly (amorphouse polygons over the great lakes)
+vector.getSource().addFeature(new ol.Feature(
+  new ol.geom.MultiPolygon([[
+    [
+      [-9665988, 6059810],
+      [-9763828, 6020674],
+      [-9763828, 5883699],
+      [-9631745, 5859239],
+      [-9548581, 5952186],
+      [-9548581, 6015782],
+    ],
+    [
+      [-9582825, 6103837],
+      [-9533905, 6089162],
+      [-9470310, 6138081],
+      [-9529013, 6206569],
+      [-9582825, 6162541],
+      [-9612177, 6133189],
+    ],
+    [
+      [-9411606, 5771184],
+      [-9255063, 5653776],
+      [-9030032, 5560829],
+      [-9078952, 5688020],
+      [-8946869, 5658668],
+      [-8951761, 5800535],
+      [-9083844, 5780967],
+    ],
+  ]])
+));
+
+
+// Add movable multi-polygon (pinwheel over ontario)
+var multiCoords = []
+for (i = 0; i < 8; i++) {
+  var p = new ol.geom.Polygon([[
+    [-9670881, 6798497],
+    [-9748937, 6989284],
+    [-9690449, 7180071],
+    [-9612178, 6979500],
+  ]]);
+  p.rotate(i * Math.PI / 4, [-9770881, 6798497]);
+  multiCoords = multiCoords.concat(p.getCoordinates())
+}
+var poly3 = new ol.Feature(new ol.geom.MultiPolygon([multiCoords]))
+var vectorForMultiPoly = new ol.layer.Vector({
+  source: new ol.source.Vector(),
+  style: new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: [233, 150, 36, 0.1]
+        }),
+        stroke: new ol.style.Stroke({
+          color: [233, 150, 36, 1],
+          width: 1,
+        })
+      })
+});
+map.addLayer(vectorForMultiPoly);
+vectorForMultiPoly.getSource().addFeature(poly3);
+select = new ol.interaction.Select({
+  layers: [vectorForMultiPoly],
+  toggleCondition: ol.events.condition.never,
+  condition: function(event){
+    if (event.type == "click"){
+      console.log(event.coordinate)
+    }
+    return event.type == 'pointermove'; },
+  style: new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: [255, 23, 180, 0.2]
+    }),
+    stroke: new ol.style.Stroke({
+      color: [255, 23, 180, 1]
+    })
+  }),
+})
+map.addInteraction(select)
+
 
 var olGM = new olgm.OLGoogleMaps({
   map: map,
