@@ -108,18 +108,20 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
 
   var gmapGeometry = null;
 
-  if (geometry instanceof ol.geom.MultiPolygon) {
-    var latLngsArr = [];
-    geometry.getCoordinates()[0].forEach(function(coordsArr) {
-      latLngsArr.push(genLatLngs(coordsArr));
-    });
-    gmapGeometry = new google.maps.Data.Polygon(latLngsArr);
-  } else if (geometry instanceof ol.geom.LineString) {
+  if (geometry instanceof ol.geom.LineString) {
     var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
     gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
-  } else {
+  } else if (geometry instanceof ol.geom.Polygon) {
     var polygonlatLngs = genLatLngs(geometry.getCoordinates()[0]);
     gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
+  } else {
+    //it must be MultiPolygon
+    var latLngsArr = [];
+    var coords = geometry.getCoordinates()[0];
+    for (var i = 0, len = coords.length; i < len; i++) {
+      latLngsArr.push(genLatLngs(coords[i]));
+    }
+    gmapGeometry = new google.maps.Data.Polygon(latLngsArr);
   }
 
   return gmapGeometry;
