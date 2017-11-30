@@ -3,6 +3,7 @@ goog.provide('olgm.gm');
 goog.require('goog.asserts');
 goog.require('ol.geom.Geometry');
 goog.require('ol.geom.LineString');
+goog.require('ol.geom.MultiLineString');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
 goog.require('ol.style.Circle');
@@ -49,6 +50,7 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
   if (geometry instanceof ol.geom.Point) {
     gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
   } else if (geometry instanceof ol.geom.LineString ||
+             geometry instanceof ol.geom.MultiLineString ||
              geometry instanceof ol.geom.Polygon) {
     gmapGeometry = olgm.gm.createGeometry(geometry, opt_ol3map);
   }
@@ -82,42 +84,52 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 
 /**
- * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon} geometry geometry to create
+ * Convert geometry coordinates to latitude and longitude.
+ * @param {Array.<ol.Coordinate>|null} coordinates coordinate to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.Polygon} google
- * LineString or Polygon
+ * @return {Array<(google.maps.LatLng|google.maps.LatLngLiteral|null)>|null} google LatLng array
  */
-olgm.gm.createGeometry = function(geometry, opt_ol3map) {
+olgm.gm.coordinatesToLatLngs = function(coordinates, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
-
   var latLngs = [];
   var lonLatCoords;
-
-  var coordinates;
-  if (geometry instanceof ol.geom.LineString) {
-    coordinates = geometry.getCoordinates();
-  } else {
-    coordinates = geometry.getCoordinates()[0];
-  }
-
   for (var i = 0, len = coordinates.length; i < len; i++) {
     lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
     latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
   }
+  return latLngs;
+};
 
+
+/**
+ * Create a Google Maps LineString or Polygon object using an OpenLayers one.
+ * @param {ol.geom.LineString|ol.geom.MultiLineString|ol.geom.Polygon} geometry geometry to create
+ * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ *     `EPSG:3857` is used.
+ * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon} google
+ * LineString, MultiLineString or Polygon
+ */
+olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var gmapGeometry = null;
-  if (geometry instanceof ol.geom.LineString) {
-    gmapGeometry = new google.maps.Data.LineString(latLngs);
+  var coordinates = geometry.getCoordinates();
+  if (geometry instanceof ol.geom.MultiLineString) {
+    var latLngsArr = [];
+    for (var i = 0, ii = coordinates.length; i < ii; i++) {
+      latLngsArr.push(olgm.gm.coordinatesToLatLngs(coordinates[i], opt_ol3map));
+    }
+    gmapGeometry = new google.maps.Data.LineString(latLngsArr);
+  } else if (geometry instanceof ol.geom.LineString) {
+    var lineStringlatLngs = olgm.gm.coordinatesToLatLngs(coordinates, opt_ol3map);
+    gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
   } else {
-    gmapGeometry = new google.maps.Data.Polygon([latLngs]);
+    var polygonlatLngs = olgm.gm.coordinatesToLatLngs(coordinates[0], opt_ol3map);
+    gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
   }
 
   return gmapGeometry;
 };
-
 
 // === Style ===
 
