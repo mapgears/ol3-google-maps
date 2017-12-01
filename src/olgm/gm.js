@@ -5,6 +5,8 @@ goog.require('ol.geom.Geometry');
 goog.require('ol.geom.LineString');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
+goog.require('ol.geom.MultiPolygon');
+goog.require('ol.geom.MultiLineString');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Icon');
 goog.require('ol.style.RegularShape');
@@ -49,7 +51,9 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
   if (geometry instanceof ol.geom.Point) {
     gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
   } else if (geometry instanceof ol.geom.LineString ||
-             geometry instanceof ol.geom.Polygon) {
+             geometry instanceof ol.geom.MultiLineString ||
+             geometry instanceof ol.geom.Polygon ||
+             geometry instanceof ol.geom.MultiPolygon) {
     gmapGeometry = olgm.gm.createGeometry(geometry, opt_ol3map);
   }
 
@@ -83,36 +87,49 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon} geometry geometry to create
+ * @param {ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.Polygon} google
+ * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon} google
  * LineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
 
-  var latLngs = [];
-  var lonLatCoords;
+  var genLatLngs = function(coordinates) {
+    var latLngs = [];
+    var lonLatCoords;
 
-  var coordinates;
-  if (geometry instanceof ol.geom.LineString) {
-    coordinates = geometry.getCoordinates();
-  } else {
-    coordinates = geometry.getCoordinates()[0];
-  }
-
-  for (var i = 0, len = coordinates.length; i < len; i++) {
-    lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
-    latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
-  }
+    for (var i = 0, len = coordinates.length; i < len; i++) {
+      lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
+      latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
+    }
+    return latLngs;
+  };
+  var genMultiLatLngs = function(coordinates) {
+    var multiLatLngs = [];
+    for (var i = 0, len = coordinates.length; i < len; i++) {
+      multiLatLngs.push(genLatLngs(coordinates[i]));
+    }
+    return multiLatLngs;
+  };
 
   var gmapGeometry = null;
+
   if (geometry instanceof ol.geom.LineString) {
-    gmapGeometry = new google.maps.Data.LineString(latLngs);
+    var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
+    gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
+  } else if (geometry instanceof ol.geom.Polygon) {
+    var polygonlatLngs = genLatLngs(geometry.getCoordinates()[0]);
+    gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
+  } else if (geometry instanceof ol.geom.MultiLineString) {
+    var multiLineStringlatLngs = genMultiLatLngs(geometry.getCoordinates());
+    gmapGeometry = new google.maps.Data.MultiLineString(multiLineStringlatLngs);
   } else {
-    gmapGeometry = new google.maps.Data.Polygon([latLngs]);
+    //it must be MultiPolygon
+    var multiPolygonlatLngs = genMultiLatLngs(geometry.getCoordinates()[0]);
+    gmapGeometry = new google.maps.Data.Polygon(multiPolygonlatLngs);
   }
 
   return gmapGeometry;
