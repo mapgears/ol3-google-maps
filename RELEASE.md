@@ -32,7 +32,8 @@ number in the `"version"` attribute, without the `v` prefix.
 
 Then, commit and push the changes:
 
-    git add package.json
+    make dist
+    git add package.json package-lock.json
     git commit -m 'Update package version to 0.8.0'
     git push origin
     git push upstream
