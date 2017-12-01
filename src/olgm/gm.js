@@ -97,42 +97,75 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
   var inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
 
-  var genLatLngs = function(coordinates) {
-    var latLngs = [];
-    var lonLatCoords;
-
-    for (var i = 0, len = coordinates.length; i < len; i++) {
-      lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
-      latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
-    }
-    return latLngs;
-  };
-  var genMultiLatLngs = function(coordinates) {
-    var multiLatLngs = [];
-    for (var i = 0, len = coordinates.length; i < len; i++) {
-      multiLatLngs.push(genLatLngs(coordinates[i]));
-    }
-    return multiLatLngs;
-  };
-
   var gmapGeometry = null;
 
   if (geometry instanceof ol.geom.LineString) {
-    var lineStringlatLngs = genLatLngs(geometry.getCoordinates());
+    var lineStringlatLngs = olgm.gm.genLatLngs_(
+        geometry.getCoordinates(),
+        inProj
+    );
     gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
   } else if (geometry instanceof ol.geom.Polygon) {
-    var polygonlatLngs = genLatLngs(geometry.getCoordinates()[0]);
+    var polygonlatLngs = olgm.gm.genLatLngs_(
+        geometry.getCoordinates()[0],
+        inProj
+    );
     gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
   } else if (geometry instanceof ol.geom.MultiLineString) {
-    var multiLineStringlatLngs = genMultiLatLngs(geometry.getCoordinates());
+    var multiLineStringlatLngs = olgm.gm.genMultiLatLngs_(
+        geometry.getCoordinates(),
+        inProj
+    );
     gmapGeometry = new google.maps.Data.MultiLineString(multiLineStringlatLngs);
   } else {
     //it must be MultiPolygon
-    var multiPolygonlatLngs = genMultiLatLngs(geometry.getCoordinates()[0]);
+    var multiPolygonlatLngs = olgm.gm.genMultiLatLngs_(
+        geometry.getCoordinates()[0],
+        inProj
+    );
     gmapGeometry = new google.maps.Data.Polygon(multiPolygonlatLngs);
   }
 
   return gmapGeometry;
+};
+
+
+/**
+ * Convert a list of OpenLayers coordinates to a list of google maps LatLng.
+ *
+ * @param {Array.<ol.Coordinate>} coordinates List of coordinate
+ * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array.<google.maps.LatLng>} List of lat lng.
+ * @private
+ */
+olgm.gm.genLatLngs_ = function(coordinates, opt_inProj) {
+  var inProj = opt_inProj || 'EPSG:3857';
+  var latLngs = [];
+  var lonLatCoords;
+  for (var i = 0, ii = coordinates.length; i < ii; i++) {
+    lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
+    latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
+  }
+  return latLngs;
+};
+
+
+/**
+ * Convert a list of OpenLayers multi-coordinates to a list of multi
+ * google maps LatLng.
+ *
+ * @param {Array.<Array.<ol.Coordinate>>} coordinates List of multi coordinate
+ * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array.<Array.<google.maps.LatLng>>} List of multi lat lng.
+ * @private
+ */
+olgm.gm.genMultiLatLngs_ = function(coordinates, opt_inProj) {
+  var inProj = opt_inProj || 'EPSG:3857';
+  var multiLatLngs = [];
+  for (var i = 0, len = coordinates.length; i < len; i++) {
+    multiLatLngs.push(olgm.gm.genLatLngs_(coordinates[i], inProj));
+  }
+  return multiLatLngs;
 };
 
 
