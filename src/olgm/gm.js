@@ -139,11 +139,9 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
  * @private
  */
 olgm.gm.genLatLngs_ = function(coordinates, opt_inProj) {
+  var inProj = opt_inProj || 'EPSG:3857';
   var latLngs = [];
   var lonLatCoords;
-
-  var inProj = opt_inProj || 'EPSG:3857';
-
   for (var i = 0, ii = coordinates.length; i < ii; i++) {
     lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
     latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
