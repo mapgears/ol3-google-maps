@@ -61,7 +61,7 @@ To install the Node.js dependencies run
 
  > If you use Visual Studio Code for development, [learn](https://code.visualstudio.com/docs/editor/integrated-terminal) how to set the Ubuntu Bash as your integrated terminal.
 
-> Dos2unix is needed because new line characters in `setkey.sh` file are not correctly recognized and they generate a parse error when running `make serve`.
+> Dos2unix is needed because new line characters in **tasks** files are not correctly recognized and they generate a parse error when running `make serve`.
 
 
 ## Working with the build tool on Windows
