@@ -6,6 +6,7 @@
 goog.require('ol');
 goog.require('ol.AssertionError');
 goog.require('ol.Attribution');
+goog.require('ol.CanvasMap');
 goog.require('ol.Collection');
 goog.require('ol.DeviceOrientation');
 goog.require('ol.Feature');
@@ -20,6 +21,7 @@ goog.require('ol.MapEvent');
 goog.require('ol.Object');
 goog.require('ol.Observable');
 goog.require('ol.Overlay');
+goog.require('ol.PluggableMap');
 goog.require('ol.Sphere');
 goog.require('ol.Tile');
 goog.require('ol.VectorTile');
@@ -135,6 +137,15 @@ goog.require('ol.render.Feature');
 goog.require('ol.render.VectorContext');
 goog.require('ol.render.canvas.Immediate');
 goog.require('ol.render.webgl.Immediate');
+goog.require('ol.renderer.canvas.ImageLayer');
+goog.require('ol.renderer.canvas.Map');
+goog.require('ol.renderer.canvas.TileLayer');
+goog.require('ol.renderer.canvas.VectorLayer');
+goog.require('ol.renderer.canvas.VectorTileLayer');
+goog.require('ol.renderer.webgl.ImageLayer');
+goog.require('ol.renderer.webgl.Map');
+goog.require('ol.renderer.webgl.TileLayer');
+goog.require('ol.renderer.webgl.VectorLayer');
 goog.require('ol.size');
 goog.require('ol.source.BingMaps');
 goog.require('ol.source.CartoDB');
@@ -205,6 +216,10 @@ goog.exportProperty(
     ol.Attribution.prototype,
     'getHTML',
     ol.Attribution.prototype.getHTML);
+
+goog.exportSymbol(
+    'ol.CanvasMap',
+    ol.CanvasMap);
 
 goog.exportSymbol(
     'ol.Collection',
@@ -677,176 +692,6 @@ goog.exportSymbol(
     ol.Map);
 
 goog.exportProperty(
-    ol.Map.prototype,
-    'addControl',
-    ol.Map.prototype.addControl);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'addInteraction',
-    ol.Map.prototype.addInteraction);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'addLayer',
-    ol.Map.prototype.addLayer);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'addOverlay',
-    ol.Map.prototype.addOverlay);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'forEachFeatureAtPixel',
-    ol.Map.prototype.forEachFeatureAtPixel);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getFeaturesAtPixel',
-    ol.Map.prototype.getFeaturesAtPixel);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'forEachLayerAtPixel',
-    ol.Map.prototype.forEachLayerAtPixel);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'hasFeatureAtPixel',
-    ol.Map.prototype.hasFeatureAtPixel);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getEventCoordinate',
-    ol.Map.prototype.getEventCoordinate);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getEventPixel',
-    ol.Map.prototype.getEventPixel);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getTarget',
-    ol.Map.prototype.getTarget);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getTargetElement',
-    ol.Map.prototype.getTargetElement);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getCoordinateFromPixel',
-    ol.Map.prototype.getCoordinateFromPixel);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getControls',
-    ol.Map.prototype.getControls);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getOverlays',
-    ol.Map.prototype.getOverlays);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getOverlayById',
-    ol.Map.prototype.getOverlayById);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getInteractions',
-    ol.Map.prototype.getInteractions);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getLayerGroup',
-    ol.Map.prototype.getLayerGroup);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getLayers',
-    ol.Map.prototype.getLayers);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getPixelFromCoordinate',
-    ol.Map.prototype.getPixelFromCoordinate);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getSize',
-    ol.Map.prototype.getSize);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getView',
-    ol.Map.prototype.getView);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'getViewport',
-    ol.Map.prototype.getViewport);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'renderSync',
-    ol.Map.prototype.renderSync);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'render',
-    ol.Map.prototype.render);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'removeControl',
-    ol.Map.prototype.removeControl);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'removeInteraction',
-    ol.Map.prototype.removeInteraction);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'removeLayer',
-    ol.Map.prototype.removeLayer);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'removeOverlay',
-    ol.Map.prototype.removeOverlay);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'setLayerGroup',
-    ol.Map.prototype.setLayerGroup);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'setSize',
-    ol.Map.prototype.setSize);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'setTarget',
-    ol.Map.prototype.setTarget);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'setView',
-    ol.Map.prototype.setView);
-
-goog.exportProperty(
-    ol.Map.prototype,
-    'updateSize',
-    ol.Map.prototype.updateSize);
-
-goog.exportProperty(
     ol.MapBrowserEvent.prototype,
     'originalEvent',
     ol.MapBrowserEvent.prototype.originalEvent);
@@ -1026,6 +871,180 @@ goog.exportProperty(
     ol.Overlay.prototype,
     'setPositioning',
     ol.Overlay.prototype.setPositioning);
+
+goog.exportSymbol(
+    'ol.PluggableMap',
+    ol.PluggableMap);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'addControl',
+    ol.PluggableMap.prototype.addControl);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'addInteraction',
+    ol.PluggableMap.prototype.addInteraction);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'addLayer',
+    ol.PluggableMap.prototype.addLayer);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'addOverlay',
+    ol.PluggableMap.prototype.addOverlay);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'forEachFeatureAtPixel',
+    ol.PluggableMap.prototype.forEachFeatureAtPixel);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getFeaturesAtPixel',
+    ol.PluggableMap.prototype.getFeaturesAtPixel);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'forEachLayerAtPixel',
+    ol.PluggableMap.prototype.forEachLayerAtPixel);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'hasFeatureAtPixel',
+    ol.PluggableMap.prototype.hasFeatureAtPixel);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getEventCoordinate',
+    ol.PluggableMap.prototype.getEventCoordinate);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getEventPixel',
+    ol.PluggableMap.prototype.getEventPixel);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getTarget',
+    ol.PluggableMap.prototype.getTarget);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getTargetElement',
+    ol.PluggableMap.prototype.getTargetElement);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getCoordinateFromPixel',
+    ol.PluggableMap.prototype.getCoordinateFromPixel);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getControls',
+    ol.PluggableMap.prototype.getControls);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getOverlays',
+    ol.PluggableMap.prototype.getOverlays);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getOverlayById',
+    ol.PluggableMap.prototype.getOverlayById);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getInteractions',
+    ol.PluggableMap.prototype.getInteractions);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getLayerGroup',
+    ol.PluggableMap.prototype.getLayerGroup);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getLayers',
+    ol.PluggableMap.prototype.getLayers);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getPixelFromCoordinate',
+    ol.PluggableMap.prototype.getPixelFromCoordinate);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getSize',
+    ol.PluggableMap.prototype.getSize);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getView',
+    ol.PluggableMap.prototype.getView);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getViewport',
+    ol.PluggableMap.prototype.getViewport);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'renderSync',
+    ol.PluggableMap.prototype.renderSync);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'render',
+    ol.PluggableMap.prototype.render);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'removeControl',
+    ol.PluggableMap.prototype.removeControl);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'removeInteraction',
+    ol.PluggableMap.prototype.removeInteraction);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'removeLayer',
+    ol.PluggableMap.prototype.removeLayer);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'removeOverlay',
+    ol.PluggableMap.prototype.removeOverlay);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'setLayerGroup',
+    ol.PluggableMap.prototype.setLayerGroup);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'setSize',
+    ol.PluggableMap.prototype.setSize);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'setTarget',
+    ol.PluggableMap.prototype.setTarget);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'setView',
+    ol.PluggableMap.prototype.setView);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'updateSize',
+    ol.PluggableMap.prototype.updateSize);
 
 goog.exportSymbol(
     'ol.proj.METERS_PER_UNIT',
@@ -1760,8 +1779,23 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.style.Text.prototype,
+    'getExceedLength',
+    ol.style.Text.prototype.getExceedLength);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
     'getFont',
     ol.style.Text.prototype.getFont);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'getMaxAngle',
+    ol.style.Text.prototype.getMaxAngle);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'getPlacement',
+    ol.style.Text.prototype.getPlacement);
 
 goog.exportProperty(
     ol.style.Text.prototype,
@@ -1815,8 +1849,18 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.style.Text.prototype,
+    'setExceedLength',
+    ol.style.Text.prototype.setExceedLength);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
     'setFont',
     ol.style.Text.prototype.setFont);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'setMaxAngle',
+    ol.style.Text.prototype.setMaxAngle);
 
 goog.exportProperty(
     ol.style.Text.prototype,
@@ -1827,6 +1871,11 @@ goog.exportProperty(
     ol.style.Text.prototype,
     'setOffsetY',
     ol.style.Text.prototype.setOffsetY);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'setPlacement',
+    ol.style.Text.prototype.setPlacement);
 
 goog.exportProperty(
     ol.style.Text.prototype,
@@ -2335,6 +2384,11 @@ goog.exportProperty(
     ol.source.Vector.prototype.removeFeature);
 
 goog.exportProperty(
+    ol.source.Vector.prototype,
+    'setLoader',
+    ol.source.Vector.prototype.setLoader);
+
+goog.exportProperty(
     ol.source.Vector.Event.prototype,
     'feature',
     ol.source.Vector.Event.prototype.feature);
@@ -2342,6 +2396,11 @@ goog.exportProperty(
 goog.exportSymbol(
     'ol.source.VectorTile',
     ol.source.VectorTile);
+
+goog.exportProperty(
+    ol.source.VectorTile.prototype,
+    'clear',
+    ol.source.VectorTile.prototype.clear);
 
 goog.exportSymbol(
     'ol.source.WMTS',
@@ -2398,6 +2457,42 @@ goog.exportSymbol(
 goog.exportSymbol(
     'ol.source.Zoomify',
     ol.source.Zoomify);
+
+goog.exportSymbol(
+    'ol.renderer.webgl.ImageLayer',
+    ol.renderer.webgl.ImageLayer);
+
+goog.exportSymbol(
+    'ol.renderer.webgl.Map',
+    ol.renderer.webgl.Map);
+
+goog.exportSymbol(
+    'ol.renderer.webgl.TileLayer',
+    ol.renderer.webgl.TileLayer);
+
+goog.exportSymbol(
+    'ol.renderer.webgl.VectorLayer',
+    ol.renderer.webgl.VectorLayer);
+
+goog.exportSymbol(
+    'ol.renderer.canvas.ImageLayer',
+    ol.renderer.canvas.ImageLayer);
+
+goog.exportSymbol(
+    'ol.renderer.canvas.Map',
+    ol.renderer.canvas.Map);
+
+goog.exportSymbol(
+    'ol.renderer.canvas.TileLayer',
+    ol.renderer.canvas.TileLayer);
+
+goog.exportSymbol(
+    'ol.renderer.canvas.VectorLayer',
+    ol.renderer.canvas.VectorLayer);
+
+goog.exportSymbol(
+    'ol.renderer.canvas.VectorTileLayer',
+    ol.renderer.canvas.VectorTileLayer);
 
 goog.exportProperty(
     ol.render.Event.prototype,
@@ -4656,6 +4751,296 @@ goog.exportProperty(
     ol.Object.prototype.un);
 
 goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'get',
+    ol.PluggableMap.prototype.get);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getKeys',
+    ol.PluggableMap.prototype.getKeys);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getProperties',
+    ol.PluggableMap.prototype.getProperties);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'set',
+    ol.PluggableMap.prototype.set);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'setProperties',
+    ol.PluggableMap.prototype.setProperties);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'unset',
+    ol.PluggableMap.prototype.unset);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'changed',
+    ol.PluggableMap.prototype.changed);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'dispatchEvent',
+    ol.PluggableMap.prototype.dispatchEvent);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'getRevision',
+    ol.PluggableMap.prototype.getRevision);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'on',
+    ol.PluggableMap.prototype.on);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'once',
+    ol.PluggableMap.prototype.once);
+
+goog.exportProperty(
+    ol.PluggableMap.prototype,
+    'un',
+    ol.PluggableMap.prototype.un);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'addControl',
+    ol.CanvasMap.prototype.addControl);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'addInteraction',
+    ol.CanvasMap.prototype.addInteraction);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'addLayer',
+    ol.CanvasMap.prototype.addLayer);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'addOverlay',
+    ol.CanvasMap.prototype.addOverlay);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'forEachFeatureAtPixel',
+    ol.CanvasMap.prototype.forEachFeatureAtPixel);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getFeaturesAtPixel',
+    ol.CanvasMap.prototype.getFeaturesAtPixel);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'forEachLayerAtPixel',
+    ol.CanvasMap.prototype.forEachLayerAtPixel);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'hasFeatureAtPixel',
+    ol.CanvasMap.prototype.hasFeatureAtPixel);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getEventCoordinate',
+    ol.CanvasMap.prototype.getEventCoordinate);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getEventPixel',
+    ol.CanvasMap.prototype.getEventPixel);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getTarget',
+    ol.CanvasMap.prototype.getTarget);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getTargetElement',
+    ol.CanvasMap.prototype.getTargetElement);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getCoordinateFromPixel',
+    ol.CanvasMap.prototype.getCoordinateFromPixel);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getControls',
+    ol.CanvasMap.prototype.getControls);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getOverlays',
+    ol.CanvasMap.prototype.getOverlays);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getOverlayById',
+    ol.CanvasMap.prototype.getOverlayById);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getInteractions',
+    ol.CanvasMap.prototype.getInteractions);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getLayerGroup',
+    ol.CanvasMap.prototype.getLayerGroup);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getLayers',
+    ol.CanvasMap.prototype.getLayers);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getPixelFromCoordinate',
+    ol.CanvasMap.prototype.getPixelFromCoordinate);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getSize',
+    ol.CanvasMap.prototype.getSize);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getView',
+    ol.CanvasMap.prototype.getView);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getViewport',
+    ol.CanvasMap.prototype.getViewport);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'renderSync',
+    ol.CanvasMap.prototype.renderSync);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'render',
+    ol.CanvasMap.prototype.render);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'removeControl',
+    ol.CanvasMap.prototype.removeControl);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'removeInteraction',
+    ol.CanvasMap.prototype.removeInteraction);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'removeLayer',
+    ol.CanvasMap.prototype.removeLayer);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'removeOverlay',
+    ol.CanvasMap.prototype.removeOverlay);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'setLayerGroup',
+    ol.CanvasMap.prototype.setLayerGroup);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'setSize',
+    ol.CanvasMap.prototype.setSize);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'setTarget',
+    ol.CanvasMap.prototype.setTarget);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'setView',
+    ol.CanvasMap.prototype.setView);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'updateSize',
+    ol.CanvasMap.prototype.updateSize);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'get',
+    ol.CanvasMap.prototype.get);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getKeys',
+    ol.CanvasMap.prototype.getKeys);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getProperties',
+    ol.CanvasMap.prototype.getProperties);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'set',
+    ol.CanvasMap.prototype.set);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'setProperties',
+    ol.CanvasMap.prototype.setProperties);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'unset',
+    ol.CanvasMap.prototype.unset);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'changed',
+    ol.CanvasMap.prototype.changed);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'dispatchEvent',
+    ol.CanvasMap.prototype.dispatchEvent);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'getRevision',
+    ol.CanvasMap.prototype.getRevision);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'on',
+    ol.CanvasMap.prototype.on);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'once',
+    ol.CanvasMap.prototype.once);
+
+goog.exportProperty(
+    ol.CanvasMap.prototype,
+    'un',
+    ol.CanvasMap.prototype.un);
+
+goog.exportProperty(
     ol.Collection.prototype,
     'get',
     ol.Collection.prototype.get);
@@ -4924,6 +5309,176 @@ goog.exportProperty(
     ol.ImageTile.prototype,
     'load',
     ol.ImageTile.prototype.load);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'addControl',
+    ol.Map.prototype.addControl);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'addInteraction',
+    ol.Map.prototype.addInteraction);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'addLayer',
+    ol.Map.prototype.addLayer);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'addOverlay',
+    ol.Map.prototype.addOverlay);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'forEachFeatureAtPixel',
+    ol.Map.prototype.forEachFeatureAtPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getFeaturesAtPixel',
+    ol.Map.prototype.getFeaturesAtPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'forEachLayerAtPixel',
+    ol.Map.prototype.forEachLayerAtPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'hasFeatureAtPixel',
+    ol.Map.prototype.hasFeatureAtPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getEventCoordinate',
+    ol.Map.prototype.getEventCoordinate);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getEventPixel',
+    ol.Map.prototype.getEventPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getTarget',
+    ol.Map.prototype.getTarget);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getTargetElement',
+    ol.Map.prototype.getTargetElement);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getCoordinateFromPixel',
+    ol.Map.prototype.getCoordinateFromPixel);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getControls',
+    ol.Map.prototype.getControls);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getOverlays',
+    ol.Map.prototype.getOverlays);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getOverlayById',
+    ol.Map.prototype.getOverlayById);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getInteractions',
+    ol.Map.prototype.getInteractions);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getLayerGroup',
+    ol.Map.prototype.getLayerGroup);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getLayers',
+    ol.Map.prototype.getLayers);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getPixelFromCoordinate',
+    ol.Map.prototype.getPixelFromCoordinate);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getSize',
+    ol.Map.prototype.getSize);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getView',
+    ol.Map.prototype.getView);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'getViewport',
+    ol.Map.prototype.getViewport);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'renderSync',
+    ol.Map.prototype.renderSync);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'render',
+    ol.Map.prototype.render);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'removeControl',
+    ol.Map.prototype.removeControl);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'removeInteraction',
+    ol.Map.prototype.removeInteraction);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'removeLayer',
+    ol.Map.prototype.removeLayer);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'removeOverlay',
+    ol.Map.prototype.removeOverlay);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'setLayerGroup',
+    ol.Map.prototype.setLayerGroup);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'setSize',
+    ol.Map.prototype.setSize);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'setTarget',
+    ol.Map.prototype.setTarget);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'setView',
+    ol.Map.prototype.setView);
+
+goog.exportProperty(
+    ol.Map.prototype,
+    'updateSize',
+    ol.Map.prototype.updateSize);
 
 goog.exportProperty(
     ol.Map.prototype,
@@ -6419,6 +6974,11 @@ goog.exportProperty(
     ol.source.Cluster.prototype,
     'removeFeature',
     ol.source.Cluster.prototype.removeFeature);
+
+goog.exportProperty(
+    ol.source.Cluster.prototype,
+    'setLoader',
+    ol.source.Cluster.prototype.setLoader);
 
 goog.exportProperty(
     ol.source.Cluster.prototype,

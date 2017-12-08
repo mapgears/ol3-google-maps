@@ -279,6 +279,100 @@ poly2.setStyle(new ol.style.Style({
 }));
 vector.getSource().addFeature(poly2);
 
+//Draw some waves over by St. John's
+vector.getSource().addFeature(new ol.Feature(
+  new ol.geom.MultiLineString([
+  [
+[-5974691,6487857],[-5949008,6489080],[-5930052,6498253],[-5923937,6514151],[-5923937,6528216],[-5931275,6542280],[-5947785,6552676],[-5938613,6564294],[-5917211,6569186],[-5890916,6564906],[-5870737,6542280],[-5864622,6528216],[-5856673,6508036],[-5849946,6494584],[-5831601,6481742],[-5807141,6481742]
+  ],
+  [ [-5759445,6590588],[-5733762,6591811],[-5714806,6600984],[-5708691,6616882],[-5708691,6630947],[-5716029,6645011],[-5732539,6655407],[-5723367,6667025],[-5701965,6671917],[-5675670,6667637],[-5655491,6645011],[-5649376,6630947],[-5641427,6610767],[-5634700,6597315],[-5616355,6584473],[-5591895,6584473]
+  ],
+  [ [-5842608,6345990],[-5816925,6347213],[-5797969,6356386],[-5791854,6372284],[-5791854,6386349],[-5799192,6400413],[-5815702,6410809],[-5806530,6422427],[-5785128,6427319],[-5758833,6423039],[-5738654,6400413],[-5732539,6386349],[-5724590,6366169],[-5717863,6352717],[-5699518,6339875],[-5675058,6339875]
+  ],
+  [
+[-6189937,6590588],[-6164254,6591811],[-6145298,6600984],[-6139183,6616882],[-6139183,6630947],[-6146521,6645011],[-6163031,6655407],[-6153859,6667025],[-6132457,6671917],[-6106162,6667637],[-6085983,6645011],[-6079868,6630947],[-6071919,6610767],[-6065192,6597315],[-6046847,6584473],[-6022387,6584473]
+  ],
+  ])
+));
+
+//Add simple multi poly (amorphouse polygons over the great lakes)
+vector.getSource().addFeature(new ol.Feature(
+  new ol.geom.MultiPolygon([[
+    [
+      [-9665988, 6059810],
+      [-9763828, 6020674],
+      [-9763828, 5883699],
+      [-9631745, 5859239],
+      [-9548581, 5952186],
+      [-9548581, 6015782],
+    ],
+    [
+      [-9582825, 6103837],
+      [-9533905, 6089162],
+      [-9470310, 6138081],
+      [-9529013, 6206569],
+      [-9582825, 6162541],
+      [-9612177, 6133189],
+    ],
+    [
+      [-9411606, 5771184],
+      [-9255063, 5653776],
+      [-9030032, 5560829],
+      [-9078952, 5688020],
+      [-8946869, 5658668],
+      [-8951761, 5800535],
+      [-9083844, 5780967],
+    ],
+  ]])
+));
+
+
+// Add movable multi-polygon (pinwheel over ontario)
+var multiCoords = []
+for (i = 0; i < 8; i++) {
+  var p = new ol.geom.Polygon([[
+    [-9670881, 6798497],
+    [-9748937, 6989284],
+    [-9690449, 7180071],
+    [-9612178, 6979500],
+  ]]);
+  p.rotate(i * Math.PI / 4, [-9770881, 6798497]);
+  multiCoords = multiCoords.concat(p.getCoordinates())
+}
+var poly3 = new ol.Feature(new ol.geom.MultiPolygon([multiCoords]))
+var vectorForMultiPoly = new ol.layer.Vector({
+  source: new ol.source.Vector(),
+  style: new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: [233, 150, 36, 0.1]
+        }),
+        stroke: new ol.style.Stroke({
+          color: [233, 150, 36, 1],
+          width: 1,
+        })
+      })
+});
+map.addLayer(vectorForMultiPoly);
+vectorForMultiPoly.getSource().addFeature(poly3);
+select = new ol.interaction.Select({
+  layers: [vectorForMultiPoly],
+  toggleCondition: ol.events.condition.never,
+  condition: function(event){
+    if (event.type == "click"){
+      console.log(event.coordinate)
+    }
+    return event.type == 'pointermove'; },
+  style: new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: [255, 23, 180, 0.2]
+    }),
+    stroke: new ol.style.Stroke({
+      color: [255, 23, 180, 1]
+    })
+  }),
+})
+map.addInteraction(select)
+
 
 var olGM = new olgm.OLGoogleMaps({
   map: map,
