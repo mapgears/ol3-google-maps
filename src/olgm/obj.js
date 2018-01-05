@@ -1,4 +1,4 @@
-/* Based on https://github.com/openlayers/openlayers/blob/master/src/ol/events.js */
+/* Based on https://github.com/openlayers/openlayers/blob/master/src/ol/obj.js */
 goog.provide('olgm.obj');
 
 
