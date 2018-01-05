@@ -56,7 +56,7 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
   }
 
   olgm.asserts.assert(gmapGeometry !== null,
-      'Expected geometry to be ol.geom.Point|LineString|Polygon');
+      'Expected geometry to be ol.geom.Point|LineString|MultiLineString|Polygon|MultiPolygon');
 
   return gmapGeometry;
 };
