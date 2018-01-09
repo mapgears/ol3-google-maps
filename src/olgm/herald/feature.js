@@ -1,11 +1,10 @@
 goog.provide('olgm.herald.Feature');
 
-goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.Observable');
-goog.require('ol.geom.Geometry');
 goog.require('ol.style.Icon');
 goog.require('olgm');
+goog.require('olgm.asserts');
 goog.require('olgm.gm');
 goog.require('olgm.herald.Herald');
 
@@ -91,8 +90,7 @@ olgm.herald.Feature.prototype.activate = function() {
 
   olgm.herald.Herald.prototype.activate.call(this);
 
-  var geometry = this.feature_.getGeometry();
-  goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
+  var geometry = this.getGeometry_();
 
   // create gmap feature
   this.gmapFeature_ = olgm.gm.createFeature(this.feature_);
@@ -138,9 +136,7 @@ olgm.herald.Feature.prototype.activate = function() {
   // event listeners (todo)
   var keys = this.listenerKeys;
   this.geometryChangeKey_ = geometry.on(
-      'change',
-      this.handleGeometryChange_,
-      this);
+      'change', this.handleGeometryChange_, this);
   keys.push(this.geometryChangeKey_);
   keys.push(this.feature_.on(
       'change:' + this.feature_.getGeometryName(),
@@ -207,13 +203,23 @@ olgm.herald.Feature.prototype.setVisible = function(value) {
   }
 };
 
+/**
+ * @private
+ * @return {ol.geom.Geometry} the feature's geometry
+ */
+olgm.herald.Feature.prototype.getGeometry_ = function() {
+  var geometry = this.feature_.getGeometry();
+  olgm.asserts.assert(
+      geometry !== undefined, 'Expected feature to have geometry');
+  return /** @type {ol.geom.Geometry} */ (geometry);
+};
+
 
 /**
  * @private
  */
 olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
-  var geometry = this.feature_.getGeometry();
-  goog.asserts.assertInstanceof(geometry, ol.geom.Geometry);
+  var geometry = this.getGeometry_();
   this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
 
   var latLng;

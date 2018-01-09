@@ -1,12 +1,9 @@
 goog.provide('olgm.herald.Layers');
 
-goog.require('goog.asserts');
 goog.require('ol');
-goog.require('ol.layer.Base');
 goog.require('ol.layer.Image');
 goog.require('ol.layer.Tile');
 goog.require('ol.layer.Vector');
-goog.require('ol.source.ImageWMS');
 goog.require('olgm');
 goog.require('olgm.herald.Herald');
 goog.require('olgm.herald.ImageWMSSource');
@@ -234,8 +231,7 @@ olgm.herald.Layers.prototype.setWatchOptions = function(watchOptions) {
  * @private
  */
 olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
-  var layer = event.element;
-  goog.asserts.assertInstanceof(layer, ol.layer.Base);
+  var layer = /** @type {ol.layer.Base} */ (event.element);
   this.watchLayer_(layer);
   this.orderLayers();
 };
@@ -247,8 +243,7 @@ olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
  * @private
  */
 olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
-  var layer = event.element;
-  goog.asserts.assertInstanceof(layer, ol.layer.Base);
+  var layer = /** @type {ol.layer.Base} */ (event.element);
   this.unwatchLayer_(layer);
   this.orderLayers();
 };
@@ -270,10 +265,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
     this.tileSourceHerald_.watchLayer(layer);
   } else if (layer instanceof ol.layer.Image &&
         this.watchOptions_.image !== false) {
-    var source = layer.getSource();
-    if (source instanceof ol.source.ImageWMS) {
-      this.imageWMSSourceHerald_.watchLayer(layer);
-    }
+    this.imageWMSSourceHerald_.watchLayer(layer);
   }
 };
 
@@ -308,10 +300,7 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
   } else if (layer instanceof ol.layer.Tile) {
     this.tileSourceHerald_.unwatchLayer(layer);
   } else if (layer instanceof ol.layer.Image) {
-    var source = layer.getSource();
-    if (source instanceof ol.source.ImageWMS) {
-      this.imageWMSSourceHerald_.unwatchLayer(layer);
-    }
+    this.imageWMSSourceHerald_.unwatchLayer(layer);
   }
 };
 
