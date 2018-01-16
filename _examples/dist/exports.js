@@ -69,6 +69,7 @@ goog.require('ol.format.filter.And');
 goog.require('ol.format.filter.Bbox');
 goog.require('ol.format.filter.Comparison');
 goog.require('ol.format.filter.ComparisonBinary');
+goog.require('ol.format.filter.Contains');
 goog.require('ol.format.filter.During');
 goog.require('ol.format.filter.EqualTo');
 goog.require('ol.format.filter.Filter');
@@ -1141,6 +1142,11 @@ goog.exportProperty(
 goog.exportSymbol(
     'ol.tilegrid.createXYZ',
     ol.tilegrid.createXYZ);
+
+goog.exportProperty(
+    ol.VectorTile.prototype,
+    'getExtent',
+    ol.VectorTile.prototype.getExtent);
 
 goog.exportProperty(
     ol.VectorTile.prototype,
@@ -3742,6 +3748,10 @@ goog.exportSymbol(
     ol.format.filter.bbox);
 
 goog.exportSymbol(
+    'ol.format.filter.contains',
+    ol.format.filter.contains);
+
+goog.exportSymbol(
     'ol.format.filter.intersects',
     ol.format.filter.intersects);
 
@@ -4193,6 +4203,10 @@ goog.exportSymbol(
 goog.exportSymbol(
     'ol.format.filter.ComparisonBinary',
     ol.format.filter.ComparisonBinary);
+
+goog.exportSymbol(
+    'ol.format.filter.Contains',
+    ol.format.filter.Contains);
 
 goog.exportSymbol(
     'ol.format.filter.During',
