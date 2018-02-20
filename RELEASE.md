@@ -73,7 +73,10 @@ send it to npm. When running this command, you need to include the version
 number, without the `v` prefix. You also need to have a npm account and be a
 contributor to the project.
 
+    rm *.zip
     ./tasks/publish.sh 0.8.0
+
+The zip file containing the compiled code is removed first.
 
 ### Update the website ###
 
