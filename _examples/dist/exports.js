@@ -175,10 +175,12 @@ goog.require('ol.source.VectorTile');
 goog.require('ol.source.WMTS');
 goog.require('ol.source.XYZ');
 goog.require('ol.source.Zoomify');
+goog.require('ol.style');
 goog.require('ol.style.AtlasManager');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Fill');
 goog.require('ol.style.Icon');
+goog.require('ol.style.IconImageCache');
 goog.require('ol.style.Image');
 goog.require('ol.style.RegularShape');
 goog.require('ol.style.Stroke');
@@ -1129,6 +1131,10 @@ goog.exportSymbol(
     'ol.Sphere.getArea',
     ol.Sphere.getArea);
 
+goog.exportSymbol(
+    'ol.style.iconImageCache',
+    ol.style.iconImageCache);
+
 goog.exportProperty(
     ol.Tile.prototype,
     'getTileCoord',
@@ -1508,6 +1514,11 @@ goog.exportProperty(
     'load',
     ol.style.Icon.prototype.load);
 
+goog.exportProperty(
+    ol.style.IconImageCache.prototype,
+    'setSize',
+    ol.style.IconImageCache.prototype.setSize);
+
 goog.exportSymbol(
     'ol.style.Image',
     ol.style.Image);
@@ -1785,8 +1796,8 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.style.Text.prototype,
-    'getExceedLength',
-    ol.style.Text.prototype.getExceedLength);
+    'getOverflow',
+    ol.style.Text.prototype.getOverflow);
 
 goog.exportProperty(
     ol.style.Text.prototype,
@@ -1855,8 +1866,23 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.style.Text.prototype,
-    'setExceedLength',
-    ol.style.Text.prototype.setExceedLength);
+    'getBackgroundFill',
+    ol.style.Text.prototype.getBackgroundFill);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'getBackgroundStroke',
+    ol.style.Text.prototype.getBackgroundStroke);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'getPadding',
+    ol.style.Text.prototype.getPadding);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'setOverflow',
+    ol.style.Text.prototype.setOverflow);
 
 goog.exportProperty(
     ol.style.Text.prototype,
@@ -1917,6 +1943,21 @@ goog.exportProperty(
     ol.style.Text.prototype,
     'setTextBaseline',
     ol.style.Text.prototype.setTextBaseline);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'setBackgroundFill',
+    ol.style.Text.prototype.setBackgroundFill);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'setBackgroundStroke',
+    ol.style.Text.prototype.setBackgroundStroke);
+
+goog.exportProperty(
+    ol.style.Text.prototype,
+    'setPadding',
+    ol.style.Text.prototype.setPadding);
 
 goog.exportSymbol(
     'ol.source.BingMaps',
@@ -2386,6 +2427,11 @@ goog.exportProperty(
 
 goog.exportProperty(
     ol.source.Vector.prototype,
+    'removeLoadedExtent',
+    ol.source.Vector.prototype.removeLoadedExtent);
+
+goog.exportProperty(
+    ol.source.Vector.prototype,
     'removeFeature',
     ol.source.Vector.prototype.removeFeature);
 
@@ -2621,6 +2667,11 @@ goog.exportProperty(
     ol.proj.Projection.prototype,
     'getWorldExtent',
     ol.proj.Projection.prototype.getWorldExtent);
+
+goog.exportProperty(
+    ol.proj.Projection.prototype,
+    'getAxisOrientation',
+    ol.proj.Projection.prototype.getAxisOrientation);
 
 goog.exportProperty(
     ol.proj.Projection.prototype,
@@ -6983,6 +7034,11 @@ goog.exportProperty(
     ol.source.Cluster.prototype,
     'getUrl',
     ol.source.Cluster.prototype.getUrl);
+
+goog.exportProperty(
+    ol.source.Cluster.prototype,
+    'removeLoadedExtent',
+    ol.source.Cluster.prototype.removeLoadedExtent);
 
 goog.exportProperty(
     ol.source.Cluster.prototype,
