@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.19.0
+// Version: v0.19.1
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -30148,18 +30148,21 @@ ol.render.canvas.ReplayGroup.prototype.forEachFeatureAtCoordinate = function(
     });
   }
 
+  var replayType;
+
   /**
    * @param {ol.Feature|ol.render.Feature} feature Feature.
    * @return {?} Callback result.
    */
-  function hitDetectionCallback(feature) {
+  function featureCallback(feature) {
     var imageData = context.getImageData(0, 0, contextSize, contextSize).data;
     for (var i = 0; i < contextSize; i++) {
       for (var j = 0; j < contextSize; j++) {
         if (mask[i][j]) {
           if (imageData[(j * contextSize + i) * 4 + 3] > 0) {
             var result;
-            if (!declutteredFeatures || declutteredFeatures.indexOf(feature) !== -1) {
+            if (!(declutteredFeatures && (replayType == ol.render.ReplayType.IMAGE || replayType == ol.render.ReplayType.TEXT)) ||
+                declutteredFeatures.indexOf(feature) !== -1) {
               result = callback(feature);
             }
             if (result) {
@@ -30174,8 +30177,37 @@ ol.render.canvas.ReplayGroup.prototype.forEachFeatureAtCoordinate = function(
     }
   }
 
-  return this.replayHitDetection_(context, transform, rotation,
-      skippedFeaturesHash, hitDetectionCallback, hitExtent, declutterReplays);
+  /** @type {Array.<number>} */
+  var zs = Object.keys(this.replaysByZIndex_).map(Number);
+  zs.sort(ol.array.numberSafeCompareFunction);
+
+  var i, j, replays, replay, result;
+  for (i = zs.length - 1; i >= 0; --i) {
+    var zIndexKey = zs[i].toString();
+    replays = this.replaysByZIndex_[zIndexKey];
+    for (j = ol.render.replay.ORDER.length - 1; j >= 0; --j) {
+      replayType = ol.render.replay.ORDER[j];
+      replay = replays[replayType];
+      if (replay !== undefined) {
+        if (declutterReplays &&
+            (replayType == ol.render.ReplayType.IMAGE || replayType == ol.render.ReplayType.TEXT)) {
+          var declutter = declutterReplays[zIndexKey];
+          if (!declutter) {
+            declutterReplays[zIndexKey] = [replay, transform.slice(0)];
+          } else {
+            declutter.push(replay, transform.slice(0));
+          }
+        } else {
+          result = replay.replayHitDetection(context, transform, rotation,
+              skippedFeaturesHash, featureCallback, hitExtent);
+          if (result) {
+            return result;
+          }
+        }
+      }
+    }
+  }
+  return undefined;
 };
 
 
@@ -30281,59 +30313,6 @@ ol.render.canvas.ReplayGroup.prototype.replay = function(context,
   }
 
   context.restore();
-};
-
-
-/**
- * @private
- * @param {CanvasRenderingContext2D} context Context.
- * @param {ol.Transform} transform Transform.
- * @param {number} viewRotation View rotation.
- * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
- *     to skip.
- * @param {function((ol.Feature|ol.render.Feature)): T} featureCallback
- *     Feature callback.
- * @param {ol.Extent=} opt_hitExtent Only check features that intersect this
- *     extent.
- * @param {Object.<string, ol.DeclutterGroup>=} opt_declutterReplays Declutter
- *     replays.
- * @return {T|undefined} Callback result.
- * @template T
- */
-ol.render.canvas.ReplayGroup.prototype.replayHitDetection_ = function(
-    context, transform, viewRotation, skippedFeaturesHash,
-    featureCallback, opt_hitExtent, opt_declutterReplays) {
-  /** @type {Array.<number>} */
-  var zs = Object.keys(this.replaysByZIndex_).map(Number);
-  zs.sort(ol.array.numberSafeCompareFunction);
-
-  var i, j, replays, replay, result;
-  for (i = zs.length - 1; i >= 0; --i) {
-    var zIndexKey = zs[i].toString();
-    replays = this.replaysByZIndex_[zIndexKey];
-    for (j = ol.render.replay.ORDER.length - 1; j >= 0; --j) {
-      var replayType = ol.render.replay.ORDER[j];
-      replay = replays[replayType];
-      if (replay !== undefined) {
-        if (opt_declutterReplays &&
-            (replayType == ol.render.ReplayType.IMAGE || replayType == ol.render.ReplayType.TEXT)) {
-          var declutter = opt_declutterReplays[zIndexKey];
-          if (!declutter) {
-            opt_declutterReplays[zIndexKey] = [replay, transform.slice(0)];
-          } else {
-            declutter.push(replay, transform.slice(0));
-          }
-        } else {
-          result = replay.replayHitDetection(context, transform, viewRotation,
-              skippedFeaturesHash, featureCallback, opt_hitExtent);
-          if (result) {
-            return result;
-          }
-        }
-      }
-    }
-  }
-  return undefined;
 };
 
 
@@ -50088,7 +50067,7 @@ ol.ext.PBF = function() {};
 
 var read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m;
-  var eLen = nBytes * 8 - mLen - 1;
+  var eLen = (nBytes * 8) - mLen - 1;
   var eMax = (1 << eLen) - 1;
   var eBias = eMax >> 1;
   var nBits = -7;
@@ -50099,11 +50078,11 @@ var read = function (buffer, offset, isLE, mLen, nBytes) {
   e = s & ((1 << (-nBits)) - 1);
   s >>= (-nBits);
   nBits += eLen;
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
   m = e & ((1 << (-nBits)) - 1);
   e >>= (-nBits);
   nBits += mLen;
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
   if (e === 0) {
     e = 1 - eBias;
   } else if (e === eMax) {
@@ -50116,7 +50095,7 @@ var read = function (buffer, offset, isLE, mLen, nBytes) {
 };
 var write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c;
-  var eLen = nBytes * 8 - mLen - 1;
+  var eLen = (nBytes * 8) - mLen - 1;
   var eMax = (1 << eLen) - 1;
   var eBias = eMax >> 1;
   var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0);
@@ -50146,7 +50125,7 @@ var write = function (buffer, value, offset, isLE, mLen, nBytes) {
       m = 0;
       e = eMax;
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen);
+      m = ((value * c) - 1) * Math.pow(2, mLen);
       e = e + eBias;
     } else {
       m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
