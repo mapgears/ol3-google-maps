@@ -8,6 +8,8 @@ goog.require('olgm');
 goog.require('olgm.asserts');
 goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
+goog.require('olgm.obj');
+goog.require('olgm.uri');
 
 
 /**
@@ -178,7 +180,9 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var ol3map = this.ol3map;
 
   //base WMS URL
-  var url = source.getUrl();
+  var baseUrl = /** @type {string} */ (source.getUrl());
+  olgm.asserts.assert(
+      baseUrl !== undefined, 'Expected the source to have an url');
   var size = ol3map.getSize();
 
   olgm.asserts.assert(
@@ -230,25 +234,31 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var wms13 = (
     parseInt(versionNumbers[0], 10) >= 1 &&
     parseInt(versionNumbers[1], 10) >= 3);
-  var referenceSystem = wms13 ? 'CRS' : 'SRS';
 
-  url += '?SERVICE=WMS';
-  url += '&VERSION=' + version;
-  url += '&REQUEST=GetMap';
-  url += '&LAYERS=' + layers;
-  url += '&STYLES=' + styles;
-  url += '&FORMAT=' + format;
-  url += '&TRANSPARENT=' + transparent;
-  url += '&' + referenceSystem + '=EPSG:3857';
-  url += '&BBOX=' + bbox;
-  url += '&WIDTH=' + size[0];
-  url += '&HEIGHT=' + size[1];
-  url += '&TILED=' + tiled;
+  var queryParams = {
+    'BBOX': bbox,
+    'FORMAT': format,
+    'HEIGHT': size[1],
+    'LAYERS': layers,
+    'REQUEST': 'GetMap',
+    'SERVICE': 'WMS',
+    'STYLES': styles,
+    'TILED': tiled,
+    'TRANSPARENT': transparent,
+    'VERSION': version,
+    'WIDTH': size[0]
+  };
 
-  // Set Custom params
-  for (key in customParams) {
-    url += '&' + key + '=' + customParams[key];
+  var epsg3857 = 'EPSG:3857';
+  if (wms13) {
+    queryParams['CRS'] = epsg3857;
+  } else {
+    queryParams['SRS'] = epsg3857;
   }
+
+  olgm.obj.assign(queryParams, customParams);
+
+  var url = olgm.uri.appendParams(baseUrl, queryParams);
 
   return url;
 };
