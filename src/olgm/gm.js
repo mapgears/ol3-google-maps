@@ -5,6 +5,7 @@ goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
 goog.require('ol.geom.MultiLineString');
 goog.require('ol.geom.MultiPolygon');
+goog.require('ol.geom.MultiPoint');
 goog.require('ol.proj');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Icon');
@@ -48,7 +49,8 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
   if (geometry instanceof ol.geom.Point) {
     gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
-  } else if (geometry instanceof ol.geom.LineString ||
+  } else if (geometry instanceof ol.geom.MultiPoint ||
+             geometry instanceof ol.geom.LineString ||
              geometry instanceof ol.geom.MultiLineString ||
              geometry instanceof ol.geom.Polygon ||
              geometry instanceof ol.geom.MultiPolygon) {
@@ -56,7 +58,7 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
   }
 
   olgm.asserts.assert(gmapGeometry !== null,
-      'Expected geometry to be ol.geom.Point|LineString|MultiLineString|Polygon|MultiPolygon');
+      'Expected geometry to be ol.geom.Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon');
 
   return gmapGeometry;
 };
@@ -85,10 +87,10 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
+ * @param {ol.geom.MultiPoint|ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon} google
+ * @return {google.maps.Data.MultiPoint|google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon|google.maps.Data.MultiPolygon} google
  * LineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
@@ -115,13 +117,18 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
         inProj
     );
     gmapGeometry = new google.maps.Data.MultiLineString(multiLineStringlatLngs);
-  } else {
-    //it must be MultiPolygon
-    var multiPolygonlatLngs = olgm.gm.genMultiLatLngs_(
-        geometry.getCoordinates()[0],
+  } else if (geometry instanceof ol.geom.MultiPolygon) {
+    var multiPolygons = olgm.gm.genMultiPolygon_(
+        geometry.getPolygons(),
         inProj
     );
-    gmapGeometry = new google.maps.Data.Polygon(multiPolygonlatLngs);
+    gmapGeometry = new google.maps.Data.MultiPolygon(multiPolygons);
+  } else if (geometry instanceof ol.geom.MultiPoint) {
+    var multiPoints = olgm.gm.genLatLngs_(
+        geometry.getCoordinates(),
+        inProj
+    );
+    gmapGeometry = new google.maps.Data.MultiPoint(multiPoints);
   }
 
   return gmapGeometry;
@@ -164,6 +171,25 @@ olgm.gm.genMultiLatLngs_ = function(coordinates, opt_inProj) {
     multiLatLngs.push(olgm.gm.genLatLngs_(coordinates[i], inProj));
   }
   return multiLatLngs;
+};
+
+
+/**
+ * Convert a list of OpenLayers polygons to a list of google maps polygons.
+ *
+ * @param {Array.<ol.geom.Polygon>} polygons List of polygons.
+ * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array.<google.maps.Data.Polygon>} List of polygons.
+ * @private
+ */
+olgm.gm.genMultiPolygon_ = function(polygons, opt_inProj) {
+  var mutliPolygons = [];
+  for (var i = 0, len = polygons.length; i < len; i++) {
+    var latLgns = olgm.gm.genMultiLatLngs_(polygons[i].getCoordinates(), opt_inProj);
+    var multiPolygon = new google.maps.Data.Polygon(latLgns);
+    mutliPolygons.push(multiPolygon);
+  }
+  return mutliPolygons;
 };
 
 
