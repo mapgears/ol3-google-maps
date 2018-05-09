@@ -98,13 +98,7 @@ The styling of the following multi-geometries are supported by OL3-Google-Maps:
 
  * `MultiLineString`
  * `MultiPolygon`
-
-The following are not supported:
-
  * `MultiPoint`
-
-
-Recommendation: avoid using geometry types that are not supported.
 
 
 Rotation
