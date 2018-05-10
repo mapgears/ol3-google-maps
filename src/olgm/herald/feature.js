@@ -1,5 +1,6 @@
 goog.provide('olgm.herald.Feature');
 
+goog.require('goog.json');
 goog.require('ol');
 goog.require('ol.Observable');
 goog.require('ol.style.Icon');
@@ -99,39 +100,7 @@ olgm.herald.Feature.prototype.activate = function() {
     this.data_.add(this.gmapFeature_);
   }
 
-  // override style if a style is defined at the feature level
-  var gmStyle = olgm.gm.createStyle(
-      this.feature_, this.mapIconOptions_, this.index_);
-  if (gmStyle) {
-    this.data_.overrideStyle(this.gmapFeature_, gmStyle);
-  }
-
-  // if the feature has text style, add a map label to gmap
-  var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
-  var style = olgm.getStyleOf(this.feature_);
-
-  if (style) {
-    var zIndex = style.getZIndex();
-    var index = zIndex !== undefined ? zIndex : this.index_;
-
-    var image = style.getImage();
-    var useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
-      this.mapIconOptions_.useCanvas : false;
-    if (image && image instanceof ol.style.Icon && useCanvas) {
-      this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
-      if (this.visible_) {
-        this.marker_.setMap(this.gmap);
-      }
-    }
-
-    var text = style.getText();
-    if (text) {
-      this.label_ = olgm.gm.createLabel(text, latLng, index);
-      if (this.visible_) {
-        this.label_.setMap(this.gmap);
-      }
-    }
-  }
+  this.syncStyle_();
 
   // event listeners (todo)
   var keys = this.listenerKeys;
@@ -141,6 +110,10 @@ olgm.herald.Feature.prototype.activate = function() {
   keys.push(this.feature_.on(
       'change:' + this.feature_.getGeometryName(),
       this.handleGeometryReplace_, this
+  ));
+  keys.push(this.feature_.on(
+      'change',
+      this.handleChange_, this
   ));
 };
 
@@ -203,6 +176,7 @@ olgm.herald.Feature.prototype.setVisible = function(value) {
   }
 };
 
+
 /**
  * @private
  * @return {ol.geom.Geometry} the feature's geometry
@@ -212,6 +186,62 @@ olgm.herald.Feature.prototype.getGeometry_ = function() {
   olgm.asserts.assert(
       geometry !== undefined, 'Expected feature to have geometry');
   return /** @type {ol.geom.Geometry} */ (geometry);
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Feature.prototype.syncStyle_ = function() {
+  // override style if a style is defined at the feature level
+  var gmStyle = olgm.gm.createStyle(
+      this.feature_, this.mapIconOptions_, this.index_);
+  if (gmStyle) {
+    this.data_.overrideStyle(this.gmapFeature_, gmStyle);
+  }
+
+  // if we had existing markers or labels, we need to remove them
+  if (this.marker_) {
+    // remove feature
+    this.marker_.setMap(null);
+    this.marker_ = null;
+  }
+  if (this.label_) {
+    // remove label
+    this.label_.setMap(null);
+    this.label_ = null;
+  }
+
+  // if the feature has text style, add a map label to gmap
+  var style = olgm.getStyleOf(this.feature_);
+
+  if (style) {
+    this.cachedStyle_ = this.cacheStyle_(style);
+    var geometry = this.getGeometry_();
+    var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    var zIndex = style.getZIndex();
+    var index = zIndex !== undefined ? zIndex : this.index_;
+
+    var image = style.getImage();
+    var useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
+      this.mapIconOptions_.useCanvas : false;
+    if (image && image instanceof ol.style.Icon && useCanvas) {
+      this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
+      if (this.visible_) {
+        this.marker_.setMap(this.gmap);
+      }
+    }
+
+    var text = style.getText();
+    if (text) {
+      this.label_ = olgm.gm.createLabel(text, latLng, index);
+      if (this.visible_) {
+        this.label_.setMap(this.gmap);
+      }
+    }
+  } else {
+    this.cachedStyle_ = null;
+  }
 };
 
 
@@ -250,4 +280,32 @@ olgm.herald.Feature.prototype.handleGeometryReplace_ = function() {
       this);
   keys.push(this.geometryChangeKey_);
   this.handleGeometryChange_();
+};
+
+
+/**
+ * @private
+ */
+olgm.herald.Feature.prototype.handleChange_ = function() {
+  // detect if the styles have changed, if so, update the gmap feature
+  var style = this.cacheStyle_(olgm.getStyleOf(this.feature_));
+  if (goog.json.serialize(style) !== goog.json.serialize(this.cachedStyle_)) {
+    this.syncStyle_();
+  }
+};
+
+
+/**
+ * @private
+ * @param {ol.style.Style} style Style to generate a cacheable object for
+ * @return {Object} Style object worth caching
+ */
+olgm.herald.Feature.prototype.cacheStyle_ = function(style) {
+  return {
+    fill: style.getFill() ? style.getFill().clone() : undefined,
+    image: style.getImage() ? style.getImage().clone() : undefined,
+    stroke: style.getStroke() ? style.getStroke().clone() : undefined,
+    text: style.getText() ? style.getText().clone() : undefined,
+    zIndex: style.getZIndex()
+  };
 };

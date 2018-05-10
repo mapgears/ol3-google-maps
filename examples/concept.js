@@ -182,6 +182,7 @@ var generateLineFeature = function() {
 };
 
 var addPointFeatures = function(len, opt_style) {
+  var features = [];
   var feature;
   for (var i = 0; i < len; i++) {
     feature = generatePointFeature();
@@ -191,11 +192,13 @@ var addPointFeatures = function(len, opt_style) {
       feature.setStyle(style);
     }
     vector.getSource().addFeature(feature);
+    features.push(feature);
   }
+  return features;
 };
 
 var addMarkerFeatures = function(len) {
-  addPointFeatures(len, {
+  var points = addPointFeatures(len, {
     image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
       anchor: [0.5, 46],
       anchorXUnits: 'fraction',
@@ -212,6 +215,15 @@ var addMarkerFeatures = function(len) {
       stroke: new ol.style.Stroke({color: '#ffffff', width: 5}),
     })
   });
+
+  setTimeout(function() {
+    var style = points[0].getStyle();
+    var text = style.getText().clone();
+    text.setText('HI');
+    style.setText(text);
+    // set the style after the feature has rendered, which tests herald
+    points[0].setStyle(style);
+  }, 1000);
 };
 
 var addCircleFeatures = function(len) {
