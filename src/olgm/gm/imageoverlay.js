@@ -135,6 +135,8 @@ olgm.gm.ImageOverlay.prototype.setZIndex = function(zIndex) {
  * @override
  */
 olgm.gm.ImageOverlay.prototype.onRemove = function() {
-  this.div_.parentNode.removeChild(this.div_);
-  this.div_ = null;
+  if (this.div_) {
+    this.div_.parentNode.removeChild(this.div_);
+    this.div_ = null;
+  }
 };
