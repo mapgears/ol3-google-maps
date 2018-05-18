@@ -1,6 +1,6 @@
 // Ol3-Google-Maps. See https://github.com/mapgears/ol3-google-maps/
 // License: https://github.com/mapgears/ol3-google-maps/blob/master/LICENSE
-// Version: v0.19.1
+// Version: v0.20.0
 
 var CLOSURE_NO_DEPS = true;
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
@@ -82890,6 +82890,7 @@ goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
 goog.require('ol.geom.MultiLineString');
 goog.require('ol.geom.MultiPolygon');
+goog.require('ol.geom.MultiPoint');
 goog.require('ol.proj');
 goog.require('ol.style.Circle');
 goog.require('ol.style.Icon');
@@ -82933,7 +82934,8 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
 
   if (geometry instanceof ol.geom.Point) {
     gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
-  } else if (geometry instanceof ol.geom.LineString ||
+  } else if (geometry instanceof ol.geom.MultiPoint ||
+             geometry instanceof ol.geom.LineString ||
              geometry instanceof ol.geom.MultiLineString ||
              geometry instanceof ol.geom.Polygon ||
              geometry instanceof ol.geom.MultiPolygon) {
@@ -82941,7 +82943,7 @@ olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
   }
 
   olgm.asserts.assert(gmapGeometry !== null,
-      'Expected geometry to be ol.geom.Point|LineString|MultiLineString|Polygon|MultiPolygon');
+      'Expected geometry to be ol.geom.Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon');
 
   return gmapGeometry;
 };
@@ -82970,10 +82972,10 @@ olgm.gm.createLatLng = function(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
+ * @param {ol.geom.MultiPoint|ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
  * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon} google
+ * @return {google.maps.Data.MultiPoint|google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon|google.maps.Data.MultiPolygon} google
  * LineString or Polygon
  */
 olgm.gm.createGeometry = function(geometry, opt_ol3map) {
@@ -83000,13 +83002,18 @@ olgm.gm.createGeometry = function(geometry, opt_ol3map) {
         inProj
     );
     gmapGeometry = new google.maps.Data.MultiLineString(multiLineStringlatLngs);
-  } else {
-    //it must be MultiPolygon
-    var multiPolygonlatLngs = olgm.gm.genMultiLatLngs_(
-        geometry.getCoordinates()[0],
+  } else if (geometry instanceof ol.geom.MultiPolygon) {
+    var multiPolygons = olgm.gm.genMultiPolygon_(
+        geometry.getPolygons(),
         inProj
     );
-    gmapGeometry = new google.maps.Data.Polygon(multiPolygonlatLngs);
+    gmapGeometry = new google.maps.Data.MultiPolygon(multiPolygons);
+  } else if (geometry instanceof ol.geom.MultiPoint) {
+    var multiPoints = olgm.gm.genLatLngs_(
+        geometry.getCoordinates(),
+        inProj
+    );
+    gmapGeometry = new google.maps.Data.MultiPoint(multiPoints);
   }
 
   return gmapGeometry;
@@ -83049,6 +83056,25 @@ olgm.gm.genMultiLatLngs_ = function(coordinates, opt_inProj) {
     multiLatLngs.push(olgm.gm.genLatLngs_(coordinates[i], inProj));
   }
   return multiLatLngs;
+};
+
+
+/**
+ * Convert a list of OpenLayers polygons to a list of google maps polygons.
+ *
+ * @param {Array.<ol.geom.Polygon>} polygons List of polygons.
+ * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array.<google.maps.Data.Polygon>} List of polygons.
+ * @private
+ */
+olgm.gm.genMultiPolygon_ = function(polygons, opt_inProj) {
+  var mutliPolygons = [];
+  for (var i = 0, len = polygons.length; i < len; i++) {
+    var latLgns = olgm.gm.genMultiLatLngs_(polygons[i].getCoordinates(), opt_inProj);
+    var multiPolygon = new google.maps.Data.Polygon(latLgns);
+    mutliPolygons.push(multiPolygon);
+  }
+  return mutliPolygons;
 };
 
 
@@ -83485,8 +83511,10 @@ olgm.gm.ImageOverlay.prototype.setZIndex = function(zIndex) {
  * @override
  */
 olgm.gm.ImageOverlay.prototype.onRemove = function() {
-  this.div_.parentNode.removeChild(this.div_);
-  this.div_ = null;
+  if (this.div_) {
+    this.div_.parentNode.removeChild(this.div_);
+    this.div_ = null;
+  }
 };
 
 goog.provide('olgm.gm.PanesOverlay');
@@ -83932,6 +83960,35 @@ olgm.herald.Source.prototype.findIndex = function(layer) {
   return layerIndex;
 };
 
+goog.provide('olgm.uri');
+
+
+/**
+ * Shamelessly borrowed from `ol.uri.appendParams`.
+ *
+ * Appends query parameters to a URI.
+ *
+ * @param {string} uri The original URI, which may already have query data.
+ * @param {!Object} params An object where keys are URI-encoded parameter keys,
+ *     and the values are arbitrary types or arrays.
+ * @return {string} The new URI.
+ */
+olgm.uri.appendParams = function(uri, params) {
+  var keyParams = [];
+  // Skip any null or undefined parameter values
+  Object.keys(params).forEach(function(k) {
+    if (params[k] !== null && params[k] !== undefined) {
+      keyParams.push(k + '=' + encodeURIComponent(params[k]));
+    }
+  });
+  var qs = keyParams.join('&');
+  // remove any trailing ? or &
+  uri = uri.replace(/[?&]$/, '');
+  // append ? or & depending on whether uri has existing parameters
+  uri = uri.indexOf('?') === -1 ? uri + '?' : uri + '&';
+  return uri + qs;
+};
+
 goog.provide('olgm.herald.ImageWMSSource');
 
 goog.require('ol');
@@ -83942,6 +83999,8 @@ goog.require('olgm');
 goog.require('olgm.asserts');
 goog.require('olgm.gm.ImageOverlay');
 goog.require('olgm.herald.Source');
+goog.require('olgm.obj');
+goog.require('olgm.uri');
 
 
 /**
@@ -84112,7 +84171,9 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var ol3map = this.ol3map;
 
   //base WMS URL
-  var url = source.getUrl();
+  var baseUrl = /** @type {string} */ (source.getUrl());
+  olgm.asserts.assert(
+      baseUrl !== undefined, 'Expected the source to have an url');
   var size = ol3map.getSize();
 
   olgm.asserts.assert(
@@ -84164,25 +84225,31 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   var wms13 = (
     parseInt(versionNumbers[0], 10) >= 1 &&
     parseInt(versionNumbers[1], 10) >= 3);
-  var referenceSystem = wms13 ? 'CRS' : 'SRS';
 
-  url += '?SERVICE=WMS';
-  url += '&VERSION=' + version;
-  url += '&REQUEST=GetMap';
-  url += '&LAYERS=' + layers;
-  url += '&STYLES=' + styles;
-  url += '&FORMAT=' + format;
-  url += '&TRANSPARENT=' + transparent;
-  url += '&' + referenceSystem + '=EPSG:3857';
-  url += '&BBOX=' + bbox;
-  url += '&WIDTH=' + size[0];
-  url += '&HEIGHT=' + size[1];
-  url += '&TILED=' + tiled;
+  var queryParams = {
+    'BBOX': bbox,
+    'FORMAT': format,
+    'HEIGHT': size[1],
+    'LAYERS': layers,
+    'REQUEST': 'GetMap',
+    'SERVICE': 'WMS',
+    'STYLES': styles,
+    'TILED': tiled,
+    'TRANSPARENT': transparent,
+    'VERSION': version,
+    'WIDTH': size[0]
+  };
 
-  // Set Custom params
-  for (key in customParams) {
-    url += '&' + key + '=' + customParams[key];
+  var epsg3857 = 'EPSG:3857';
+  if (wms13) {
+    queryParams['CRS'] = epsg3857;
+  } else {
+    queryParams['SRS'] = epsg3857;
   }
+
+  olgm.obj.assign(queryParams, customParams);
+
+  var url = olgm.uri.appendParams(baseUrl, queryParams);
 
   return url;
 };
