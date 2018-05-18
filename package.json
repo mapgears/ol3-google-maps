@@ -39,6 +39,7 @@
     "fs-extra": "~0.8.1",
     "geojsonhint": "^1.0.0",
     "graceful-fs": "~3.0.2",
+    "hoek": "5.0.3",
     "jsdoc": "3.5.5",
     "marked": "0.3.9",
     "mocha": "2.5.3",
