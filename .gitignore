@@ -1,8 +1,7 @@
-_site
-.build
+/build/
+/coverage/
+/dist/
+node_modules/
+src/index.js
+src/olgm/package.json
 api_key.txt
-build/jsdoc/info/conf-generated.json
-dist
-examples/example-list.js
-node_modules
-.vscode

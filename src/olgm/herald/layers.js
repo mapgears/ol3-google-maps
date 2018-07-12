@@ -1,17 +1,17 @@
-goog.provide('olgm.herald.Layers');
-
-goog.require('ol');
-goog.require('ol.layer.Image');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('olgm');
-goog.require('olgm.herald.Herald');
-goog.require('olgm.herald.ImageWMSSource');
-goog.require('olgm.herald.TileSource');
-goog.require('olgm.herald.VectorSource');
-goog.require('olgm.herald.View');
-goog.require('olgm.layer.Google');
-
+/**
+ * @module olgm/herald/Layers
+ */
+import {inherits} from 'ol/index.js';
+import Image from 'ol/layer/Image.js';
+import Tile from 'ol/layer/Tile.js';
+import Vector from 'ol/layer/Vector.js';
+import {unlistenAllByKey} from '../util.js';
+import Herald from './Herald.js';
+import ImageWMSSource from './ImageWMSSource.js';
+import TileSource from './TileSource.js';
+import VectorSource from './VectorSource.js';
+import View from './View.js';
+import Google from '../layer/Google.js';
 
 /**
  * The Layers Herald is responsible of synchronizing the layers from the
@@ -51,7 +51,7 @@ goog.require('olgm.layer.Google');
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
+const Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
 
   /**
    * @type {Array.<olgm.layer.Google>}
@@ -69,26 +69,26 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
    * @type {olgm.herald.ImageWMSSource}
    * @private
    */
-  this.imageWMSSourceHerald_ = new olgm.herald.ImageWMSSource(ol3map, gmap);
+  this.imageWMSSourceHerald_ = new ImageWMSSource(ol3map, gmap);
 
   /**
    * @type {olgm.herald.TileSource}
    * @private
    */
-  this.tileSourceHerald_ = new olgm.herald.TileSource(ol3map, gmap);
+  this.tileSourceHerald_ = new TileSource(ol3map, gmap);
 
   /**
    * @type {olgm.herald.VectorSource}
    * @private
    */
-  this.vectorSourceHerald_ = new olgm.herald.VectorSource(
-      ol3map, gmap, mapIconOptions);
+  this.vectorSourceHerald_ = new VectorSource(
+    ol3map, gmap, mapIconOptions);
 
   /**
    * @type {olgm.herald.View}
    * @private
    */
-  this.viewHerald_ = new olgm.herald.View(ol3map, gmap);
+  this.viewHerald_ = new View(ol3map, gmap);
 
   /**
    * @type {olgmx.herald.WatchOptions}
@@ -118,13 +118,13 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
   this.targetEl_ = ol3map.getTargetElement();
 
 
-  olgm.herald.Herald.call(this, ol3map, gmap);
+  Herald.call(this, ol3map, gmap);
 
 
   // some controls, like the ol.control.ZoomSlider, require the map div
   // to have a size. While activating Google Maps, the size of the ol3 map
   // becomes moot. The code below fixes that.
-  var center = this.ol3map.getView().getCenter();
+  const center = this.ol3map.getView().getCenter();
   if (!center) {
     this.ol3map.getView().once('change:center', function() {
       this.ol3map.once('postrender', function() {
@@ -140,7 +140,8 @@ olgm.herald.Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
     }, this);
   }
 };
-ol.inherits(olgm.herald.Layers, olgm.herald.Herald);
+
+inherits(Layers, Herald);
 
 
 /**
@@ -149,30 +150,30 @@ ol.inherits(olgm.herald.Layers, olgm.herald.Herald);
  * @type {boolean}
  * @private
  */
-olgm.herald.Layers.prototype.googleMapsIsActive_ = false;
+Layers.prototype.googleMapsIsActive_ = false;
 
 
 /**
  * @type {boolean}
  * @private
  */
-olgm.herald.Layers.prototype.ol3mapIsRenderered_ = false;
+Layers.prototype.ol3mapIsRenderered_ = false;
 
 
 /**
  * @inheritDoc
  */
-olgm.herald.Layers.prototype.activate = function() {
+Layers.prototype.activate = function() {
 
-  olgm.herald.Herald.prototype.activate.call(this);
+  Herald.prototype.activate.call(this);
 
-  var layers = this.ol3map.getLayers();
+  const layers = this.ol3map.getLayers();
 
   // watch existing layers
   layers.forEach(this.watchLayer_, this);
 
   // event listeners
-  var keys = this.listenerKeys;
+  const keys = this.listenerKeys;
   keys.push(layers.on('add', this.handleLayersAdd_, this));
   keys.push(layers.on('remove', this.handleLayersRemove_, this));
 };
@@ -181,18 +182,18 @@ olgm.herald.Layers.prototype.activate = function() {
 /**
  * @inheritDoc
  */
-olgm.herald.Layers.prototype.deactivate = function() {
+Layers.prototype.deactivate = function() {
   // unwatch existing layers
   this.ol3map.getLayers().forEach(this.unwatchLayer_, this);
 
-  olgm.herald.Herald.prototype.deactivate.call(this);
+  Herald.prototype.deactivate.call(this);
 };
 
 
 /**
  * @return {boolean} whether google maps is active or not
  */
-olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
+Layers.prototype.getGoogleMapsActive = function() {
   return this.googleMapsIsActive_;
 };
 
@@ -202,7 +203,7 @@ olgm.herald.Layers.prototype.getGoogleMapsActive = function() {
  * @param {boolean} active value to update the google maps active flag with
  * @private
  */
-olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
+Layers.prototype.setGoogleMapsActive_ = function(active) {
   this.googleMapsIsActive_ = active;
   this.imageWMSSourceHerald_.setGoogleMapsActive(active);
   this.tileSourceHerald_.setGoogleMapsActive(active);
@@ -216,7 +217,7 @@ olgm.herald.Layers.prototype.setGoogleMapsActive_ = function(active) {
  * should be watched
  * @api
  */
-olgm.herald.Layers.prototype.setWatchOptions = function(watchOptions) {
+Layers.prototype.setWatchOptions = function(watchOptions) {
   this.watchOptions_ = watchOptions;
 
   // Re-watch the appropriate layers
@@ -230,8 +231,8 @@ olgm.herald.Layers.prototype.setWatchOptions = function(watchOptions) {
  * @param {ol.Collection.Event} event Collection event.
  * @private
  */
-olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
-  var layer = /** @type {ol.layer.Base} */ (event.element);
+Layers.prototype.handleLayersAdd_ = function(event) {
+  const layer = /** @type {ol.layer.Base} */ (event.element);
   this.watchLayer_(layer);
   this.orderLayers();
 };
@@ -242,8 +243,8 @@ olgm.herald.Layers.prototype.handleLayersAdd_ = function(event) {
  * @param {ol.Collection.Event} event Collection event.
  * @private
  */
-olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
-  var layer = /** @type {ol.layer.Base} */ (event.element);
+Layers.prototype.handleLayersRemove_ = function(event) {
+  const layer = /** @type {ol.layer.Base} */ (event.element);
   this.unwatchLayer_(layer);
   this.orderLayers();
 };
@@ -254,16 +255,16 @@ olgm.herald.Layers.prototype.handleLayersRemove_ = function(event) {
  * @param {ol.layer.Base} layer layer to watch
  * @private
  */
-olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
-  if (layer instanceof olgm.layer.Google) {
+Layers.prototype.watchLayer_ = function(layer) {
+  if (layer instanceof Google) {
     this.watchGoogleLayer_(layer);
-  } else if (layer instanceof ol.layer.Vector &&
+  } else if (layer instanceof Vector &&
         this.watchOptions_.vector !== false) {
     this.vectorSourceHerald_.watchLayer(layer);
-  } else if (layer instanceof ol.layer.Tile &&
+  } else if (layer instanceof Tile &&
         this.watchOptions_.tile !== false) {
     this.tileSourceHerald_.watchLayer(layer);
-  } else if (layer instanceof ol.layer.Image &&
+  } else if (layer instanceof Image &&
         this.watchOptions_.image !== false) {
     this.imageWMSSourceHerald_.watchLayer(layer);
   }
@@ -275,7 +276,7 @@ olgm.herald.Layers.prototype.watchLayer_ = function(layer) {
  * @param {olgm.layer.Google} layer google layer to watch
  * @private
  */
-olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
+Layers.prototype.watchGoogleLayer_ = function(layer) {
   this.googleLayers_.push(layer);
   this.googleCache_.push(/** @type {olgm.herald.Layers.GoogleLayerCache} */ ({
     layer: layer,
@@ -292,14 +293,14 @@ olgm.herald.Layers.prototype.watchGoogleLayer_ = function(layer) {
  * @param {ol.layer.Base} layer layer to unwatch
  * @private
  */
-olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
-  if (layer instanceof olgm.layer.Google) {
+Layers.prototype.unwatchLayer_ = function(layer) {
+  if (layer instanceof Google) {
     this.unwatchGoogleLayer_(layer);
-  } else if (layer instanceof ol.layer.Vector) {
+  } else if (layer instanceof Vector) {
     this.vectorSourceHerald_.unwatchLayer(layer);
-  } else if (layer instanceof ol.layer.Tile) {
+  } else if (layer instanceof Tile) {
     this.tileSourceHerald_.unwatchLayer(layer);
-  } else if (layer instanceof ol.layer.Image) {
+  } else if (layer instanceof Image) {
     this.imageWMSSourceHerald_.unwatchLayer(layer);
   }
 };
@@ -310,13 +311,13 @@ olgm.herald.Layers.prototype.unwatchLayer_ = function(layer) {
  * @param {olgm.layer.Google} layer google layer to unwatch
  * @private
  */
-olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
-  var index = this.googleLayers_.indexOf(layer);
+Layers.prototype.unwatchGoogleLayer_ = function(layer) {
+  const index = this.googleLayers_.indexOf(layer);
   if (index !== -1) {
     this.googleLayers_.splice(index, 1);
 
-    var cacheItem = this.googleCache_[index];
-    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+    const cacheItem = this.googleCache_[index];
+    unlistenAllByKey(cacheItem.listenerKeys);
 
     this.googleCache_.splice(index, 1);
 
@@ -330,18 +331,18 @@ olgm.herald.Layers.prototype.unwatchGoogleLayer_ = function(layer) {
  * the ol3 map inside the gmap controls.
  * @private
  */
-olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
+Layers.prototype.activateGoogleMaps_ = function() {
 
-  var center = this.ol3map.getView().getCenter();
+  const center = this.ol3map.getView().getCenter();
   if (this.googleMapsIsActive_ || !this.ol3mapIsRenderered_ || !center) {
     return;
   }
 
   this.targetEl_.removeChild(this.ol3mapEl_);
   this.targetEl_.appendChild(this.gmapEl_);
-  var index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
+  const index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
   this.gmap.controls[index].push(
-      this.ol3mapEl_);
+    this.ol3mapEl_);
 
   this.viewHerald_.activate();
 
@@ -371,13 +372,13 @@ olgm.herald.Layers.prototype.activateGoogleMaps_ = function() {
  * and remove the gmap map.
  * @private
  */
-olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
+Layers.prototype.deactivateGoogleMaps_ = function() {
 
   if (!this.googleMapsIsActive_) {
     return;
   }
 
-  var index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
+  const index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
   this.gmap.controls[index].removeAt(0);
   this.targetEl_.removeChild(this.gmapEl_);
   this.targetEl_.appendChild(this.ol3mapEl_);
@@ -403,29 +404,29 @@ olgm.herald.Layers.prototype.deactivateGoogleMaps_ = function() {
  * accordingly too to fit the top-most ol3 Google layer.
  * @private
  */
-olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
+Layers.prototype.toggleGoogleMaps_ = function() {
 
-  var found = null;
+  let found = null;
 
   // find top-most Google layer
   this.ol3map.getLayers().getArray().slice(0).reverse().every(
-      function(layer) {
-        if (layer instanceof olgm.layer.Google &&
+    function(layer) {
+      if (layer instanceof Google &&
             layer.getVisible() &&
             this.googleLayers_.indexOf(layer) !== -1) {
-          found = layer;
-          return false;
-        } else {
-          return true;
-        }
-      },
-      this);
+        found = layer;
+        return false;
+      } else {
+        return true;
+      }
+    },
+    this);
 
   if (found) {
     // set mapTypeId
     this.gmap.setMapTypeId(found.getMapTypeId());
     // set styles
-    var styles = found.getStyles();
+    const styles = found.getStyles();
     if (styles) {
       this.gmap.setOptions({'styles': styles});
     } else {
@@ -445,7 +446,7 @@ olgm.herald.Layers.prototype.toggleGoogleMaps_ = function() {
  * Order the layers for each herald that supports it
  * @api
  */
-olgm.herald.Layers.prototype.orderLayers = function() {
+Layers.prototype.orderLayers = function() {
   this.imageWMSSourceHerald_.orderLayers();
   this.tileSourceHerald_.orderLayers();
 };
@@ -455,7 +456,7 @@ olgm.herald.Layers.prototype.orderLayers = function() {
  * For each layer type that support refreshing, tell them to refresh
  * @api
  */
-olgm.herald.Layers.prototype.refresh = function() {
+Layers.prototype.refresh = function() {
   this.imageWMSSourceHerald_.refresh();
 };
 
@@ -466,4 +467,5 @@ olgm.herald.Layers.prototype.refresh = function() {
  *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>)
  * }}
  */
-olgm.herald.Layers.GoogleLayerCache;
+Layers.GoogleLayerCache;
+export default Layers;

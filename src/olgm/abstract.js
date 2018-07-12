@@ -1,6 +1,6 @@
-goog.provide('olgm.Abstract');
-
-
+/**
+ * @module olgm/Abstract
+ */
 /**
  * Abstract class for most classes of this library, which receives a reference
  * to the `google.maps.Map` and `ol.Map` objects an behave accordingly with
@@ -10,7 +10,7 @@ goog.provide('olgm.Abstract');
  * @param {!google.maps.Map} gmap google maps map
  * @constructor
  */
-olgm.Abstract = function(ol3map, gmap) {
+const Abstract = function(ol3map, gmap) {
 
   /**
    * @type {!ol.Map}
@@ -25,3 +25,4 @@ olgm.Abstract = function(ol3map, gmap) {
   this.gmap = gmap;
 
 };
+export default Abstract;

@@ -1,8 +1,4 @@
 {
-  "rules": {
-    "openlayers-internal/no-missing-requires": 0,
-    "openlayers-internal/valid-provide": 0
-  },
   "env": {
     "mocha": true
   },

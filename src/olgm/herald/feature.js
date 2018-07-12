@@ -1,13 +1,14 @@
-goog.provide('olgm.herald.Feature');
-
-goog.require('ol');
-goog.require('ol.Observable');
-goog.require('ol.style.Icon');
-goog.require('olgm');
-goog.require('olgm.asserts');
-goog.require('olgm.gm');
-goog.require('olgm.herald.Herald');
-
+/**
+ * @module olgm/herald/Feature
+ */
+import {inherits} from 'ol/index.js';
+import Observable from 'ol/Observable.js';
+import Icon from 'ol/style/Icon.js';
+import {getCenterOf, getStyleOf} from '../util.js';
+import {assert} from '../asserts.js';
+import {createFeature, createStyle, createLatLng, createMapIcon,
+  createLabel, createFeatureGeometry} from '../gm.js';
+import Herald from './Herald.js';
 
 /**
  * The Feature Herald is responsible of synchronizing a single ol3 vector
@@ -22,7 +23,7 @@ goog.require('olgm.herald.Herald');
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Feature = function(ol3map, gmap, options) {
+const Feature = function(ol3map, gmap, options) {
 
   /**
    * @type {ol.Feature}
@@ -54,24 +55,25 @@ olgm.herald.Feature = function(ol3map, gmap, options) {
    */
   this.visible_ = options.visible !== undefined ? options.visible : true;
 
-  olgm.herald.Herald.call(this, ol3map, gmap);
+  Herald.call(this, ol3map, gmap);
 
 };
-ol.inherits(olgm.herald.Feature, olgm.herald.Herald);
+
+inherits(Feature, Herald);
 
 
 /**
  * @type {google.maps.Data.Feature}
  * @private
  */
-olgm.herald.Feature.prototype.gmapFeature_ = null;
+Feature.prototype.gmapFeature_ = null;
 
 
 /**
  * @type {olgm.gm.MapLabel}
  * @private
  */
-olgm.herald.Feature.prototype.label_ = null;
+Feature.prototype.label_ = null;
 
 /**
  * The marker object contains a marker to draw on a canvas instead of using
@@ -80,53 +82,53 @@ olgm.herald.Feature.prototype.label_ = null;
  * @type {olgm.gm.MapIcon}
  * @private
  */
-olgm.herald.Feature.prototype.marker_ = null;
+Feature.prototype.marker_ = null;
 
 
 /**
  * @inheritDoc
  */
-olgm.herald.Feature.prototype.activate = function() {
+Feature.prototype.activate = function() {
 
-  olgm.herald.Herald.prototype.activate.call(this);
+  Herald.prototype.activate.call(this);
 
-  var geometry = this.getGeometry_();
+  const geometry = this.getGeometry_();
 
   // create gmap feature
-  this.gmapFeature_ = olgm.gm.createFeature(this.feature_);
+  this.gmapFeature_ = createFeature(this.feature_);
 
   if (this.visible_) {
     this.data_.add(this.gmapFeature_);
   }
 
   // override style if a style is defined at the feature level
-  var gmStyle = olgm.gm.createStyle(
-      this.feature_, this.mapIconOptions_, this.index_);
+  const gmStyle = createStyle(
+    this.feature_, this.mapIconOptions_, this.index_);
   if (gmStyle) {
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
   }
 
   // if the feature has text style, add a map label to gmap
-  var latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
-  var style = olgm.getStyleOf(this.feature_);
+  const latLng = createLatLng(getCenterOf(geometry));
+  const style = getStyleOf(this.feature_);
 
   if (style) {
-    var zIndex = style.getZIndex();
-    var index = zIndex !== undefined ? zIndex : this.index_;
+    const zIndex = style.getZIndex();
+    const index = zIndex !== undefined ? zIndex : this.index_;
 
-    var image = style.getImage();
-    var useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
+    const image = style.getImage();
+    const useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
       this.mapIconOptions_.useCanvas : false;
-    if (image && image instanceof ol.style.Icon && useCanvas) {
-      this.marker_ = olgm.gm.createMapIcon(image, latLng, index);
+    if (image && image instanceof Icon && useCanvas) {
+      this.marker_ = createMapIcon(image, latLng, index);
       if (this.visible_) {
         this.marker_.setMap(this.gmap);
       }
     }
 
-    var text = style.getText();
+    const text = style.getText();
     if (text) {
-      this.label_ = olgm.gm.createLabel(text, latLng, index);
+      this.label_ = createLabel(text, latLng, index);
       if (this.visible_) {
         this.label_.setMap(this.gmap);
       }
@@ -134,13 +136,13 @@ olgm.herald.Feature.prototype.activate = function() {
   }
 
   // event listeners (todo)
-  var keys = this.listenerKeys;
+  const keys = this.listenerKeys;
   this.geometryChangeKey_ = geometry.on(
-      'change', this.handleGeometryChange_, this);
+    'change', this.handleGeometryChange_, this);
   keys.push(this.geometryChangeKey_);
   keys.push(this.feature_.on(
-      'change:' + this.feature_.getGeometryName(),
-      this.handleGeometryReplace_, this
+    'change:' + this.feature_.getGeometryName(),
+    this.handleGeometryReplace_, this
   ));
 };
 
@@ -148,7 +150,7 @@ olgm.herald.Feature.prototype.activate = function() {
 /**
  * @inheritDoc
  */
-olgm.herald.Feature.prototype.deactivate = function() {
+Feature.prototype.deactivate = function() {
 
   // remove gmap feature
   this.data_.remove(this.gmapFeature_);
@@ -166,7 +168,7 @@ olgm.herald.Feature.prototype.deactivate = function() {
     this.label_ = null;
   }
 
-  olgm.herald.Herald.prototype.deactivate.call(this);
+  Herald.prototype.deactivate.call(this);
 };
 
 
@@ -174,7 +176,7 @@ olgm.herald.Feature.prototype.deactivate = function() {
  * Set visible or invisible, without deleting the feature object
  * @param {boolean} value true to set visible, false to set invisible
  */
-olgm.herald.Feature.prototype.setVisible = function(value) {
+Feature.prototype.setVisible = function(value) {
   if (value && !this.visible_) {
     this.data_.add(this.gmapFeature_);
 
@@ -207,10 +209,10 @@ olgm.herald.Feature.prototype.setVisible = function(value) {
  * @private
  * @return {ol.geom.Geometry} the feature's geometry
  */
-olgm.herald.Feature.prototype.getGeometry_ = function() {
-  var geometry = this.feature_.getGeometry();
-  olgm.asserts.assert(
-      geometry !== undefined, 'Expected feature to have geometry');
+Feature.prototype.getGeometry_ = function() {
+  const geometry = this.feature_.getGeometry();
+  assert(
+    geometry !== undefined, 'Expected feature to have geometry');
   return /** @type {ol.geom.Geometry} */ (geometry);
 };
 
@@ -218,19 +220,19 @@ olgm.herald.Feature.prototype.getGeometry_ = function() {
 /**
  * @private
  */
-olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
-  var geometry = this.getGeometry_();
-  this.gmapFeature_.setGeometry(olgm.gm.createFeatureGeometry(geometry));
+Feature.prototype.handleGeometryChange_ = function() {
+  const geometry = this.getGeometry_();
+  this.gmapFeature_.setGeometry(createFeatureGeometry(geometry));
 
-  var latLng;
+  let latLng;
 
   if (this.label_) {
-    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    latLng = createLatLng(getCenterOf(geometry));
     this.label_.set('position', latLng);
   }
 
   if (this.marker_) {
-    latLng = olgm.gm.createLatLng(olgm.getCenterOf(geometry));
+    latLng = createLatLng(getCenterOf(geometry));
     this.marker_.set('position', latLng);
   }
 };
@@ -239,15 +241,16 @@ olgm.herald.Feature.prototype.handleGeometryChange_ = function() {
 /**
  * @private
  */
-olgm.herald.Feature.prototype.handleGeometryReplace_ = function() {
-  var keys = this.listenerKeys;
-  ol.Observable.unByKey(this.geometryChangeKey_);
-  var index = keys.indexOf(this.geometryChangeKey_);
+Feature.prototype.handleGeometryReplace_ = function() {
+  const keys = this.listenerKeys;
+  Observable.unByKey(this.geometryChangeKey_);
+  const index = keys.indexOf(this.geometryChangeKey_);
   keys.splice(index, 1);
 
   this.geometryChangeKey_ = this.feature_.getGeometry().on('change',
-      this.handleGeometryChange_,
-      this);
+    this.handleGeometryChange_,
+    this);
   keys.push(this.geometryChangeKey_);
   this.handleGeometryChange_();
 };
+export default Feature;

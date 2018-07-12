@@ -1,16 +1,16 @@
-goog.provide('olgm.herald.ImageWMSSource');
-
-goog.require('ol');
-goog.require('ol.extent');
-goog.require('ol.proj');
-goog.require('ol.source.ImageWMS');
-goog.require('olgm');
-goog.require('olgm.asserts');
-goog.require('olgm.gm.ImageOverlay');
-goog.require('olgm.herald.Source');
-goog.require('olgm.obj');
-goog.require('olgm.uri');
-
+/**
+ * @module olgm/herald/ImageWMSSource
+ */
+import {inherits} from 'ol/index.js';
+import {getTopLeft} from 'ol/extent.js';
+import {transform} from 'ol/proj.js';
+import ImageWMS from 'ol/source/ImageWMS.js';
+import {unlistenAllByKey} from '../util.js';
+import {assert} from '../asserts.js';
+import ImageOverlay from '../gm/ImageOverlay.js';
+import Source from './Source.js';
+import {assign} from '../obj.js';
+import {appendParams} from '../uri.js';
 
 /**
  * Listen to a Image WMS layer
@@ -19,7 +19,7 @@ goog.require('olgm.uri');
  * @constructor
  * @extends {olgm.herald.Source}
  */
-olgm.herald.ImageWMSSource = function(ol3map, gmap) {
+const ImageWMSSource = function(ol3map, gmap) {
   /**
   * @type {Array.<olgm.herald.ImageWMSSource.LayerCache>}
   * @private
@@ -32,30 +32,31 @@ olgm.herald.ImageWMSSource = function(ol3map, gmap) {
   */
   this.layers_ = [];
 
-  olgm.herald.Source.call(this, ol3map, gmap);
+  Source.call(this, ol3map, gmap);
 };
-ol.inherits(olgm.herald.ImageWMSSource, olgm.herald.Source);
+
+inherits(ImageWMSSource, Source);
 
 
 /**
  * @param {ol.layer.Base} layer layer to watch
  * @override
  */
-olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
-  var imageLayer = /** @type {ol.layer.Image} */ (layer);
+ImageWMSSource.prototype.watchLayer = function(layer) {
+  const imageLayer = /** @type {ol.layer.Image} */ (layer);
 
   // Source must be ImageWMS
-  var source = imageLayer.getSource();
-  if (!(source instanceof ol.source.ImageWMS)) {
+  const source = imageLayer.getSource();
+  if (!(source instanceof ImageWMS)) {
     return;
   }
 
   this.layers_.push(imageLayer);
 
   // opacity
-  var opacity = imageLayer.getOpacity();
+  const opacity = imageLayer.getOpacity();
 
-  var cacheItem = /** {@type olgm.herald.ImageWMSSource.LayerCache} */ ({
+  const cacheItem = /** {@type olgm.herald.ImageWMSSource.LayerCache} */ ({
     imageOverlay: null,
     lastUrl: null,
     layer: imageLayer,
@@ -66,18 +67,18 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
 
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(imageLayer.on('change:visible',
-      this.handleVisibleChange_.bind(this, cacheItem), this));
+    this.handleVisibleChange_.bind(this, cacheItem), this));
 
   cacheItem.listenerKeys.push(this.ol3map.on('moveend',
-      this.handleMoveEnd_.bind(this, cacheItem), this));
+    this.handleMoveEnd_.bind(this, cacheItem), this));
 
   cacheItem.listenerKeys.push(this.ol3map.getView().on('change:resolution',
-      this.handleMoveEnd_.bind(this, cacheItem), this));
+    this.handleMoveEnd_.bind(this, cacheItem), this));
 
   // Make sure that any change to the layer source itself also updates the
   // google maps layer
   cacheItem.listenerKeys.push(imageLayer.getSource().on('change',
-      this.handleMoveEnd_.bind(this, cacheItem), this));
+    this.handleMoveEnd_.bind(this, cacheItem), this));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
@@ -90,15 +91,15 @@ olgm.herald.ImageWMSSource.prototype.watchLayer = function(layer) {
  * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
-olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
-  var imageLayer = /** @type {ol.layer.Image} */ (layer);
+ImageWMSSource.prototype.unwatchLayer = function(layer) {
+  const imageLayer = /** @type {ol.layer.Image} */ (layer);
 
-  var index = this.layers_.indexOf(imageLayer);
+  const index = this.layers_.indexOf(imageLayer);
   if (index !== -1) {
     this.layers_.splice(index, 1);
 
-    var cacheItem = this.cache_[index];
-    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+    const cacheItem = this.cache_[index];
+    unlistenAllByKey(cacheItem.listenerKeys);
 
     // Clean previous overlay
     this.resetImageOverlay_(cacheItem);
@@ -115,8 +116,8 @@ olgm.herald.ImageWMSSource.prototype.unwatchLayer = function(layer) {
  * Activate all cache items
  * @override
  */
-olgm.herald.ImageWMSSource.prototype.activate = function() {
-  olgm.herald.Source.prototype.activate.call(this);
+ImageWMSSource.prototype.activate = function() {
+  Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -127,10 +128,10 @@ olgm.herald.ImageWMSSource.prototype.activate = function() {
  * activate
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
+ImageWMSSource.prototype.activateCacheItem_ = function(
+  cacheItem) {
+  const layer = cacheItem.layer;
+  const visible = layer.getVisible();
   if (visible && this.googleMapsIsActive) {
     cacheItem.lastUrl = null;
     cacheItem.layer.setOpacity(0);
@@ -143,8 +144,8 @@ olgm.herald.ImageWMSSource.prototype.activateCacheItem_ = function(
  * Deactivate all cache items
  * @override
  */
-olgm.herald.ImageWMSSource.prototype.deactivate = function() {
-  olgm.herald.Source.prototype.deactivate.call(this);
+ImageWMSSource.prototype.deactivate = function() {
+  Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
@@ -155,8 +156,8 @@ olgm.herald.ImageWMSSource.prototype.deactivate = function() {
  * deactivate
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
-    cacheItem) {
+ImageWMSSource.prototype.deactivateCacheItem_ = function(
+  cacheItem) {
   if (cacheItem.imageOverlay) {
     cacheItem.imageOverlay.setMap(null);
     cacheItem.imageOverlay = null;
@@ -171,28 +172,28 @@ olgm.herald.ImageWMSSource.prototype.deactivateCacheItem_ = function(
  * @return {string} url to the requested tile
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
-    layer) {
-  var key;
-  var source = /** @type {ol.source.ImageWMS} */ (layer.getSource());
+ImageWMSSource.prototype.generateImageWMSFunction_ = function(
+  layer) {
+  let key;
+  const source = /** @type {ol.source.ImageWMS} */ (layer.getSource());
 
-  var params = source.getParams();
-  var ol3map = this.ol3map;
+  const params = source.getParams();
+  const ol3map = this.ol3map;
 
   //base WMS URL
-  var baseUrl = /** @type {string} */ (source.getUrl());
-  olgm.asserts.assert(
-      baseUrl !== undefined, 'Expected the source to have an url');
-  var size = ol3map.getSize();
+  const baseUrl = /** @type {string} */ (source.getUrl());
+  assert(
+    baseUrl !== undefined, 'Expected the source to have an url');
+  const size = ol3map.getSize();
 
-  olgm.asserts.assert(
-      size !== undefined, 'Expected the map to have a size');
+  assert(
+    size !== undefined, 'Expected the map to have a size');
 
-  var view = ol3map.getView();
-  var bbox = view.calculateExtent(size);
+  const view = ol3map.getView();
+  const bbox = view.calculateExtent(size);
 
   // Separate original WMS params and custom ones
-  var wmsParamsList = [
+  const wmsParamsList = [
     'CRS',
     'BBOX',
     'FORMAT',
@@ -207,10 +208,10 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
     'VERSION',
     'WIDTH'
   ];
-  var customParams = {};
-  var wmsParams = {};
+  const customParams = {};
+  const wmsParams = {};
   for (key in params) {
-    var upperCaseKey = key.toUpperCase();
+    const upperCaseKey = key.toUpperCase();
     if (wmsParamsList.indexOf(upperCaseKey) === -1) {
       if (params[key] !== undefined && params[key] !== null) {
         customParams[key] = params[key];
@@ -221,21 +222,21 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
   }
 
   // Set WMS params
-  var version = wmsParams['VERSION'] ? wmsParams['VERSION'] : '1.3.0';
-  var layers = wmsParams['LAYERS'] ? wmsParams['LAYERS'] : '';
-  var styles = wmsParams['STYLES'] ? wmsParams['STYLES'] : '';
-  var format = wmsParams['FORMAT'] ? wmsParams['FORMAT'] : 'image/png';
-  var transparent = wmsParams['TRANSPARENT'] ?
+  const version = wmsParams['VERSION'] ? wmsParams['VERSION'] : '1.3.0';
+  const layers = wmsParams['LAYERS'] ? wmsParams['LAYERS'] : '';
+  const styles = wmsParams['STYLES'] ? wmsParams['STYLES'] : '';
+  const format = wmsParams['FORMAT'] ? wmsParams['FORMAT'] : 'image/png';
+  const transparent = wmsParams['TRANSPARENT'] ?
     wmsParams['TRANSPARENT'] : 'TRUE';
-  var tiled = wmsParams['TILED'] ? wmsParams['TILED'] : 'FALSE';
+  const tiled = wmsParams['TILED'] ? wmsParams['TILED'] : 'FALSE';
 
   // Check whether or not we're using WMS 1.3.0
-  var versionNumbers = version.split('.');
-  var wms13 = (
+  const versionNumbers = version.split('.');
+  const wms13 = (
     parseInt(versionNumbers[0], 10) >= 1 &&
     parseInt(versionNumbers[1], 10) >= 3);
 
-  var queryParams = {
+  const queryParams = {
     'BBOX': bbox,
     'FORMAT': format,
     'HEIGHT': size[1],
@@ -249,16 +250,16 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
     'WIDTH': size[0]
   };
 
-  var epsg3857 = 'EPSG:3857';
+  const epsg3857 = 'EPSG:3857';
   if (wms13) {
     queryParams['CRS'] = epsg3857;
   } else {
     queryParams['SRS'] = epsg3857;
   }
 
-  olgm.obj.assign(queryParams, customParams);
+  assign(queryParams, customParams);
 
-  var url = olgm.uri.appendParams(baseUrl, queryParams);
+  const url = appendParams(baseUrl, queryParams);
 
   return url;
 };
@@ -269,7 +270,7 @@ olgm.herald.ImageWMSSource.prototype.generateImageWMSFunction_ = function(
  * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
+ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
   // Clean previous overlay
   if (cacheItem.imageOverlay) {
     // Remove the overlay from the map
@@ -289,16 +290,16 @@ olgm.herald.ImageWMSSource.prototype.resetImageOverlay_ = function(cacheItem) {
  * url for the request hasn't changed. Defaults to false.
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
-    cacheItem, opt_force) {
-  var layer = cacheItem.layer;
+ImageWMSSource.prototype.updateImageOverlay_ = function(
+  cacheItem, opt_force) {
+  const layer = cacheItem.layer;
 
   if (!layer.getVisible()) {
     return;
   }
 
-  var url = this.generateImageWMSFunction_(layer);
-  var forceRefresh = opt_force == true;
+  let url = this.generateImageWMSFunction_(layer);
+  const forceRefresh = opt_force == true;
 
   // Force a refresh by setting a new url
   if (forceRefresh) {
@@ -306,9 +307,9 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
   }
 
   // Check if we're within the accepted resolutions
-  var minResolution = layer.getMinResolution();
-  var maxResolution = layer.getMaxResolution();
-  var currentResolution = this.ol3map.getView().getResolution();
+  const minResolution = layer.getMinResolution();
+  const maxResolution = layer.getMaxResolution();
+  const currentResolution = this.ol3map.getView().getResolution();
   if (currentResolution < minResolution || currentResolution > maxResolution) {
     this.resetImageOverlay_(cacheItem);
     return;
@@ -327,25 +328,25 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
   cacheItem.lastUrl = url;
 
   // Create a new overlay
-  var view = this.ol3map.getView();
-  var size = this.ol3map.getSize();
+  const view = this.ol3map.getView();
+  const size = this.ol3map.getSize();
 
-  olgm.asserts.assert(
-      size !== undefined, 'Expected the map to have a size');
+  assert(
+    size !== undefined, 'Expected the map to have a size');
 
-  var extent = view.calculateExtent(size);
+  const extent = view.calculateExtent(size);
 
   // First, get the coordinates of the top left corner
-  var topLeft = ol.extent.getTopLeft(extent);
+  const topLeft = getTopLeft(extent);
 
   // Then, convert it to LatLng coordinates for google
-  var lngLat = ol.proj.transform(topLeft, 'EPSG:3857', 'EPSG:4326');
-  var topLeftLatLng = new google.maps.LatLng(lngLat[1], lngLat[0]);
+  const lngLat = transform(topLeft, 'EPSG:3857', 'EPSG:4326');
+  const topLeftLatLng = new google.maps.LatLng(lngLat[1], lngLat[0]);
 
-  var overlay = new olgm.gm.ImageOverlay(
-      url,
-      /** @type {Array<number>} */ (size),
-      topLeftLatLng);
+  const overlay = new ImageOverlay(
+    url,
+    /** @type {Array<number>} */ (size),
+    topLeftLatLng);
   overlay.setZIndex(cacheItem.zIndex);
 
   // Set the new overlay right away to give it time to render
@@ -363,11 +364,11 @@ olgm.herald.ImageWMSSource.prototype.updateImageOverlay_ = function(
  * Order the layers by index in the ol3 layers array
  * @api
  */
-olgm.herald.ImageWMSSource.prototype.orderLayers = function() {
-  for (var i = 0; i < this.cache_.length; i++) {
-    var cacheItem = this.cache_[i];
-    var layer = cacheItem.layer;
-    var zIndex = this.findIndex(layer);
+ImageWMSSource.prototype.orderLayers = function() {
+  for (let i = 0; i < this.cache_.length; i++) {
+    const cacheItem = this.cache_[i];
+    const layer = cacheItem.layer;
+    const zIndex = this.findIndex(layer);
     cacheItem.zIndex = zIndex;
 
     // There won't be an imageOverlay while Google Maps isn't visible
@@ -382,8 +383,8 @@ olgm.herald.ImageWMSSource.prototype.orderLayers = function() {
  * Refresh the image overlay for each cache item
  * @api
  */
-olgm.herald.ImageWMSSource.prototype.refresh = function() {
-  for (var i = 0; i < this.cache_.length; i++) {
+ImageWMSSource.prototype.refresh = function() {
+  for (let i = 0; i < this.cache_.length; i++) {
     this.updateImageOverlay_(this.cache_[i], true);
   }
 };
@@ -395,10 +396,10 @@ olgm.herald.ImageWMSSource.prototype.refresh = function() {
  * watched layer
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
+ImageWMSSource.prototype.handleVisibleChange_ = function(
+  cacheItem) {
+  const layer = cacheItem.layer;
+  const visible = layer.getVisible();
 
   if (visible) {
     this.activateCacheItem_(cacheItem);
@@ -414,8 +415,8 @@ olgm.herald.ImageWMSSource.prototype.handleVisibleChange_ = function(
  * watched layer
  * @private
  */
-olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(
-    cacheItem) {
+ImageWMSSource.prototype.handleMoveEnd_ = function(
+  cacheItem) {
   if (cacheItem.layer.getVisible() && this.ol3map.getView().getCenter()) {
     this.updateImageOverlay_(cacheItem);
   }
@@ -432,4 +433,5 @@ olgm.herald.ImageWMSSource.prototype.handleMoveEnd_ = function(
  *   zIndex: (number)
  * }}
  */
-olgm.herald.ImageWMSSource.LayerCache;
+ImageWMSSource.LayerCache;
+export default ImageWMSSource;

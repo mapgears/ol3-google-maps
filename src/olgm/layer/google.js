@@ -1,8 +1,8 @@
-goog.provide('olgm.layer.Google');
-
-goog.require('ol');
-goog.require('ol.layer.Group');
-
+/**
+ * @module olgm/layer/Google
+ */
+import {inherits} from 'ol/index.js';
+import Group from 'ol/layer/Group.js';
 
 /**
  * An ol3 layer object serving the purpose of being added to the ol3 map
@@ -14,11 +14,11 @@ goog.require('ol.layer.Group');
  * @extends {ol.layer.Group}
  * @api
  */
-olgm.layer.Google = function(opt_options) {
+const Google = function(opt_options) {
 
-  var options = opt_options !== undefined ? opt_options : {};
+  const options = opt_options !== undefined ? opt_options : {};
 
-  ol.layer.Group.call(this, /** @type {olx.layer.GroupOptions} */ (options));
+  Group.call(this, /** @type {olx.layer.GroupOptions} */ (options));
 
   /**
    * @type {google.maps.MapTypeId.<(number|string)>|string}
@@ -34,14 +34,15 @@ olgm.layer.Google = function(opt_options) {
   this.styles_ = options.styles ? options.styles : null;
 
 };
-ol.inherits(olgm.layer.Google, ol.layer.Group);
+
+inherits(Google, Group);
 
 
 /**
  * @return {google.maps.MapTypeId.<(number|string)>|string} map type id
  * @api
  */
-olgm.layer.Google.prototype.getMapTypeId = function() {
+Google.prototype.getMapTypeId = function() {
   return this.mapTypeId_;
 };
 
@@ -49,6 +50,7 @@ olgm.layer.Google.prototype.getMapTypeId = function() {
 /**
  * @return {?Array.<google.maps.MapTypeStyle>} map styles
  */
-olgm.layer.Google.prototype.getStyles = function() {
+Google.prototype.getStyles = function() {
   return this.styles_;
 };
+export default Google;

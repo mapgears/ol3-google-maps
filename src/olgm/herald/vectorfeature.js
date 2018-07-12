@@ -1,9 +1,9 @@
-goog.provide('olgm.herald.VectorFeature');
-
-goog.require('ol');
-goog.require('olgm.herald.Feature');
-goog.require('olgm.herald.Herald');
-
+/**
+ * @module olgm/herald/VectorFeature
+ */
+import {inherits} from 'ol/index.js';
+import Feature from './Feature.js';
+import Herald from './Herald.js';
 
 /**
  * The VectorFeature Herald is responsible of sychronizing the features from
@@ -19,8 +19,8 @@ goog.require('olgm.herald.Herald');
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.VectorFeature = function(
-    ol3map, gmap, source, data, mapIconOptions) {
+const VectorFeature = function(
+  ol3map, gmap, source, data, mapIconOptions) {
 
   /**
    * @type {Array.<ol.Feature>}
@@ -58,23 +58,24 @@ olgm.herald.VectorFeature = function(
    */
   this.visible_ = true;
 
-  olgm.herald.Herald.call(this, ol3map, gmap);
+  Herald.call(this, ol3map, gmap);
 };
-ol.inherits(olgm.herald.VectorFeature, olgm.herald.Herald);
+
+inherits(VectorFeature, Herald);
 
 
 /**
  * @inheritDoc
  */
-olgm.herald.VectorFeature.prototype.activate = function() {
+VectorFeature.prototype.activate = function() {
 
-  olgm.herald.Herald.prototype.activate.call(this);
+  Herald.prototype.activate.call(this);
 
   // watch existing features...
   this.source_.getFeatures().forEach(this.watchFeature_, this);
 
   // event listeners
-  var keys = this.listenerKeys;
+  const keys = this.listenerKeys;
   keys.push(this.source_.on('addfeature', this.handleAddFeature_, this));
   keys.push(this.source_.on('removefeature', this.handleRemoveFeature_, this));
 };
@@ -83,11 +84,11 @@ olgm.herald.VectorFeature.prototype.activate = function() {
 /**
  * @inheritDoc
  */
-olgm.herald.VectorFeature.prototype.deactivate = function() {
+VectorFeature.prototype.deactivate = function() {
   // unwatch existing features...
   this.source_.getFeatures().forEach(this.unwatchFeature_, this);
 
-  olgm.herald.Herald.prototype.deactivate.call(this);
+  Herald.prototype.deactivate.call(this);
 };
 
 
@@ -95,9 +96,9 @@ olgm.herald.VectorFeature.prototype.deactivate = function() {
  * Set each feature visible or invisible
  * @param {boolean} value true for visible, false for invisible
  */
-olgm.herald.VectorFeature.prototype.setVisible = function(value) {
+VectorFeature.prototype.setVisible = function(value) {
   this.visible_ = value;
-  for (var i = 0; i < this.cache_.length; i++) {
+  for (let i = 0; i < this.cache_.length; i++) {
     this.cache_[i].herald.setVisible(value);
   }
 };
@@ -107,8 +108,8 @@ olgm.herald.VectorFeature.prototype.setVisible = function(value) {
  * @param {ol.source.Vector.Event} event addFeature event
  * @private
  */
-olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
-  var feature = /** @type {ol.Feature} */ (event.feature);
+VectorFeature.prototype.handleAddFeature_ = function(event) {
+  const feature = /** @type {ol.Feature} */ (event.feature);
   this.watchFeature_(feature);
 };
 
@@ -117,8 +118,8 @@ olgm.herald.VectorFeature.prototype.handleAddFeature_ = function(event) {
  * @param {ol.source.Vector.Event} event removeFeature event
  * @private
  */
-olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
-  var feature = /** @type {ol.Feature} */ (event.feature);
+VectorFeature.prototype.handleRemoveFeature_ = function(event) {
+  const feature = /** @type {ol.Feature} */ (event.feature);
   this.unwatchFeature_(feature);
 };
 
@@ -127,26 +128,26 @@ olgm.herald.VectorFeature.prototype.handleRemoveFeature_ = function(event) {
  * @param {ol.Feature} feature feature to watch
  * @private
  */
-olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
+VectorFeature.prototype.watchFeature_ = function(feature) {
 
-  var ol3map = this.ol3map;
-  var gmap = this.gmap;
-  var data = this.data_;
+  const ol3map = this.ol3map;
+  const gmap = this.gmap;
+  const data = this.data_;
 
   // push to features (internal)
   this.features_.push(feature);
 
-  var index = this.features_.indexOf(feature);
+  const index = this.features_.indexOf(feature);
 
   // create and activate feature herald
-  var options = {
+  const options = {
     feature: feature,
     data: data,
     index: index,
     mapIconOptions: this.mapIconOptions_,
     visible: this.visible_
   };
-  var herald = new olgm.herald.Feature(ol3map, gmap, options);
+  const herald = new Feature(ol3map, gmap, options);
   herald.activate();
 
   // push to cache
@@ -161,8 +162,8 @@ olgm.herald.VectorFeature.prototype.watchFeature_ = function(feature) {
  * @param {ol.Feature} feature feature to unwatch
  * @private
  */
-olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {
-  var index = this.features_.indexOf(feature);
+VectorFeature.prototype.unwatchFeature_ = function(feature) {
+  const index = this.features_.indexOf(feature);
   if (index !== -1) {
     // remove from features (internal)
     this.features_.splice(index, 1);
@@ -180,4 +181,5 @@ olgm.herald.VectorFeature.prototype.unwatchFeature_ = function(feature) {
  *   herald: (olgm.herald.Feature)
  * }}
  */
-olgm.herald.VectorFeature.Cache;
+VectorFeature.Cache;
+export default VectorFeature;

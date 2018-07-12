@@ -1,72 +1,72 @@
-OL3-Google-Maps
-===============
+# OL-Google-Maps
 
 [![Build Status](https://travis-ci.org/mapgears/ol3-google-maps.svg)](https://travis-ci.org/mapgears/ol3-google-maps)
 
-OpenLayers - Google Maps integration library. Create a map using
-[OpenLayers 3](http://openlayers.org/) with the possibility to use Google Maps
-as base map and much more.
+OpenLayers - Google Maps integration library. Create a map using [OpenLayers](http://openlayers.org/) with the possibility to use Google Maps as base map and much more.
 
-
-Features
---------
+## Features
 
 Synchronizes:
 
- - Layers (Google, Vector)
- - Vector features (style, geometry)
+* Layers (Google, Vector)
+* Vector features (style, geometry)
 
-Installation
------------
-You can install OL3-Google-Maps via npm:
+## Getting started
 
-    npm install ol3-google-maps --save
+For use with webpack, Rollup, Browserify, or other module bundlers, install the [`olgm` package](https://www.npmjs.com/package/olgm).
 
+```
+npm install olgm
+```
 
-Quick start
------------
+You must also install the [`ol` package](https://www.npmjs.com/package/ol).
 
-To use OL3-Google-Maps, first you need to load Google Maps API. It's important to load Google Maps API **before** OL3-Google-Maps. You also need to use your own Google Maps API key.
+To use OL-Google-Maps, first you need to load Google Maps API. It's important to load Google Maps API **before** OL-Google-Maps. You also need to use your own Google Maps API key.
 
-    <script
-      type="text/javascript"
-      src="https://maps.googleapis.com/maps/api/js?v=3&key=<YOUR_KEY>">
-    </script>
-
-Then, load the OL3-Google-Maps script included in the tarball of the version you downloaded, which already includes OpenLayers so you don't need to load OpenLayers too. See the [Releases](https://github.com/mapgears/ol3-google-maps/releases) section to download the latest version.
-
-    <script type="text/javascript" src="ol3gm.js"></script>
+```
+<script
+  type="text/javascript"
+  src="https://maps.googleapis.com/maps/api/js?v=3&key=<YOUR_KEY>">
+</script>
+```
 
 It is recommended to load the CSS file included in there as well.
 
-    <link rel="stylesheet" href="ol3gm.css" type="text/css" />
+```
+<link rel="stylesheet" href="ol3gm.css" type="text/css" />
+```
 
 Then, in your existing OpenLayers application, activate OL3-Google-Maps. Here's a simple example:
 
-    var center = [-7908084, 6177492];
+```
+import Map from 'ol/Map.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import interaction from 'olgm/interaction.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
 
-    // This dummy layer tells Google Maps to switch to its default map type
-    var googleLayer = new olgm.layer.Google();
+var center = [-7908084, 6177492];
 
-    var map = new ol.Map({
-      // use OL3-Google-Maps recommended default interactions
-      interactions: olgm.interaction.defaults(),
-      layers: [
-        googleLayer
-      ],
-      target: 'map',
-      view: new ol.View({
-        center: center,
-        zoom: 12
-      })
-    });
+// This dummy layer tells Google Maps to switch to its default map type
+const googleLayer = new GoogleLayer();
 
-    var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
-    olGM.activate();
+var map = new Map({
+  // use OL3-Google-Maps recommended default interactions
+  interactions: interaction.defaults(),
+  layers: [
+    googleLayer
+  ],
+  target: 'map',
+  view: new ol.View({
+    center: center,
+    zoom: 12
+  })
+});
 
+var olGM = new OLGoogleMaps({map: map}); // map is the ol.Map instance
+olGM.activate();
+```
 
-Live examples
--------------
+## Live examples
 
 See OL3-Google-Maps in action:
 
@@ -78,9 +78,7 @@ See OL3-Google-Maps in action:
 See all other examples at:
 http://mapgears.github.io/ol3-google-maps/examples/
 
-
-Developing
------------
+## Developing
 
 See the [developing](DEVELOPING.md) instructions if you want to contribute
 new features or patches to OL3-Google-Maps.
@@ -89,15 +87,11 @@ Note that contributions have to meet some minimum quality requirements
 in order to be included in the official package, but that's the same
 as with any mature open source project.
 
-
-Known Limitations
------------------
+## Known Limitations
 
 Please see the known [limitations](LIMITATIONS.md) of this library in details.
 
-
-Bugs and issues
----------------
+## Bugs and issues
 
 For bugs or feature requests, use the
 [issue tracker](https://github.com/mapgears/ol3-google-maps/issues)
@@ -105,9 +99,7 @@ For bugs or feature requests, use the
 If you need help with the library, use
 [StackOverflow under the ol3-google-maps tag](http://stackoverflow.com/questions/tagged/ol3-google-maps)
 
-
-Our commitment
---------------
+## Our commitment
 
 We, at Mapgears, are definitely committed to continuing to support
 this project as long as it will make sense to do so. We use it for our

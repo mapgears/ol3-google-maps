@@ -1,8 +1,8 @@
-goog.provide('olgm.gm.MapIcon');
-
-goog.require('ol');
-goog.require('olgm.gm.MapElement');
-
+/**
+ * @module olgm/gm/MapIcon
+ */
+import {inherits} from 'ol/index.js';
+import MapElement from './MapElement.js';
 
 /**
  * Creates a new map icon
@@ -12,9 +12,9 @@ goog.require('olgm.gm.MapElement');
  * @param {Object.<string, *>=} opt_options Optional properties to set.
  * @api
  */
-olgm.gm.MapIcon = function(imageStyle, opt_options) {
+const MapIcon = function(imageStyle, opt_options) {
 
-  olgm.gm.MapElement.call(this);
+  MapElement.call(this);
 
   /**
    * This object contains the ol3 style properties for the icon. We keep
@@ -27,7 +27,8 @@ olgm.gm.MapIcon = function(imageStyle, opt_options) {
 
   this.setValues(opt_options);
 };
-ol.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
+
+inherits(MapIcon, MapElement);
 
 
 /**
@@ -36,7 +37,7 @@ ol.inherits(olgm.gm.MapIcon, olgm.gm.MapElement);
  * @api
  * @override
  */
-olgm.gm.MapIcon.prototype.changed = function(prop) {
+MapIcon.prototype.changed = function(prop) {
   switch (prop) {
     case 'maxZoom':
     case 'minZoom':
@@ -55,34 +56,34 @@ olgm.gm.MapIcon.prototype.changed = function(prop) {
  * Draws the icon to the canvas 2d context.
  * @private
  */
-olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
-  var canvas = this.canvas_;
+MapIcon.prototype.drawCanvas_ = function() {
+  const canvas = this.canvas_;
   if (!canvas) {
     return;
   }
 
-  var image = this.imageStyle_.getImage(1);
+  const image = this.imageStyle_.getImage(1);
   if (!image) {
     return;
   }
 
-  var style = canvas.style;
+  const style = canvas.style;
 
   style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
-  var ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  var anchor = this.imageStyle_.getAnchor() || [0, 0];
-  var scale = this.imageStyle_.getScale() || 1;
-  var rotation = this.imageStyle_.getRotation() || 0;
-  var opacity = this.imageStyle_.getOpacity() || 1;
+  const anchor = this.imageStyle_.getAnchor() || [0, 0];
+  const scale = this.imageStyle_.getScale() || 1;
+  const rotation = this.imageStyle_.getRotation() || 0;
+  const opacity = this.imageStyle_.getOpacity() || 1;
 
-  var offsetX = anchor[0] * scale;
-  var offsetY = anchor[1] * scale;
+  const offsetX = anchor[0] * scale;
+  const offsetY = anchor[1] * scale;
 
-  var x = canvas.width / 2 - offsetX;
-  var y = canvas.height / 2 - offsetY;
+  const x = canvas.width / 2 - offsetX;
+  const y = canvas.height / 2 - offsetY;
 
   ctx.translate(x + offsetX, y + offsetY);
   ctx.rotate(rotation);
@@ -90,7 +91,7 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
   ctx.globalAlpha = opacity;
 
   ctx.drawImage(image, x, y,
-      image.width * scale, image.height * scale);
+    image.width * scale, image.height * scale);
 };
 
 
@@ -99,15 +100,16 @@ olgm.gm.MapIcon.prototype.drawCanvas_ = function() {
  * @api
  * @override
  */
-olgm.gm.MapIcon.prototype.onAdd = function() {
-  var canvas = this.canvas_ = document.createElement('canvas');
-  var style = canvas.style;
+MapIcon.prototype.onAdd = function() {
+  const canvas = this.canvas_ = document.createElement('canvas');
+  const style = canvas.style;
   style.position = 'absolute';
 
   this.drawCanvas_();
 
-  var panes = this.getPanes();
+  const panes = this.getPanes();
   if (panes) {
     panes.markerLayer.appendChild(canvas);
   }
 };
+export default MapIcon;

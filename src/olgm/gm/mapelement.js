@@ -1,6 +1,4 @@
-goog.provide('olgm.gm.MapElement');
-
-goog.require('ol');
+import {inherits} from 'ol/index.js';
 
 /**
  * This class is a parent for all elements that are drawn manually onto Google
@@ -19,33 +17,32 @@ goog.require('ol');
  * @extends {google.maps.OverlayView}
  * @api
  */
-olgm.gm.MapElement = function() {
+const MapElement = function() {
 
 };
 if (window.google && window.google.maps) {
-  ol.inherits(olgm.gm.MapElement, google.maps.OverlayView);
+  inherits(MapElement, google.maps.OverlayView);
 }
-
 
 /**
  * @type {boolean}
  * @private
  */
-olgm.gm.MapElement.prototype.drawn_ = false;
+MapElement.prototype.drawn_ = false;
 
 
 /**
  * @type {number}
  * @private
  */
-olgm.gm.MapElement.prototype.height_ = 0;
+MapElement.prototype.height_ = 0;
 
 
 /**
  * @type {number}
  * @private
  */
-olgm.gm.MapElement.prototype.width_ = 0;
+MapElement.prototype.width_ = 0;
 
 
 /**
@@ -54,21 +51,21 @@ olgm.gm.MapElement.prototype.width_ = 0;
  * @api
  * @override
  */
-olgm.gm.MapElement.prototype.draw = function() {
+MapElement.prototype.draw = function() {
   if (this.drawn_) {
     this.redraw_();
     return;
   }
 
-  var canvas = this.canvas_;
+  const canvas = this.canvas_;
   if (!canvas) {
     // onAdd has not been called yet.
     return;
   }
 
-  var ctx = canvas.getContext('2d');
-  var height = ctx.canvas.height;
-  var width = ctx.canvas.width;
+  const ctx = canvas.getContext('2d');
+  const height = ctx.canvas.height;
+  const width = ctx.canvas.width;
   this.width_ = width;
   this.height_ = height;
 
@@ -85,26 +82,26 @@ olgm.gm.MapElement.prototype.draw = function() {
  * @return {boolean} whether or not the function ran successfully
  * @private
  */
-olgm.gm.MapElement.prototype.redraw_ = function() {
-  var latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
+MapElement.prototype.redraw_ = function() {
+  const latLng = /** @type {google.maps.LatLng} */ (this.get('position'));
   if (!latLng) {
     return false;
   }
 
-  var projection = this.getProjection();
+  const projection = this.getProjection();
   if (!projection) {
     // The map projection is not ready yet so do nothing
     return false;
   }
 
-  var pos = projection.fromLatLngToDivPixel(latLng);
-  var height = this.height_;
-  var width = this.width_;
+  const pos = projection.fromLatLngToDivPixel(latLng);
+  const height = this.height_;
+  const width = this.width_;
 
-  var offsetX = this.get('offsetX') || 0;
-  var offsetY = this.get('offsetY') || 0;
+  const offsetX = this.get('offsetX') || 0;
+  const offsetY = this.get('offsetY') || 0;
 
-  var style = this.canvas_.style;
+  const style = this.canvas_.style;
   style['top'] = (pos.y - (height / 2) + offsetY) + 'px';
   style['left'] = (pos.x - (width / 2) + offsetX) + 'px';
 
@@ -119,20 +116,20 @@ olgm.gm.MapElement.prototype.redraw_ = function() {
  * @private
  * @return {string} blank string if visible, 'hidden' if invisible.
  */
-olgm.gm.MapElement.prototype.getVisible_ = function() {
-  var minZoom = /** @type {number} */ (this.get('minZoom'));
-  var maxZoom = /** @type {number} */ (this.get('maxZoom'));
+MapElement.prototype.getVisible_ = function() {
+  const minZoom = /** @type {number} */ (this.get('minZoom'));
+  const maxZoom = /** @type {number} */ (this.get('maxZoom'));
 
   if (minZoom === undefined && maxZoom === undefined) {
     return '';
   }
 
-  var map = this.getMap();
+  const map = this.getMap();
   if (!map) {
     return '';
   }
 
-  var mapZoom = map.getZoom();
+  const mapZoom = map.getZoom();
   if (mapZoom < minZoom || mapZoom > maxZoom) {
     return 'hidden';
   }
@@ -145,9 +142,10 @@ olgm.gm.MapElement.prototype.getVisible_ = function() {
  * @api
  * @override
  */
-olgm.gm.MapElement.prototype.onRemove = function() {
-  var canvas = this.canvas_;
+MapElement.prototype.onRemove = function() {
+  const canvas = this.canvas_;
   if (canvas && canvas.parentNode) {
     canvas.parentNode.removeChild(canvas);
   }
 };
+export default MapElement;

@@ -1,13 +1,13 @@
-goog.provide('olgm.herald.TileSource');
-
-goog.require('ol');
-goog.require('ol.extent');
-goog.require('ol.proj');
-goog.require('ol.source.TileImage');
-goog.require('olgm');
-goog.require('olgm.gm.PanesOverlay');
-goog.require('olgm.herald.Source');
-
+/**
+ * @module olgm/herald/TileSource
+ */
+import {inherits} from 'ol/index.js';
+import {getIntersection, getSize} from 'ol/extent.js';
+import {get} from 'ol/proj.js';
+import TileImage from 'ol/source/TileImage.js';
+import {unlistenAllByKey} from '../util.js';
+import PanesOverlay from '../gm/PanesOverlay.js';
+import Source from './Source.js';
 
 /**
  * Listen to a tiled layer
@@ -16,7 +16,7 @@ goog.require('olgm.herald.Source');
  * @constructor
  * @extends {olgm.herald.Source}
  */
-olgm.herald.TileSource = function(ol3map, gmap) {
+const TileSource = function(ol3map, gmap) {
   /**
   * @type {Array.<olgm.herald.TileSource.LayerCache>}
   * @private
@@ -34,7 +34,7 @@ olgm.herald.TileSource = function(ol3map, gmap) {
    * @type {olgm.gm.PanesOverlay}
    * @private
    */
-  this.panesOverlay_ = new olgm.gm.PanesOverlay(gmap);
+  this.panesOverlay_ = new PanesOverlay(gmap);
 
   /**
    * We can only access the mapPane pane after google maps is done loading.
@@ -45,30 +45,31 @@ olgm.herald.TileSource = function(ol3map, gmap) {
     this.orderLayers();
   }).bind(this));
 
-  olgm.herald.Source.call(this, ol3map, gmap);
+  Source.call(this, ol3map, gmap);
 };
-ol.inherits(olgm.herald.TileSource, olgm.herald.Source);
+
+inherits(TileSource, Source);
 
 
 /**
  * @param {ol.layer.Base} layer layer to watch
  * @override
  */
-olgm.herald.TileSource.prototype.watchLayer = function(layer) {
-  var tileLayer = /** @type {ol.layer.Tile} */ (layer);
+TileSource.prototype.watchLayer = function(layer) {
+  const tileLayer = /** @type {ol.layer.Tile} */ (layer);
 
   // Source must be TileImage
-  var source = tileLayer.getSource();
-  if (!(source instanceof ol.source.TileImage)) {
+  const source = tileLayer.getSource();
+  if (!(source instanceof TileImage)) {
     return;
   }
 
   this.layers_.push(tileLayer);
 
   // opacity
-  var opacity = tileLayer.getOpacity();
+  const opacity = tileLayer.getOpacity();
 
-  var cacheItem = /** {@type olgm.herald.TileSource.LayerCache} */ ({
+  const cacheItem = /** {@type olgm.herald.TileSource.LayerCache} */ ({
     element: null,
     ignoreNextOpacityChange: true,
     layer: tileLayer,
@@ -77,19 +78,19 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
     zIndex: 0
   });
 
-  var tileGrid = source.getTileGrid();
-  var tileSize = 256;
+  const tileGrid = source.getTileGrid();
+  let tileSize = 256;
 
   if (tileGrid) {
-    var tileGridTileSize = tileGrid.getTileSize(0);
+    const tileGridTileSize = tileGrid.getTileSize(0);
     if (typeof tileGridTileSize === 'number') {
       tileSize = tileGridTileSize;
     }
   }
 
-  var googleTileSize = new google.maps.Size(tileSize, tileSize);
+  const googleTileSize = new google.maps.Size(tileSize, tileSize);
 
-  var options = {
+  const options = {
     'getTileUrl': this.googleGetTileUrlFunction_.bind(this, tileLayer),
     'tileSize': googleTileSize,
     'isPng': true,
@@ -97,7 +98,7 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
   };
 
   // Create the tiled layer on the google layer
-  var googleTileLayer = new google.maps.ImageMapType(options);
+  const googleTileLayer = new google.maps.ImageMapType(options);
   if (tileLayer.getVisible()) {
     this.gmap.overlayMapTypes.push(googleTileLayer);
   }
@@ -105,11 +106,11 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
 
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(tileLayer.on('change:visible',
-      this.handleVisibleChange_.bind(this, cacheItem), this));
+    this.handleVisibleChange_.bind(this, cacheItem), this));
   cacheItem.listenerKeys.push(tileLayer.on('change:opacity',
-      this.handleOpacityChange_.bind(this, cacheItem), this));
+    this.handleOpacityChange_.bind(this, cacheItem), this));
   cacheItem.listenerKeys.push(tileLayer.getSource().on('change',
-      this.handleSourceChange_.bind(this, cacheItem), this));
+    this.handleSourceChange_.bind(this, cacheItem), this));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);
@@ -126,27 +127,27 @@ olgm.herald.TileSource.prototype.watchLayer = function(layer) {
  * @return {string|undefined} url to the tile
  * @private
  */
-olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
-    tileLayer, coords, zoom) {
-  var source = /** @type {ol.source.TileImage} */ (tileLayer.getSource());
+TileSource.prototype.googleGetTileUrlFunction_ = function(
+  tileLayer, coords, zoom) {
+  const source = /** @type {ol.source.TileImage} */ (tileLayer.getSource());
 
   // Check if we're within the accepted resolutions
-  var minResolution = tileLayer.getMinResolution();
-  var maxResolution = tileLayer.getMaxResolution();
-  var currentResolution = this.ol3map.getView().getResolution();
+  const minResolution = tileLayer.getMinResolution();
+  const maxResolution = tileLayer.getMaxResolution();
+  const currentResolution = this.ol3map.getView().getResolution();
   if (currentResolution < minResolution || currentResolution > maxResolution) {
     return;
   }
 
   // Get a few variables from the source object
-  var getTileUrlFunction = source.getTileUrlFunction();
-  var proj = ol.proj.get('EPSG:3857');
+  let getTileUrlFunction = source.getTileUrlFunction();
+  const proj = get('EPSG:3857');
 
   // Convert the coords from google maps to ol3 tile format
-  var ol3Coords = [zoom, coords.x, (-coords.y) - 1];
+  const ol3Coords = [zoom, coords.x, (-coords.y) - 1];
 
   // Save the extent for this layer, default to the one for the projection
-  var extent = tileLayer.getExtent();
+  let extent = tileLayer.getExtent();
   if (!extent) {
     extent = proj.getExtent();
   }
@@ -158,33 +159,33 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
    *    above the world map. We need to filter out these to avoid invalid
    *    requests.
    */
-  var tileGrid = source.getTileGrid();
+  const tileGrid = source.getTileGrid();
   if (tileGrid) {
     /* Google maps always draws the tiles from the top left corner. We need to
      * adjust for that if our origin isn't at that location
      * The default origin is at the top left corner, and the default tile size
      * is 256.
      */
-    var defaultOrigin = [-20037508.342789244, 20037508.342789244];
-    var defaultTileSize = 256;
-    var origin = tileGrid.getOrigin(0);
+    const defaultOrigin = [-20037508.342789244, 20037508.342789244];
+    const defaultTileSize = 256;
+    const origin = tileGrid.getOrigin(0);
 
     // Skip this step if the origin is at the top left corner
     if (origin[0] != defaultOrigin[0] || origin[1] != defaultOrigin[1]) {
       /* Tiles have a size equal to 2^n. Find the difference between the n for
        * the current tileGrid versus the n for the expected tileGrid.
        */
-      var tileGridTileSize = /** @type {number} */ (tileGrid.getTileSize(zoom));
+      const tileGridTileSize = /** @type {number} */ (tileGrid.getTileSize(zoom));
 
-      var defaultTileSizeExponent = Math.log2(defaultTileSize);
-      var tileSizeExponent = Math.log2(tileGridTileSize);
-      var exponentDifference = tileSizeExponent - defaultTileSizeExponent;
+      const defaultTileSizeExponent = Math.log2(defaultTileSize);
+      const tileSizeExponent = Math.log2(tileGridTileSize);
+      const exponentDifference = tileSizeExponent - defaultTileSizeExponent;
 
       /* Calculate the offset to add to the tile coordinates, assuming the
        * origin to fix is equal to [0, 0]. TODO: Support different origins
        */
-      var nbTilesSide = Math.pow(2, zoom - exponentDifference);
-      var offset = nbTilesSide / 2;
+      const nbTilesSide = Math.pow(2, zoom - exponentDifference);
+      const offset = nbTilesSide / 2;
 
       // Add the offset. Move the tiles left (x--) and up (y++)
       ol3Coords[1] = ol3Coords[1] - offset;
@@ -197,17 +198,17 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
      * above the map but not inside it still counts as an intersection, but
      * with a size of 0.
      */
-    var intersection = ol.extent.getIntersection(
-        extent, tileGrid.getTileCoordExtent(ol3Coords));
-    var intersectionSize = ol.extent.getSize(intersection);
-    var intersectionArea = intersectionSize[0] * intersectionSize[1];
+    const intersection = getIntersection(
+      extent, tileGrid.getTileCoordExtent(ol3Coords));
+    const intersectionSize = getSize(intersection);
+    const intersectionArea = intersectionSize[0] * intersectionSize[1];
 
     if (intersectionArea < 1 || intersectionArea == Infinity) {
       return;
     }
   }
 
-  var result = getTileUrlFunction(ol3Coords, 1, proj);
+  let result = getTileUrlFunction(ol3Coords, 1, proj);
 
   // TileJSON sources don't have their url function right away, try again
   if (result === undefined) {
@@ -224,22 +225,22 @@ olgm.herald.TileSource.prototype.googleGetTileUrlFunction_ = function(
  * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
-olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
-  var tileLayer = /** @type {ol.layer.Tile} */ (layer);
+TileSource.prototype.unwatchLayer = function(layer) {
+  const tileLayer = /** @type {ol.layer.Tile} */ (layer);
 
-  var index = this.layers_.indexOf(tileLayer);
+  const index = this.layers_.indexOf(tileLayer);
   if (index !== -1) {
     this.layers_.splice(index, 1);
 
-    var cacheItem = this.cache_[index];
-    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+    const cacheItem = this.cache_[index];
+    unlistenAllByKey(cacheItem.listenerKeys);
 
     // Remove the layer from google maps
-    var googleTileLayer = cacheItem.googleTileLayer;
-    var googleMapsLayers = this.gmap.overlayMapTypes;
+    const googleTileLayer = cacheItem.googleTileLayer;
+    const googleMapsLayers = this.gmap.overlayMapTypes;
 
     // Get the position of the google layer so we can remove it
-    var layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
+    const layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
     if (layerIndex != -1) {
       googleMapsLayers.removeAt(layerIndex);
     }
@@ -257,8 +258,8 @@ olgm.herald.TileSource.prototype.unwatchLayer = function(layer) {
  * @api
  * @override
  */
-olgm.herald.TileSource.prototype.activate = function() {
-  olgm.herald.Source.prototype.activate.call(this);
+TileSource.prototype.activate = function() {
+  Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -268,10 +269,10 @@ olgm.herald.TileSource.prototype.activate = function() {
  * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to activate
  * @private
  */
-olgm.herald.TileSource.prototype.activateCacheItem_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
+TileSource.prototype.activateCacheItem_ = function(
+  cacheItem) {
+  const layer = cacheItem.layer;
+  const visible = layer.getVisible();
   if (visible && this.googleMapsIsActive) {
     cacheItem.ignoreNextOpacityChange = true;
     cacheItem.layer.setOpacity(0);
@@ -284,8 +285,8 @@ olgm.herald.TileSource.prototype.activateCacheItem_ = function(
  * @api
  * @override
  */
-olgm.herald.TileSource.prototype.deactivate = function() {
-  olgm.herald.Source.prototype.deactivate.call(this);
+TileSource.prototype.deactivate = function() {
+  Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
@@ -295,8 +296,8 @@ olgm.herald.TileSource.prototype.deactivate = function() {
  * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to deactivate
  * @private
  */
-olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
-    cacheItem) {
+TileSource.prototype.deactivateCacheItem_ = function(
+  cacheItem) {
   cacheItem.ignoreNextOpacityChange = true;
   cacheItem.layer.setOpacity(cacheItem.opacity);
 };
@@ -307,25 +308,25 @@ olgm.herald.TileSource.prototype.deactivateCacheItem_ = function(
  * it assigns them the correct z-index
  * @api
  */
-olgm.herald.TileSource.prototype.orderLayers = function() {
-  var panes = this.panesOverlay_.getMapPanes();
+TileSource.prototype.orderLayers = function() {
+  const panes = this.panesOverlay_.getMapPanes();
 
   if (!panes) {
     return;
   }
-  var mapPane = panes.mapPane;
-  var overlayMapTypes = this.gmap.overlayMapTypes;
+  const mapPane = panes.mapPane;
+  const overlayMapTypes = this.gmap.overlayMapTypes;
 
   // For each tile layer we watch
-  for (var i = 0; i < this.cache_.length; i++) {
+  for (let i = 0; i < this.cache_.length; i++) {
     // Calculate the wanted index
-    var cacheItem = this.cache_[i];
-    var layer = cacheItem.layer;
+    const cacheItem = this.cache_[i];
+    const layer = cacheItem.layer;
     cacheItem.zIndex = this.findIndex(layer);
 
     // Get the google overlay layer, and its index
-    var googleTileLayer = cacheItem.googleTileLayer;
-    var overlayIndex = overlayMapTypes.getArray().indexOf(googleTileLayer);
+    const googleTileLayer = cacheItem.googleTileLayer;
+    const overlayIndex = overlayMapTypes.getArray().indexOf(googleTileLayer);
 
     // If the layer is currently rendered by Google Maps
     if (overlayIndex != -1) {
@@ -334,15 +335,15 @@ olgm.herald.TileSource.prototype.orderLayers = function() {
        * compare. This allows us to find which div is associated to that layer.
        */
       overlayMapTypes.removeAt(overlayIndex);
-      var childNodes = Array.prototype.slice.call(mapPane.childNodes);
+      const childNodes = Array.prototype.slice.call(mapPane.childNodes);
       overlayMapTypes.push(googleTileLayer);
-      var childNodesWithLayer = mapPane.childNodes;
+      const childNodesWithLayer = mapPane.childNodes;
 
       /**
        * Find which layer is missing from the list we created after removing
        * the appropriate overlay
        */
-      for (var j = 0; j < childNodesWithLayer.length; j++) {
+      for (let j = 0; j < childNodesWithLayer.length; j++) {
         if (childNodes.indexOf(childNodesWithLayer[j]) == -1) {
           // Set a timeout because otherwise it won't work
           cacheItem.element = childNodesWithLayer[j];
@@ -362,9 +363,9 @@ olgm.herald.TileSource.prototype.orderLayers = function() {
  * watched layer
  * @private
  */
-olgm.herald.TileSource.prototype.handleOpacityChange_ = function(cacheItem) {
-  var layer = cacheItem.layer;
-  var newOpacity = cacheItem.layer.getOpacity();
+TileSource.prototype.handleOpacityChange_ = function(cacheItem) {
+  const layer = cacheItem.layer;
+  const newOpacity = cacheItem.layer.getOpacity();
 
   /**
    * Each time the opacity is set on the ol3 layer, we need to set it back to
@@ -379,7 +380,7 @@ olgm.herald.TileSource.prototype.handleOpacityChange_ = function(cacheItem) {
     cacheItem.googleTileLayer.setOpacity(newOpacity);
     cacheItem.opacity = newOpacity;
 
-    var visible = layer.getVisible();
+    const visible = layer.getVisible();
     if (visible && this.googleMapsIsActive) {
       cacheItem.ignoreNextOpacityChange = true;
       cacheItem.layer.setOpacity(0);
@@ -393,15 +394,15 @@ olgm.herald.TileSource.prototype.handleOpacityChange_ = function(cacheItem) {
  * watched layer
  * @private
  */
-olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
+TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
+  const layer = cacheItem.layer;
+  const visible = layer.getVisible();
 
-  var googleTileLayer = cacheItem.googleTileLayer;
-  var googleMapsLayers = this.gmap.overlayMapTypes;
+  const googleTileLayer = cacheItem.googleTileLayer;
+  const googleMapsLayers = this.gmap.overlayMapTypes;
 
   // Get the position of the google layer so we can remove it
-  var layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
+  const layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
 
   if (visible) {
     // Add the google tile layer only if it's not there already
@@ -427,7 +428,7 @@ olgm.herald.TileSource.prototype.handleVisibleChange_ = function(cacheItem) {
  * watched layer
  * @private
  */
-olgm.herald.TileSource.prototype.handleSourceChange_ = function(cacheItem) {
+TileSource.prototype.handleSourceChange_ = function(cacheItem) {
   // Note: The 'changed' method of google.maps.MVCObject requires a param,
   //       but it's not acutally used here.  It's just to satisfy the compiler.
   cacheItem.googleTileLayer.changed('foo');
@@ -445,4 +446,5 @@ olgm.herald.TileSource.prototype.handleSourceChange_ = function(cacheItem) {
  *   zIndex: (number)
  * }}
  */
-olgm.herald.TileSource.LayerCache;
+TileSource.LayerCache;
+export default TileSource;

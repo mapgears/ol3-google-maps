@@ -1,4 +1,7 @@
 /**
+ * @module olgm/gm/MapLabel
+ */
+/**
  * The following file was borrowed from the MapLabel project, which original
  * source code is available at:
  *
@@ -31,11 +34,8 @@
  * @author adube@mapgears.com (Alexandre Dubé)
  */
 
-goog.provide('olgm.gm.MapLabel');
-
-goog.require('ol');
-goog.require('olgm.gm.MapElement');
-
+import {inherits} from 'ol/index.js';
+import MapElement from './MapElement.js';
 
 /**
  * Creates a new Map Label
@@ -44,9 +44,9 @@ goog.require('olgm.gm.MapElement');
  * @param {Object.<string, *>=} opt_options Optional properties to set.
  * @api
  */
-olgm.gm.MapLabel = function(opt_options) {
+const MapLabel = function(opt_options) {
 
-  olgm.gm.MapElement.call(this);
+  MapElement.call(this);
 
   this.set('font', 'normal 10px sans-serif');
   this.set('textAlign', 'center');
@@ -56,7 +56,8 @@ olgm.gm.MapLabel = function(opt_options) {
 
   this.setValues(opt_options);
 };
-ol.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
+
+inherits(MapLabel, MapElement);
 
 
 /**
@@ -65,7 +66,7 @@ ol.inherits(olgm.gm.MapLabel, olgm.gm.MapElement);
  * @api
  * @override
  */
-olgm.gm.MapLabel.prototype.changed = function(prop) {
+MapLabel.prototype.changed = function(prop) {
   switch (prop) {
     case 'fontColor':
     case 'fontFamily':
@@ -95,22 +96,22 @@ olgm.gm.MapLabel.prototype.changed = function(prop) {
  * Draws the label to the canvas 2d context.
  * @private
  */
-olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
-  var canvas = this.canvas_;
+MapLabel.prototype.drawCanvas_ = function() {
+  const canvas = this.canvas_;
   if (!canvas) {
     return;
   }
 
-  var style = canvas.style;
+  const style = canvas.style;
 
-  var fillStyle = this.get('fontColor');
+  const fillStyle = this.get('fontColor');
   if (!fillStyle) {
     return;
   }
 
   style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
-  var ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.textBaseline = this.get('textBaseline');
   ctx.strokeStyle = this.get('strokeColor');
@@ -118,12 +119,12 @@ olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
   ctx.font = this.get('font');
   ctx.textAlign = this.get('textAlign');
 
-  var text = this.get('text');
+  const text = this.get('text');
   if (text) {
-    var x = canvas.width / 2;
-    var y = canvas.height / 2;
+    const x = canvas.width / 2;
+    const y = canvas.height / 2;
 
-    var strokeWeight = Number(this.get('strokeWeight'));
+    const strokeWeight = Number(this.get('strokeWeight'));
     if (strokeWeight) {
       ctx.lineWidth = strokeWeight;
       ctx.strokeText(text, x, y);
@@ -139,18 +140,19 @@ olgm.gm.MapLabel.prototype.drawCanvas_ = function() {
  * @api
  * @override
  */
-olgm.gm.MapLabel.prototype.onAdd = function() {
-  var canvas = this.canvas_ = document.createElement('canvas');
-  var style = canvas.style;
+MapLabel.prototype.onAdd = function() {
+  const canvas = this.canvas_ = document.createElement('canvas');
+  const style = canvas.style;
   style.position = 'absolute';
 
-  var ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   ctx.lineJoin = 'round';
 
   this.drawCanvas_();
 
-  var panes = this.getPanes();
+  const panes = this.getPanes();
   if (panes) {
     panes.markerLayer.appendChild(canvas);
   }
 };
+export default MapLabel;

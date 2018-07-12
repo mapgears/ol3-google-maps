@@ -1,19 +1,32 @@
 {
   "name": "ol3-google-maps",
-  "version": "0.20.0",
-  "description": "OpenLayers 3 Google Maps integration library",
+  "version": "0.21.0",
+  "description": "OpenLayers Google Maps integration library",
   "keywords": [
     "map",
     "mapping",
-    "ol3",
+    "ol",
     "google maps"
   ],
   "homepage": "http://mapgears.github.io/ol3-google-maps/",
   "scripts": {
-    "pretest": "eslint src/",
-    "test": "node tasks/test.js"
+    "lint": "eslint tasks test src/olgm examples",
+    "pretest": "npm run lint",
+    "test": "npm run karma -- --single-run",
+    "karma": "karma start test/karma.config.js",
+    "serve-examples": "webpack-dev-server --config examples/webpack/config.js --mode development --watch",
+    "build-examples": "webpack --config examples/webpack/config.js --mode production",
+    "build-index": "node tasks/generate-index",
+    "prepare-package": "node tasks/prepare-package",
+    "prebuild": "npm run prepare-package && npm run build-index",
+    "prepare": "npm run prepare-package",
+    "build": "rollup --config config/rollup.js && cleancss --source-map src/olgm/olgm.css -o build/olgm.css",
+    "presrc-closure": "npm run prebuild",
+    "src-closure": "node tasks/transform-types",
+    "pretypecheck": "npm run src-closure",
+    "typecheck": "node tasks/typecheck"
   },
-  "main": "dist/ol3gm.js",
+  "main": "src/olgm/index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/mapgears/ol3-google-maps.git"
@@ -22,32 +35,62 @@
   "bugs": {
     "url": "https://github.com/mapgears/ol3-google-maps/issues"
   },
-  "browser": "dist/ol3gm.js",
-  "style": [
-    "css/ol3gm.css"
-  ],
-  "dependencies": {
-    "async": "~0.2.10",
-    "htmlparser2": "~3.7.1"
+  "peerDependencies": {
+    "ol": "^5.0.0"
   },
   "devDependencies": {
-    "chai": "3.5.0",
-    "closure-util": "1.26.0",
-    "eslint": "4.19.1",
-    "eslint-config-openlayers": "7.0.0",
-    "eslint-plugin-openlayers-internal": "^3.1.0",
-    "fs-extra": "~0.8.1",
-    "geojsonhint": "^1.0.0",
-    "graceful-fs": "~3.0.2",
-    "hoek": "5.0.3",
+    "babel-core": "^6.26.3",
+    "babel-plugin-jsdoc-closure": "1.5.1",
+    "buble-loader": "^0.5.1",
+    "chaikin-smooth": "^1.0.4",
+    "clean-css-cli": "4.1.11",
+    "copy-webpack-plugin": "^4.4.1",
+    "coveralls": "3.0.1",
+    "eslint": "5.0.1",
+    "eslint-config-openlayers": "^9.2.0",
+    "expect.js": "0.3.1",
+    "front-matter": "^2.1.2",
+    "fs-extra": "^6.0.0",
+    "glob": "^7.1.2",
+    "google-closure-compiler": "20180610.0.2",
+    "handlebars": "4.0.11",
+    "istanbul": "0.4.5",
+    "jquery": "3.3.1",
     "jsdoc": "3.5.5",
-    "marked": "0.3.9",
-    "mocha": "2.5.3",
-    "mocha-phantomjs-core": "^1.3.1",
-    "nomnom": "~1.6.2",
-    "openlayers": "4.6.5",
-    "phantomjs-prebuilt": "2.1.7",
-    "temp": "~0.7.0",
-    "walk": "~2.3.3"
-  }
+    "karma": "^2.0.0",
+    "karma-chrome-launcher": "2.2.0",
+    "karma-coverage": "^1.1.1",
+    "karma-firefox-launcher": "^1.1.0",
+    "karma-mocha": "1.3.0",
+    "karma-sauce-launcher": "1.2.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "4.0.0-beta.0",
+    "marked": "0.4.0",
+    "mocha": "5.2.0",
+    "mustache": "^2.3.0",
+    "ol": "5.0.3",
+    "pixelmatch": "^4.0.2",
+    "proj4": "2.4.4",
+    "recast": "0.15.2",
+    "rollup": "0.62.0",
+    "rollup-plugin-buble": "0.19.2",
+    "rollup-plugin-commonjs": "9.1.3",
+    "rollup-plugin-node-resolve": "3.3.0",
+    "rollup-plugin-sourcemaps": "0.4.2",
+    "rollup-plugin-uglify": "4.0.0",
+    "sinon": "^6.0.0",
+    "uglifyjs-webpack-plugin": "^1.2.5",
+    "url-polyfill": "^1.0.13",
+    "walk": "^2.3.9",
+    "webpack": "4.16.0",
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-server": "^3.1.4"
+  },
+  "eslintConfig": {
+    "extends": "openlayers",
+    "globals": {
+      "google": false
+    }
+  },
+  "sideEffects": false
 }

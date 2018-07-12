@@ -1,42 +1,45 @@
-goog.provide('olgm.test.OLGoogleMaps');
+import View from 'ol/View.js';
+import Map from 'ol/Map.js';
+import OLGoogleMaps from '../../../src/olgm/OLGoogleMaps.js';
+import GoogleLayer from '../../../src/olgm/layer/Google.js';
 
 describe('olgm.OLGoogleMaps', function() {
-  var target = document.createElement('div');
-  var style = target.style;
+  const target = document.createElement('div');
+  const style = target.style;
   style.width = '300px';
   style.height = '300px';
 
-  var view = new ol.View({
+  const view = new View({
     center: [-7908084, 6177492],
     zoom: 12
   });
 
   describe('constructor', function() {
-    var map = new ol.Map({});
-    var olGM;
+    const map = new Map({});
+    let olGM;
 
     it('creates a new OLGoogleMaps object', function() {
-      olGM = new olgm.OLGoogleMaps({map: map});
-      expect(olGM).to.be.an.instanceof(olgm.OLGoogleMaps);
+      olGM = new OLGoogleMaps({map: map});
+      expect(olGM).to.be.an.instanceof(OLGoogleMaps);
     });
 
     it('creates the Google Maps map', function() {
-      var gmap = olGM.gmap;
+      const gmap = olGM.gmap;
       expect(gmap).to.be.an.instanceof(google.maps.Map);
     });
   });
 
   describe('#activate()', function() {
     document.body.appendChild(target);
-    var googleLayer = new olgm.layer.Google();
-    var map = new ol.Map({
+    const googleLayer = new GoogleLayer();
+    const map = new Map({
       layers: [
         googleLayer
       ],
       target: target,
       view: view
     });
-    var olGM = new olgm.OLGoogleMaps({map: map});
+    const olGM = new OLGoogleMaps({map: map});
 
     it('activates the heralds', function() {
       expect(olGM.getGoogleMapsActive()).to.be.false;
@@ -49,15 +52,15 @@ describe('olgm.OLGoogleMaps', function() {
 
   describe('#deactivate()', function() {
     document.body.appendChild(target);
-    var googleLayer = new olgm.layer.Google();
-    var map = new ol.Map({
+    const googleLayer = new GoogleLayer();
+    const map = new Map({
       layers: [
         googleLayer
       ],
       target: target,
       view: view
     });
-    var olGM = new olgm.OLGoogleMaps({map: map});
+    const olGM = new OLGoogleMaps({map: map});
 
     olGM.activate();
     it('deactivates the heralds', function() {
@@ -71,15 +74,15 @@ describe('olgm.OLGoogleMaps', function() {
 
   describe('#getGoogleMapsActive()', function() {
     document.body.appendChild(target);
-    var googleLayer = new olgm.layer.Google();
-    var map = new ol.Map({
+    const googleLayer = new GoogleLayer();
+    const map = new Map({
       layers: [
         googleLayer
       ],
       target: target,
       view: view
     });
-    var olGM = new olgm.OLGoogleMaps({map: map});
+    const olGM = new OLGoogleMaps({map: map});
 
     it('returns true when Google Maps is active', function() {
       expect(olGM.getGoogleMapsActive()).to.be.false;
@@ -100,11 +103,11 @@ describe('olgm.OLGoogleMaps', function() {
   });
 
   describe('#getGoogleMapsMap()', function() {
-    var map = new ol.Map({});
-    var olGM = new olgm.OLGoogleMaps({map: map});
+    const map = new Map({});
+    const olGM = new OLGoogleMaps({map: map});
 
     it('returns the Google Maps map', function() {
-      var gmap = olGM.gmap;
+      const gmap = olGM.gmap;
       expect(gmap).to.be.an.instanceof(google.maps.Map);
       expect(gmap).to.equal(olGM.getGoogleMapsMap());
     });
@@ -112,15 +115,15 @@ describe('olgm.OLGoogleMaps', function() {
 
   describe('#toggle()', function() {
     document.body.appendChild(target);
-    var googleLayer = new olgm.layer.Google();
-    var map = new ol.Map({
+    const googleLayer = new GoogleLayer();
+    const map = new Map({
       layers: [
         googleLayer
       ],
       target: target,
       view: view
     });
-    var olGM = new olgm.OLGoogleMaps({map: map});
+    const olGM = new OLGoogleMaps({map: map});
 
     it('sets the OLGoogleMaps object to active when inactive', function() {
       expect(olGM.getGoogleMapsActive()).to.be.false;

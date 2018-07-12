@@ -1,11 +1,11 @@
-goog.provide('olgm.herald.View');
-
-goog.require('ol');
-goog.require('ol.proj');
-goog.require('olgm');
-goog.require('olgm.events');
-goog.require('olgm.herald.Herald');
-
+/**
+ * @module olgm/herald/View
+ */
+import {inherits} from 'ol/index.js';
+import {transform} from 'ol/proj.js';
+import {getZoomFromResolution} from '../util.js';
+import {listen} from '../events.js';
+import Herald from './Herald.js';
 
 /**
  * The View Herald is responsible of synchronizing the view (center/zoom)
@@ -19,10 +19,11 @@ goog.require('olgm.herald.Herald');
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.View = function(ol3map, gmap) {
-  olgm.herald.Herald.call(this, ol3map, gmap);
+const View = function(ol3map, gmap) {
+  Herald.call(this, ol3map, gmap);
 };
-ol.inherits(olgm.herald.View, olgm.herald.Herald);
+
+inherits(View, Herald);
 
 
 /**
@@ -31,18 +32,18 @@ ol.inherits(olgm.herald.View, olgm.herald.Herald);
  * @type {?number}
  * @private
  */
-olgm.herald.View.prototype.windowResizeTimerId_ = null;
+View.prototype.windowResizeTimerId_ = null;
 
 
 /**
  * @inheritDoc
  */
-olgm.herald.View.prototype.activate = function() {
+View.prototype.activate = function() {
 
-  olgm.herald.Herald.prototype.activate.call(this);
+  Herald.prototype.activate.call(this);
 
-  var view = this.ol3map.getView();
-  var keys = this.listenerKeys;
+  const view = this.ol3map.getView();
+  const keys = this.listenerKeys;
 
   // listen to center change
   keys.push(view.on('change:center', this.setCenter, this));
@@ -54,12 +55,12 @@ olgm.herald.View.prototype.activate = function() {
   keys.push(view.on('change:rotation', this.setRotation, this));
 
   // listen to browser window resize
-  this.olgmListenerKeys.push(olgm.events.listen(
-      window,
-      'resize',
-      this.handleWindowResize_,
-      this,
-      false));
+  this.olgmListenerKeys.push(listen(
+    window,
+    'resize',
+    this.handleWindowResize_,
+    this,
+    false));
 
   // Rotate and recenter the map after it's ready
   google.maps.event.addListenerOnce(this.gmap, 'idle', (function() {
@@ -73,20 +74,20 @@ olgm.herald.View.prototype.activate = function() {
 /**
  * @inheritDoc
  */
-olgm.herald.View.prototype.deactivate = function() {
-  olgm.herald.Herald.prototype.deactivate.call(this);
+View.prototype.deactivate = function() {
+  Herald.prototype.deactivate.call(this);
 };
 
 
 /**
  * Recenter the gmap map at the ol3 map center location.
  */
-olgm.herald.View.prototype.setCenter = function() {
-  var view = this.ol3map.getView();
-  var projection = view.getProjection();
-  var center = view.getCenter();
+View.prototype.setCenter = function() {
+  const view = this.ol3map.getView();
+  const projection = view.getProjection();
+  let center = view.getCenter();
   if (Array.isArray(center)) {
-    center = ol.proj.transform(center, projection, 'EPSG:4326');
+    center = transform(center, projection, 'EPSG:4326');
     this.gmap.setCenter(new google.maps.LatLng(center[1], center[0]));
   }
 };
@@ -96,27 +97,27 @@ olgm.herald.View.prototype.setCenter = function() {
  * Rotate the gmap map like the ol3 map. The first time it is ran, the map
  * will be resized to be a square.
  */
-olgm.herald.View.prototype.setRotation = function() {
-  var view = this.ol3map.getView();
-  var rotation = view.getRotation();
+View.prototype.setRotation = function() {
+  const view = this.ol3map.getView();
+  const rotation = view.getRotation();
 
-  var mapDiv = this.gmap.getDiv();
-  var tilesDiv = mapDiv.childNodes[0].childNodes[0];
+  const mapDiv = this.gmap.getDiv();
+  const tilesDiv = mapDiv.childNodes[0].childNodes[0];
 
   // If googlemaps is fully loaded
   if (tilesDiv) {
 
     // Rotate the div containing the map tiles
-    var tilesDivStyle = tilesDiv.style;
+    const tilesDivStyle = tilesDiv.style;
     tilesDivStyle.transform = 'rotate(' + rotation + 'rad)';
 
-    var width = this.ol3map.getSize()[0];
-    var height = this.ol3map.getSize()[1];
+    const width = this.ol3map.getSize()[0];
+    const height = this.ol3map.getSize()[1];
 
     // Change the size of the rendering area to a square
     if (width != height && rotation != 0) {
-      var sideSize = Math.max(width, height);
-      var mapDivStyle = mapDiv.style;
+      const sideSize = Math.max(width, height);
+      const mapDivStyle = mapDiv.style;
       mapDivStyle.width = sideSize + 'px';
       mapDivStyle.height = sideSize + 'px';
 
@@ -124,8 +125,8 @@ olgm.herald.View.prototype.setRotation = function() {
       this.ol3map.getTargetElement().style.overflow = 'hidden';
 
       // Adjust the map's center to offset with the new size
-      var diffX = width - sideSize;
-      var diffY = height - sideSize;
+      const diffX = width - sideSize;
+      const diffY = height - sideSize;
 
       tilesDivStyle.top = (diffY / 2) + 'px';
       tilesDivStyle.left = (diffX / 2) + 'px';
@@ -138,17 +139,17 @@ olgm.herald.View.prototype.setRotation = function() {
       this.setZoom();
 
       // Move up the elements at the bottom of the map
-      var childNodes = mapDiv.childNodes[0].childNodes;
-      for (var i = 0; i < childNodes.length; i++) {
+      const childNodes = mapDiv.childNodes[0].childNodes;
+      for (let i = 0; i < childNodes.length; i++) {
         // Set the bottom to where the overflow starts being hidden
-        var style = childNodes[i].style;
+        const style = childNodes[i].style;
         if (style.bottom == '0px') {
           style.bottom = Math.abs(diffY) + 'px';
         }
       }
 
       // Set the ol3map's viewport size to px instead of 100%
-      var viewportStyle = this.ol3map.getViewport().style;
+      const viewportStyle = this.ol3map.getViewport().style;
       if (viewportStyle.height == '100%') {
         viewportStyle.height = height + 'px';
       }
@@ -160,10 +161,10 @@ olgm.herald.View.prototype.setRotation = function() {
 /**
  * Set the gmap map zoom level at the ol3 map view zoom level.
  */
-olgm.herald.View.prototype.setZoom = function() {
-  var resolution = this.ol3map.getView().getResolution();
+View.prototype.setZoom = function() {
+  const resolution = this.ol3map.getView().getResolution();
   if (typeof resolution === 'number') {
-    var zoom = olgm.getZoomFromResolution(resolution);
+    const zoom = getZoomFromResolution(resolution);
     this.gmap.setZoom(zoom);
   }
 };
@@ -174,13 +175,13 @@ olgm.herald.View.prototype.setZoom = function() {
  * map after a slight delay.
  * @private
  */
-olgm.herald.View.prototype.handleWindowResize_ = function() {
+View.prototype.handleWindowResize_ = function() {
   if (this.windowResizeTimerId_) {
     window.clearTimeout(this.windowResizeTimerId_);
   }
   this.windowResizeTimerId_ = window.setTimeout(
-      this.setCenterAfterResize_.bind(this),
-      100);
+    this.setCenterAfterResize_.bind(this),
+    100);
 };
 
 
@@ -189,7 +190,8 @@ olgm.herald.View.prototype.handleWindowResize_ = function() {
  * Set the center of the GoogleMaps map and reset the timeout.
  * @private
  */
-olgm.herald.View.prototype.setCenterAfterResize_ = function() {
+View.prototype.setCenterAfterResize_ = function() {
   this.setCenter();
   this.windowResizeTimerId_ = null;
 };
+export default View;

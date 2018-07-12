@@ -1,11 +1,11 @@
-goog.provide('olgm.herald.VectorSource');
-
-goog.require('ol');
-goog.require('olgm');
-goog.require('olgm.gm');
-goog.require('olgm.herald.Source');
-goog.require('olgm.herald.VectorFeature');
-
+/**
+ * @module olgm/herald/VectorSource
+ */
+import {inherits} from 'ol/index.js';
+import {unlistenAllByKey} from '../util.js';
+import {createStyle} from '../gm.js';
+import Source from './Source.js';
+import VectorFeature from './VectorFeature.js';
 
 /**
  * Listen to a Vector layer
@@ -15,7 +15,7 @@ goog.require('olgm.herald.VectorFeature');
  * @constructor
  * @extends {olgm.herald.Source}
  */
-olgm.herald.VectorSource = function(ol3map, gmap, mapIconOptions) {
+const VectorSource = function(ol3map, gmap, mapIconOptions) {
   /**
   * @type {Array.<olgm.herald.VectorSource.LayerCache>}
   * @private
@@ -34,20 +34,21 @@ olgm.herald.VectorSource = function(ol3map, gmap, mapIconOptions) {
    */
   this.mapIconOptions_ = mapIconOptions;
 
-  olgm.herald.Source.call(this, ol3map, gmap);
+  Source.call(this, ol3map, gmap);
 };
-ol.inherits(olgm.herald.VectorSource, olgm.herald.Source);
+
+inherits(VectorSource, Source);
 
 
 /**
  * @param {ol.layer.Base} layer layer to watch
  * @override
  */
-olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
-  var vectorLayer = /** @type {ol.layer.Vector} */ (layer);
+VectorSource.prototype.watchLayer = function(layer) {
+  const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
 
   // Source required
-  var source = vectorLayer.getSource();
+  const source = vectorLayer.getSource();
   if (!source) {
     return;
   }
@@ -55,24 +56,24 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
   this.layers_.push(vectorLayer);
 
   // Data
-  var data = new google.maps.Data({
+  const data = new google.maps.Data({
     'map': this.gmap
   });
 
   // Style
-  var gmStyle = olgm.gm.createStyle(vectorLayer, this.mapIconOptions_);
+  const gmStyle = createStyle(vectorLayer, this.mapIconOptions_);
   if (gmStyle) {
     data.setStyle(gmStyle);
   }
 
   // herald
-  var herald = new olgm.herald.VectorFeature(
-      this.ol3map, this.gmap, source, data, this.mapIconOptions_);
+  const herald = new VectorFeature(
+    this.ol3map, this.gmap, source, data, this.mapIconOptions_);
 
   // opacity
-  var opacity = vectorLayer.getOpacity();
+  const opacity = vectorLayer.getOpacity();
 
-  var cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
+  const cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
     data: data,
     herald: herald,
     layer: vectorLayer,
@@ -81,11 +82,11 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
   });
 
   cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
-      this.handleVisibleChange_.bind(this, cacheItem), this));
+    this.handleVisibleChange_.bind(this, cacheItem), this));
 
-  var view = this.ol3map.getView();
+  const view = this.ol3map.getView();
   cacheItem.listenerKeys.push(view.on('change:resolution',
-      this.handleResolutionChange_.bind(this, cacheItem), this));
+    this.handleResolutionChange_.bind(this, cacheItem), this));
 
 
   this.activateCacheItem_(cacheItem);
@@ -99,15 +100,15 @@ olgm.herald.VectorSource.prototype.watchLayer = function(layer) {
  * @param {ol.layer.Base} layer layer to unwatch
  * @override
  */
-olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
-  var vectorLayer = /** @type {ol.layer.Vector} */ (layer);
+VectorSource.prototype.unwatchLayer = function(layer) {
+  const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
 
-  var index = this.layers_.indexOf(vectorLayer);
+  const index = this.layers_.indexOf(vectorLayer);
   if (index !== -1) {
     this.layers_.splice(index, 1);
 
-    var cacheItem = this.cache_[index];
-    olgm.unlistenAllByKey(cacheItem.listenerKeys);
+    const cacheItem = this.cache_[index];
+    unlistenAllByKey(cacheItem.listenerKeys);
 
     // data - unset
     cacheItem.data.setMap(null);
@@ -129,8 +130,8 @@ olgm.herald.VectorSource.prototype.unwatchLayer = function(layer) {
  * @api
  * @override
  */
-olgm.herald.VectorSource.prototype.activate = function() {
-  olgm.herald.Source.prototype.activate.call(this);
+VectorSource.prototype.activate = function() {
+  Source.prototype.activate.call(this);
   this.cache_.forEach(this.activateCacheItem_, this);
 };
 
@@ -140,10 +141,10 @@ olgm.herald.VectorSource.prototype.activate = function() {
  * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to activate
  * @private
  */
-olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
+VectorSource.prototype.activateCacheItem_ = function(
+  cacheItem) {
+  const layer = cacheItem.layer;
+  const visible = layer.getVisible();
   if (visible && this.googleMapsIsActive) {
     cacheItem.herald.activate();
     cacheItem.layer.setOpacity(0);
@@ -156,8 +157,8 @@ olgm.herald.VectorSource.prototype.activateCacheItem_ = function(
  * @api
  * @override
  */
-olgm.herald.VectorSource.prototype.deactivate = function() {
-  olgm.herald.Source.prototype.deactivate.call(this);
+VectorSource.prototype.deactivate = function() {
+  Source.prototype.deactivate.call(this);
   this.cache_.forEach(this.deactivateCacheItem_, this);
 };
 
@@ -168,20 +169,20 @@ olgm.herald.VectorSource.prototype.deactivate = function() {
  * deactivate
  * @private
  */
-olgm.herald.VectorSource.prototype.deactivateCacheItem_ = function(
-    cacheItem) {
+VectorSource.prototype.deactivateCacheItem_ = function(
+  cacheItem) {
   cacheItem.herald.deactivate();
   cacheItem.layer.setOpacity(cacheItem.opacity);
 };
 
 
-olgm.herald.VectorSource.prototype.handleResolutionChange_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
+VectorSource.prototype.handleResolutionChange_ = function(
+  cacheItem) {
+  const layer = cacheItem.layer;
 
-  var minResolution = layer.getMinResolution();
-  var maxResolution = layer.getMaxResolution();
-  var currentResolution = this.ol3map.getView().getResolution();
+  const minResolution = layer.getMinResolution();
+  const maxResolution = layer.getMaxResolution();
+  const currentResolution = this.ol3map.getView().getResolution();
   if (currentResolution < minResolution || currentResolution > maxResolution) {
     cacheItem.herald.setVisible(false);
   } else {
@@ -196,10 +197,10 @@ olgm.herald.VectorSource.prototype.handleResolutionChange_ = function(
  * watched layer
  * @private
  */
-olgm.herald.VectorSource.prototype.handleVisibleChange_ = function(
-    cacheItem) {
-  var layer = cacheItem.layer;
-  var visible = layer.getVisible();
+VectorSource.prototype.handleVisibleChange_ = function(
+  cacheItem) {
+  const layer = cacheItem.layer;
+  const visible = layer.getVisible();
   if (visible) {
     this.activateCacheItem_(cacheItem);
   } else {
@@ -217,4 +218,5 @@ olgm.herald.VectorSource.prototype.handleVisibleChange_ = function(
  *   opacity: (number)
  * }}
  */
-olgm.herald.VectorSource.LayerCache;
+VectorSource.LayerCache;
+export default VectorSource;

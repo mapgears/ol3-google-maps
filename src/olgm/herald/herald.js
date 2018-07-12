@@ -1,9 +1,9 @@
-goog.provide('olgm.herald.Herald');
-
-goog.require('ol');
-goog.require('olgm');
-goog.require('olgm.Abstract');
-
+/**
+ * @module olgm/herald/Herald
+ */
+import {inherits} from 'ol/index.js';
+import {unlistenAllByKey} from '../util.js';
+import Abstract from '../Abstract.js';
 
 /**
  * Abstract class for all heralds. When activated, an herald synchronizes
@@ -15,7 +15,7 @@ goog.require('olgm.Abstract');
  * @constructor
  * @extends {olgm.Abstract}
  */
-olgm.herald.Herald = function(ol3map, gmap) {
+const Herald = function(ol3map, gmap) {
 
   /**
    * @type {Array.<ol.EventsKey|Array.<ol.EventsKey>>}
@@ -29,20 +29,22 @@ olgm.herald.Herald = function(ol3map, gmap) {
    */
   this.olgmListenerKeys = [];
 
-  olgm.Abstract.call(this, ol3map, gmap);
+  Abstract.call(this, ol3map, gmap);
 };
-ol.inherits(olgm.herald.Herald, olgm.Abstract);
+
+inherits(Herald, Abstract);
 
 
 /**
  * Register all event listeners.
  */
-olgm.herald.Herald.prototype.activate = function() {};
+Herald.prototype.activate = function() {};
 
 
 /**
  * Unregister all event listeners.
  */
-olgm.herald.Herald.prototype.deactivate = function() {
-  olgm.unlistenAllByKey(this.listenerKeys, this.olgmListenerKeys);
+Herald.prototype.deactivate = function() {
+  unlistenAllByKey(this.listenerKeys, this.olgmListenerKeys);
 };
+export default Herald;

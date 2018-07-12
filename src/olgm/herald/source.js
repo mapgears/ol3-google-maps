@@ -1,8 +1,8 @@
-goog.provide('olgm.herald.Source');
-
-goog.require('ol');
-goog.require('olgm.herald.Herald');
-
+/**
+ * @module olgm/herald/Source
+ */
+import {inherits} from 'ol/index.js';
+import Herald from './Herald.js';
 
 /**
  * This is an abstract class. Children of this class will listen to one or
@@ -14,9 +14,9 @@ goog.require('olgm.herald.Herald');
  * @constructor
  * @extends {olgm.herald.Herald}
  */
-olgm.herald.Source = function(ol3map, gmap) {
+const Source = function(ol3map, gmap) {
 
-  olgm.herald.Herald.call(this, ol3map, gmap);
+  Herald.call(this, ol3map, gmap);
 
   /**
    * Flag that determines whether the GoogleMaps map is currently active, i.e.
@@ -24,9 +24,10 @@ olgm.herald.Source = function(ol3map, gmap) {
    * @type {boolean}
    * @protected
    */
-  olgm.herald.Source.prototype.googleMapsIsActive_ = false;
+  Source.prototype.googleMapsIsActive_ = false;
 };
-ol.inherits(olgm.herald.Source, olgm.herald.Herald);
+
+inherits(Source, Herald);
 
 
 /**
@@ -37,7 +38,7 @@ ol.inherits(olgm.herald.Source, olgm.herald.Herald);
  * @abstract
  * @api
  */
-olgm.herald.Source.prototype.watchLayer = function(layer) {};
+Source.prototype.watchLayer = function(layer) {};
 
 
 /**
@@ -47,7 +48,7 @@ olgm.herald.Source.prototype.watchLayer = function(layer) {};
  * @abstract
  * @api
  */
-olgm.herald.Source.prototype.unwatchLayer = function(layer) {};
+Source.prototype.unwatchLayer = function(layer) {};
 
 
 /**
@@ -55,7 +56,7 @@ olgm.herald.Source.prototype.unwatchLayer = function(layer) {};
  * @param {boolean} active whether or not google maps is active
  * @api
  */
-olgm.herald.Source.prototype.setGoogleMapsActive = function(active) {
+Source.prototype.setGoogleMapsActive = function(active) {
   this.googleMapsIsActive = active;
 };
 
@@ -66,10 +67,10 @@ olgm.herald.Source.prototype.setGoogleMapsActive = function(active) {
  * @returns {number} suggested zIndex for that layer
  * @api
  */
-olgm.herald.Source.prototype.findIndex = function(layer) {
-  var layers = this.ol3map.getLayers().getArray();
-  var layerIndex = layers.indexOf(layer);
-  var zIndex = layer.getZIndex();
+Source.prototype.findIndex = function(layer) {
+  const layers = this.ol3map.getLayers().getArray();
+  let layerIndex = layers.indexOf(layer);
+  const zIndex = layer.getZIndex();
 
   if (zIndex != 0) {
     layerIndex = zIndex;
@@ -77,3 +78,4 @@ olgm.herald.Source.prototype.findIndex = function(layer) {
 
   return layerIndex;
 };
+export default Source;

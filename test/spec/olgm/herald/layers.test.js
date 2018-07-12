@@ -1,37 +1,38 @@
-goog.provide('olgm.test.herald.Layers');
+import Map from 'ol/Map.js';
+import Layers from '../../../../src/olgm/herald/Layers.js';
 
 describe('olgm.herald.Layers', function() {
   // Setup constructor variables
-  var originalOl3map = new ol.Map({});
-  var gmapEl = document.createElement('div');
+  const originalOl3map = new Map({});
+  const gmapEl = document.createElement('div');
   gmapEl.style.height = '100px';
   gmapEl.style.width = '100px';
-  var originalGmap = new google.maps.Map(gmapEl);
-  var watchVector = true;
+  const originalGmap = new google.maps.Map(gmapEl);
+  const watchVector = true;
 
   describe('constructor', function() {
-    var layersHerald = new olgm.herald.Layers(
-        originalOl3map, originalGmap, watchVector);
+    const layersHerald = new Layers(
+      originalOl3map, originalGmap, watchVector);
 
     it('sets the Google Maps map', function() {
-      var gmap = layersHerald.gmap;
+      const gmap = layersHerald.gmap;
       expect(gmap).to.be.an.instanceof(google.maps.Map);
       expect(gmap).to.equal(originalGmap);
     });
 
     it('sets the OpenLayers map', function() {
-      var ol3map = layersHerald.ol3map;
-      expect(ol3map).to.be.an.instanceof(ol.Map);
+      const ol3map = layersHerald.ol3map;
+      expect(ol3map).to.be.an.instanceof(Map);
       expect(ol3map).to.equal(originalOl3map);
     });
   });
 
   describe('#activate()', function() {
     it('adds listener keys for layers added and removed', function() {
-      var layersHerald = new olgm.herald.Layers(
-          originalOl3map, originalGmap, watchVector);
-      var listenerKeys = layersHerald.listenerKeys;
-      var expectedNbListenerKeys = listenerKeys.length + 2;
+      const layersHerald = new Layers(
+        originalOl3map, originalGmap, watchVector);
+      const listenerKeys = layersHerald.listenerKeys;
+      const expectedNbListenerKeys = listenerKeys.length + 2;
 
       layersHerald.activate();
 

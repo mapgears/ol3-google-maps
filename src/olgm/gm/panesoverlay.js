@@ -1,7 +1,7 @@
-goog.provide('olgm.gm.PanesOverlay');
-
-goog.require('ol');
-
+/**
+ * @module olgm/gm/PanesOverlay
+ */
+import {inherits} from 'ol/index.js';
 
 /**
  * This overlay doesn't actually do anything, it's only a way to get the map's
@@ -11,11 +11,12 @@ goog.require('ol');
  * @extends {google.maps.OverlayView}
  * @api
  */
-olgm.gm.PanesOverlay = function(gmap) {
+const PanesOverlay = function(gmap) {
   this.setMap(gmap);
 };
+
 if (window.google && window.google.maps) {
-  ol.inherits(olgm.gm.PanesOverlay, google.maps.OverlayView);
+  inherits(PanesOverlay, google.maps.OverlayView);
 }
 
 
@@ -24,7 +25,7 @@ if (window.google && window.google.maps) {
  * @return {google.maps.MapPanes|undefined} array of panes
  * @api
  */
-olgm.gm.PanesOverlay.prototype.getMapPanes = function() {
+PanesOverlay.prototype.getMapPanes = function() {
   return this.getPanes();
 };
 
@@ -34,7 +35,7 @@ olgm.gm.PanesOverlay.prototype.getMapPanes = function() {
  * @api
  * @override
  */
-olgm.gm.PanesOverlay.prototype.onAdd = function() {
+PanesOverlay.prototype.onAdd = function() {
 
 };
 
@@ -44,7 +45,7 @@ olgm.gm.PanesOverlay.prototype.onAdd = function() {
  * @api
  * @override
  */
-olgm.gm.PanesOverlay.prototype.draw = function() {
+PanesOverlay.prototype.draw = function() {
 
 };
 
@@ -54,6 +55,7 @@ olgm.gm.PanesOverlay.prototype.draw = function() {
  * @api
  * @override
  */
-olgm.gm.PanesOverlay.prototype.onRemove = function() {
+PanesOverlay.prototype.onRemove = function() {
 
 };
+export default PanesOverlay;

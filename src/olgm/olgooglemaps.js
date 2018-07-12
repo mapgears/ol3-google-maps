@@ -1,9 +1,9 @@
-goog.provide('olgm.OLGoogleMaps');
-
-goog.require('ol');
-goog.require('olgm.Abstract');
-goog.require('olgm.herald.Layers');
-
+/**
+ * @module olgm/OLGoogleMaps
+ */
+import {inherits} from 'ol/index.js';
+import Abstract from './Abstract.js';
+import Layers from './herald/Layers.js';
 
 /**
  * The main component of this library. It binds an existing OpenLayers map to
@@ -38,7 +38,7 @@ goog.require('olgm.herald.Layers');
  * @extends {olgm.Abstract}
  * @api
  */
-olgm.OLGoogleMaps = function(options) {
+const OLGoogleMaps = function(options) {
 
   /**
    * @type {Array.<olgm.herald.Herald>}
@@ -46,11 +46,11 @@ olgm.OLGoogleMaps = function(options) {
    */
   this.heralds_ = [];
 
-  var gmapEl = document.createElement('div');
+  const gmapEl = document.createElement('div');
   gmapEl.style.height = 'inherit';
   gmapEl.style.width = 'inherit';
 
-  var gmap = new google.maps.Map(gmapEl, {
+  const gmap = new google.maps.Map(gmapEl, {
     disableDefaultUI: true,
     disableDoubleClickZoom: true,
     draggable: false,
@@ -60,43 +60,44 @@ olgm.OLGoogleMaps = function(options) {
     streetViewControl: false
   });
 
-  olgm.Abstract.call(this, options.map, gmap);
+  Abstract.call(this, options.map, gmap);
 
-  var watchOptions = options.watch !== undefined ?
+  const watchOptions = options.watch !== undefined ?
     options.watch : {};
 
-  var mapIconOptions = options.mapIconOptions !== undefined ?
+  const mapIconOptions = options.mapIconOptions !== undefined ?
     options.mapIconOptions : {};
 
   /**
    * @type {olgm.herald.Layers}
    * @private
    */
-  this.layersHerald_ = new olgm.herald.Layers(
-      this.ol3map, this.gmap, mapIconOptions, watchOptions);
+  this.layersHerald_ = new Layers(
+    this.ol3map, this.gmap, mapIconOptions, watchOptions);
   this.heralds_.push(this.layersHerald_);
 };
-ol.inherits(olgm.OLGoogleMaps, olgm.Abstract);
+
+inherits(OLGoogleMaps, Abstract);
 
 
 /**
  * @type {boolean}
  * @private
  */
-olgm.OLGoogleMaps.prototype.active_ = false;
+OLGoogleMaps.prototype.active_ = false;
 
 
 /**
  * @api
  */
-olgm.OLGoogleMaps.prototype.activate = function() {
+OLGoogleMaps.prototype.activate = function() {
 
   if (this.active_) {
     return;
   }
 
   // activate heralds
-  for (var i = 0, len = this.heralds_.length; i < len; i++) {
+  for (let i = 0, len = this.heralds_.length; i < len; i++) {
     this.heralds_[i].activate();
   }
 
@@ -107,14 +108,14 @@ olgm.OLGoogleMaps.prototype.activate = function() {
 /**
  * @api
  */
-olgm.OLGoogleMaps.prototype.deactivate = function() {
+OLGoogleMaps.prototype.deactivate = function() {
 
   if (!this.active_) {
     return;
   }
 
   // deactivate heralds
-  for (var i = 0, len = this.heralds_.length; i < len; i++) {
+  for (let i = 0, len = this.heralds_.length; i < len; i++) {
     this.heralds_[i].deactivate();
   }
 
@@ -126,7 +127,7 @@ olgm.OLGoogleMaps.prototype.deactivate = function() {
  * @return {boolean} whether or not google maps is active
  * @api
  */
-olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
+OLGoogleMaps.prototype.getGoogleMapsActive = function() {
   return this.active_ && this.layersHerald_.getGoogleMapsActive();
 };
 
@@ -135,7 +136,7 @@ olgm.OLGoogleMaps.prototype.getGoogleMapsActive = function() {
  * @return {google.maps.Map} the google maps map
  * @api
  */
-olgm.OLGoogleMaps.prototype.getGoogleMapsMap = function() {
+OLGoogleMaps.prototype.getGoogleMapsMap = function() {
   return this.gmap;
 };
 
@@ -146,8 +147,8 @@ olgm.OLGoogleMaps.prototype.getGoogleMapsMap = function() {
  * should be watched
  * @api
  */
-olgm.OLGoogleMaps.prototype.setWatchOptions = function(watchOptions) {
-  var newWatchOptions = watchOptions !== undefined ? watchOptions : {};
+OLGoogleMaps.prototype.setWatchOptions = function(watchOptions) {
+  const newWatchOptions = watchOptions !== undefined ? watchOptions : {};
   this.layersHerald_.setWatchOptions(newWatchOptions);
 };
 
@@ -155,7 +156,7 @@ olgm.OLGoogleMaps.prototype.setWatchOptions = function(watchOptions) {
 /**
  * @api
  */
-olgm.OLGoogleMaps.prototype.toggle = function() {
+OLGoogleMaps.prototype.toggle = function() {
   if (this.active_) {
     this.deactivate();
   } else {
@@ -171,7 +172,7 @@ olgm.OLGoogleMaps.prototype.toggle = function() {
  * the order is being change in another way.
  * @api
  */
-olgm.OLGoogleMaps.prototype.orderLayers = function() {
+OLGoogleMaps.prototype.orderLayers = function() {
   this.layersHerald_.orderLayers();
 };
 
@@ -180,6 +181,7 @@ olgm.OLGoogleMaps.prototype.orderLayers = function() {
  * Refresh layers and features that might need it (only ImageWMS so far)
  * @api
  */
-olgm.OLGoogleMaps.prototype.refresh = function() {
+OLGoogleMaps.prototype.refresh = function() {
   this.layersHerald_.refresh();
 };
+export default OLGoogleMaps;

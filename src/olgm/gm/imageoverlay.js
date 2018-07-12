@@ -1,6 +1,7 @@
-goog.provide('olgm.gm.ImageOverlay');
-
-goog.require('ol');
+/**
+ * @module olgm/gm/ImageOverlay
+ */
+import {inherits} from 'ol/index.js';
 
 /**
  * Creates a new image overlay.
@@ -11,7 +12,7 @@ goog.require('ol');
  * @param {google.maps.LatLng} topLeft topLeft corner
  * @api
  */
-olgm.gm.ImageOverlay = function(src, size, topLeft) {
+const ImageOverlay = function(src, size, topLeft) {
   /**
    * @type {string}
    * @private
@@ -42,8 +43,9 @@ olgm.gm.ImageOverlay = function(src, size, topLeft) {
    */
   this.zIndex_ = 0;
 };
+
 if (window.google && window.google.maps) {
-  ol.inherits(olgm.gm.ImageOverlay, google.maps.OverlayView);
+  inherits(ImageOverlay, google.maps.OverlayView);
 }
 
 
@@ -52,15 +54,15 @@ if (window.google && window.google.maps) {
  * @api
  * @override
  */
-olgm.gm.ImageOverlay.prototype.onAdd = function() {
-  var div = document.createElement('div');
+ImageOverlay.prototype.onAdd = function() {
+  const div = document.createElement('div');
   div.style.borderStyle = 'none';
   div.style.borderWidth = '0px';
   div.style.position = 'absolute';
   div.style.zIndex = this.zIndex_;
 
   // Create the img element and attach it to the div.
-  var img = document.createElement('img');
+  const img = document.createElement('img');
   img.src = this.src_;
   img.style.width = '100%';
   img.style.height = '100%';
@@ -74,7 +76,7 @@ olgm.gm.ImageOverlay.prototype.onAdd = function() {
    * "overlayLayer" pane, but we want to be able to show it behind tile layers,
    * so we place them together in the same pane.
    */
-  var panes = this.getPanes();
+  const panes = this.getPanes();
   panes.mapPane.appendChild(div);
 };
 
@@ -84,29 +86,29 @@ olgm.gm.ImageOverlay.prototype.onAdd = function() {
  * @api
  * @override
  */
-olgm.gm.ImageOverlay.prototype.draw = function() {
-  var div = this.div_;
+ImageOverlay.prototype.draw = function() {
+  const div = this.div_;
 
-  var sizeX = this.size_[0];
-  var sizeY = this.size_[1];
+  const sizeX = this.size_[0];
+  const sizeY = this.size_[1];
 
   div.style.width = sizeX + 'px';
   div.style.height = sizeY + 'px';
 
-  var overlayProjection = this.getProjection();
-  var topLeftPx = overlayProjection.fromLatLngToDivPixel(this.topLeft_);
+  const overlayProjection = this.getProjection();
+  const topLeftPx = overlayProjection.fromLatLngToDivPixel(this.topLeft_);
 
-  var offsetX = topLeftPx.x;
-  var offsetY = topLeftPx.y;
+  let offsetX = topLeftPx.x;
+  const offsetY = topLeftPx.y;
 
   // Adjust bad calculations when the view is larger than the world
-  var worldWidth = overlayProjection.getWorldWidth();
+  const worldWidth = overlayProjection.getWorldWidth();
   if (worldWidth < sizeX) {
     // Overlap of the map on each size
-    var mapOverlap = Math.floor(sizeX / worldWidth) / 2;
+    const mapOverlap = Math.floor(sizeX / worldWidth) / 2;
 
     // For when only one map is overlapping
-    var factor = Math.max(mapOverlap, 1);
+    const factor = Math.max(mapOverlap, 1);
 
     offsetX -= worldWidth * factor;
   }
@@ -121,7 +123,7 @@ olgm.gm.ImageOverlay.prototype.draw = function() {
  * @param {number} zIndex zIndex to set
  * @api
  */
-olgm.gm.ImageOverlay.prototype.setZIndex = function(zIndex) {
+ImageOverlay.prototype.setZIndex = function(zIndex) {
   this.zIndex_ = zIndex;
   if (this.div_) {
     this.div_.style.zIndex = zIndex;
@@ -134,9 +136,10 @@ olgm.gm.ImageOverlay.prototype.setZIndex = function(zIndex) {
  * @api
  * @override
  */
-olgm.gm.ImageOverlay.prototype.onRemove = function() {
+ImageOverlay.prototype.onRemove = function() {
   if (this.div_) {
     this.div_.parentNode.removeChild(this.div_);
     this.div_ = null;
   }
 };
+export default ImageOverlay;
