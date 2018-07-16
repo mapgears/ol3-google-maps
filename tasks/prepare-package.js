@@ -14,14 +14,14 @@ for (let i = 0, ii = lines.length; i < ii; ++i) {
 }
 fs.writeFileSync(util, lines.join('\n'), 'utf-8');
 
-const src = path.join('src', 'olgm');
-const packageJson = path.resolve(__dirname, path.join('..', src, 'package.json'));
+const src = path.posix.join('src', 'olgm');
+const packageJson = path.resolve(__dirname, '..', src, 'package.json');
 delete pkg.scripts;
 delete pkg.devDependencies;
 delete pkg.style;
 delete pkg.eslintConfig;
-const main = path.posix.relative(src, require.resolve(path.join('..', pkg.main)));
+const main = path.posix.relative(path.posix.resolve(__dirname, '..', src), path.posix.resolve(__dirname, '..', pkg.main));
 pkg.main = pkg.module = main;
-pkg.name = 'ol';
+pkg.name = 'olgm';
 
 fs.writeFileSync(packageJson, JSON.stringify(pkg, null, 2), 'utf-8');

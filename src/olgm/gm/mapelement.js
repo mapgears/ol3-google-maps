@@ -1,3 +1,6 @@
+/**
+ * @module olgm/gm/MapElement
+ */
 import {inherits} from 'ol/index.js';
 
 /**
