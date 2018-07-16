@@ -41,7 +41,7 @@ Then, in your existing OpenLayers application, activate OL3-Google-Maps. Here's 
 ```
 import Map from 'ol/Map.js';
 import GoogleLayer from 'olgm/layer/Google.js';
-import interaction from 'olgm/interaction.js';
+import {defaults} from 'olgm/interaction.js';
 import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
 
 var center = [-7908084, 6177492];
@@ -51,7 +51,7 @@ const googleLayer = new GoogleLayer();
 
 var map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: interaction.defaults(),
+  interactions: defaults(),
   layers: [
     googleLayer
   ],
