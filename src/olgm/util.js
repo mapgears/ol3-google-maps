@@ -2,7 +2,7 @@
  * @module olgm/util
  */
 import Feature from 'ol/Feature.js';
-import Observable from 'ol/Observable.js';
+import {unByKey} from 'ol/Observable.js';
 import {getCenter} from 'ol/extent.js';
 import Point from 'ol/geom/Point.js';
 import Polygon from 'ol/geom/Polygon.js';
@@ -217,7 +217,7 @@ export function stringStartsWith(string, needle) {
  * @param {Array.<ol.EventsKey>=} opt_olgmListenerKeys olgm listener keys
  */
 export function unlistenAllByKey(listenerKeys, opt_olgmListenerKeys) {
-  listenerKeys.forEach(Observable.unByKey);
+  listenerKeys.forEach(unByKey);
   listenerKeys.length = 0;
   if (opt_olgmListenerKeys) {
     opt_olgmListenerKeys.forEach(unlistenByKey);

@@ -46,13 +46,13 @@ View.prototype.activate = function() {
   const keys = this.listenerKeys;
 
   // listen to center change
-  keys.push(view.on('change:center', this.setCenter, this));
+  keys.push(view.on('change:center', () => this.setCenter()));
 
   // listen to resolution change
-  keys.push(view.on('change:resolution', this.setZoom, this));
+  keys.push(view.on('change:resolution', () => this.setZoom()));
 
   // listen to rotation change
-  keys.push(view.on('change:rotation', this.setRotation, this));
+  keys.push(view.on('change:rotation', () => this.setRotation()));
 
   // listen to browser window resize
   this.olgmListenerKeys.push(listen(
@@ -63,11 +63,11 @@ View.prototype.activate = function() {
     false));
 
   // Rotate and recenter the map after it's ready
-  google.maps.event.addListenerOnce(this.gmap, 'idle', (function() {
+  google.maps.event.addListenerOnce(this.gmap, 'idle', () => {
     this.setRotation();
     this.setCenter();
     this.setZoom();
-  }).bind(this));
+  });
 };
 
 
@@ -85,10 +85,10 @@ View.prototype.deactivate = function() {
 View.prototype.setCenter = function() {
   const view = this.ol3map.getView();
   const projection = view.getProjection();
-  let center = view.getCenter();
+  const center = view.getCenter();
   if (Array.isArray(center)) {
-    center = transform(center, projection, 'EPSG:4326');
-    this.gmap.setCenter(new google.maps.LatLng(center[1], center[0]));
+    const [lng, lat] = transform(center, projection, 'EPSG:4326');
+    this.gmap.setCenter(new google.maps.LatLng(lat, lng));
   }
 };
 

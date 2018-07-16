@@ -82,11 +82,11 @@ VectorSource.prototype.watchLayer = function(layer) {
   });
 
   cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
-    this.handleVisibleChange_.bind(this, cacheItem), this));
+    () => this.handleVisibleChange_(cacheItem)));
 
   const view = this.ol3map.getView();
   cacheItem.listenerKeys.push(view.on('change:resolution',
-    this.handleResolutionChange_.bind(this, cacheItem), this));
+    () => this.handleResolutionChange_(cacheItem)));
 
 
   this.activateCacheItem_(cacheItem);

@@ -67,18 +67,18 @@ ImageWMSSource.prototype.watchLayer = function(layer) {
 
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(imageLayer.on('change:visible',
-    this.handleVisibleChange_.bind(this, cacheItem), this));
+    () => this.handleVisibleChange_(cacheItem)));
 
   cacheItem.listenerKeys.push(this.ol3map.on('moveend',
-    this.handleMoveEnd_.bind(this, cacheItem), this));
+    () => this.handleMoveEnd_(cacheItem)));
 
   cacheItem.listenerKeys.push(this.ol3map.getView().on('change:resolution',
-    this.handleMoveEnd_.bind(this, cacheItem), this));
+    () => this.handleMoveEnd_(cacheItem)));
 
   // Make sure that any change to the layer source itself also updates the
   // google maps layer
   cacheItem.listenerKeys.push(imageLayer.getSource().on('change',
-    this.handleMoveEnd_.bind(this, cacheItem), this));
+    () => this.handleMoveEnd_(cacheItem)));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);

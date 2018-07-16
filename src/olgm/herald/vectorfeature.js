@@ -72,12 +72,12 @@ VectorFeature.prototype.activate = function() {
   Herald.prototype.activate.call(this);
 
   // watch existing features...
-  this.source_.getFeatures().forEach(this.watchFeature_, this);
+  this.source_.getFeatures().forEach((feature) => this.watchFeature_(feature));
 
   // event listeners
   const keys = this.listenerKeys;
-  keys.push(this.source_.on('addfeature', this.handleAddFeature_, this));
-  keys.push(this.source_.on('removefeature', this.handleRemoveFeature_, this));
+  keys.push(this.source_.on('addfeature', (event) => this.handleAddFeature_(event)));
+  keys.push(this.source_.on('removefeature', (event) => this.handleRemoveFeature_(event)));
 };
 
 
@@ -86,7 +86,7 @@ VectorFeature.prototype.activate = function() {
  */
 VectorFeature.prototype.deactivate = function() {
   // unwatch existing features...
-  this.source_.getFeatures().forEach(this.unwatchFeature_, this);
+  this.source_.getFeatures().forEach((feature) => this.unwatchFeature_(feature));
 
   Herald.prototype.deactivate.call(this);
 };

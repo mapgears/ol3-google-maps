@@ -126,18 +126,18 @@ const Layers = function(ol3map, gmap, mapIconOptions, watchOptions) {
   // becomes moot. The code below fixes that.
   const center = this.ol3map.getView().getCenter();
   if (!center) {
-    this.ol3map.getView().once('change:center', function() {
-      this.ol3map.once('postrender', function() {
+    this.ol3map.getView().once('change:center', () => {
+      this.ol3map.once('postrender', () => {
         this.ol3mapIsRenderered_ = true;
         this.toggleGoogleMaps_();
-      }, this);
+      });
       this.toggleGoogleMaps_();
-    }, this);
+    });
   } else {
-    this.ol3map.once('postrender', function() {
+    this.ol3map.once('postrender', () => {
       this.ol3mapIsRenderered_ = true;
       this.toggleGoogleMaps_();
-    }, this);
+    });
   }
 };
 
@@ -170,12 +170,12 @@ Layers.prototype.activate = function() {
   const layers = this.ol3map.getLayers();
 
   // watch existing layers
-  layers.forEach(this.watchLayer_, this);
+  layers.forEach((layer) => this.watchLayer_(layer));
 
   // event listeners
   const keys = this.listenerKeys;
-  keys.push(layers.on('add', this.handleLayersAdd_, this));
-  keys.push(layers.on('remove', this.handleLayersRemove_, this));
+  keys.push(layers.on('add', (event) => this.handleLayersAdd_(event)));
+  keys.push(layers.on('remove', (event) => this.handleLayersRemove_(event)));
 };
 
 
@@ -184,7 +184,7 @@ Layers.prototype.activate = function() {
  */
 Layers.prototype.deactivate = function() {
   // unwatch existing layers
-  this.ol3map.getLayers().forEach(this.unwatchLayer_, this);
+  this.ol3map.getLayers().forEach((layer) => this.unwatchLayer_(layer));
 
   Herald.prototype.deactivate.call(this);
 };
@@ -281,7 +281,7 @@ Layers.prototype.watchGoogleLayer_ = function(layer) {
   this.googleCache_.push(/** @type {olgm.herald.Layers.GoogleLayerCache} */ ({
     layer: layer,
     listenerKeys: [
-      layer.on('change:visible', this.toggleGoogleMaps_, this)
+      layer.on('change:visible', () => this.toggleGoogleMaps_())
     ]
   }));
   this.toggleGoogleMaps_();

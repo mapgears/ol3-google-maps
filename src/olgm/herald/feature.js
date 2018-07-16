@@ -138,11 +138,11 @@ Feature.prototype.activate = function() {
   // event listeners (todo)
   const keys = this.listenerKeys;
   this.geometryChangeKey_ = geometry.on(
-    'change', this.handleGeometryChange_, this);
+    'change', () => this.handleGeometryChange_);
   keys.push(this.geometryChangeKey_);
   keys.push(this.feature_.on(
     'change:' + this.feature_.getGeometryName(),
-    this.handleGeometryReplace_, this
+    () => this.handleGeometryReplace_
   ));
 };
 
@@ -248,8 +248,7 @@ Feature.prototype.handleGeometryReplace_ = function() {
   keys.splice(index, 1);
 
   this.geometryChangeKey_ = this.feature_.getGeometry().on('change',
-    this.handleGeometryChange_,
-    this);
+    () => this.handleGeometryChange_);
   keys.push(this.geometryChangeKey_);
   this.handleGeometryChange_();
 };

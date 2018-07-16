@@ -41,9 +41,9 @@ const TileSource = function(ol3map, gmap) {
    * Accessing that pane means we can reorder the div for each tile layer
    * Google Maps is rendering.
    */
-  google.maps.event.addListenerOnce(gmap, 'idle', (function() {
+  google.maps.event.addListenerOnce(gmap, 'idle', () => {
     this.orderLayers();
-  }).bind(this));
+  });
 
   Source.call(this, ol3map, gmap);
 };
@@ -106,11 +106,11 @@ TileSource.prototype.watchLayer = function(layer) {
 
   // Hide the google layer when the ol3 layer is invisible
   cacheItem.listenerKeys.push(tileLayer.on('change:visible',
-    this.handleVisibleChange_.bind(this, cacheItem), this));
+    () => this.handleVisibleChange_(cacheItem)));
   cacheItem.listenerKeys.push(tileLayer.on('change:opacity',
-    this.handleOpacityChange_.bind(this, cacheItem), this));
+    () => this.handleOpacityChange_(cacheItem)));
   cacheItem.listenerKeys.push(tileLayer.getSource().on('change',
-    this.handleSourceChange_.bind(this, cacheItem), this));
+    () => this.handleSourceChange_(cacheItem)));
 
   // Activate the cache item
   this.activateCacheItem_(cacheItem);

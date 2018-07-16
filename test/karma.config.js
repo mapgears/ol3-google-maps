@@ -1,12 +1,11 @@
 /* eslint-env node, es6 */
 
 const path = require('path');
-const pkg = require('../package.json');
 
 module.exports = function(karma) {
   karma.set({
     browserDisconnectTolerance: 2,
-    frameworks: ['mocha'],
+    frameworks: ['mocha', 'chai'],
     client: {
       runInParent: true,
       mocha: {
@@ -14,109 +13,45 @@ module.exports = function(karma) {
       }
     },
     files: [
-      'https://maps.googleapis.com/maps/api/js?v=3',
-      {
-        pattern: path.resolve(__dirname, require.resolve('url-polyfill/url-polyfill.js')),
-        watched: false
-      },
-      {
-        pattern: 'module-global.js',
-        watched: false
-      }, {
-        pattern: path.resolve(__dirname, require.resolve('jquery/dist/jquery.js')),
-        watched: false
-      }, {
-        pattern: path.resolve(__dirname, require.resolve('expect.js/index.js')),
-        watched: false
-      }, {
-        pattern: path.resolve(__dirname, require.resolve('sinon/pkg/sinon.js')),
-        watched: false
-      }, {
-        pattern: path.resolve(__dirname, require.resolve('proj4/dist/proj4.js')),
-        watched: false
-      }, {
-        pattern: path.resolve(__dirname, require.resolve('pixelmatch/index.js')),
-        watched: false
-      },
+      `https://maps.googleapis.com/maps/api/js?v=3&key=${process.env.GOOGLE_MAPS_API_KEY}`,
       {
         pattern: path.resolve(__dirname, './index_test.js'),
-        watched: false
-      }, {
-        pattern: '**/*',
-        included: false,
         watched: false
       }
     ],
     exclude: [
       '**/*.test.js'
     ],
-    proxies: {
-      '/rendering/': '/base/rendering/',
-      '/spec/': '/base/spec/'
-    },
     preprocessors: {
       '**/*.js': ['webpack', 'sourcemap']
     },
     reporters: ['progress'],
     webpack: {
       devtool: 'inline-source-map',
-      mode: 'development'
+      mode: 'development',
+      module: {
+        rules: [{
+          use: {
+            loader: 'buble-loader'
+          },
+          test: /\.js$/
+        }]
+      }
     },
     webpackMiddleware: {
       noInfo: true
-    }
+    },
+    crossOriginAttribute: false,
+    browsers: ['PhantomJS']
   });
 
   if (process.env.TRAVIS) {
-    const testName = process.env.TRAVIS_PULL_REQUEST ?
-      `https://github.com/mapgears/ol3-google-maps/pull/${process.env.TRAVIS_PULL_REQUEST}` :
-      `${pkg.name}@${pkg.version} (${process.env.TRAVIS_COMMIT})`;
-
-    // see https://wiki.saucelabs.com/display/DOCS/Platform+Configurator
-    // for platform and browserName options (Selenium API, node.js code)
-    const customLaunchers = {
-      SL_Chrome: {
-        base: 'SauceLabs',
-        browserName: 'chrome',
-        version: '62.0'
-      },
-      SL_Firefox: {
-        base: 'SauceLabs',
-        browserName: 'firefox',
-        version: '58'
-      },
-      SL_Edge: {
-        base: 'SauceLabs',
-        platform: 'Windows 10',
-        browserName: 'MicrosoftEdge'
-      },
-      SL_Safari: {
-        base: 'SauceLabs',
-        platform: 'macOS 10.12',
-        browserName: 'safari'
-      }
-    };
     karma.set({
-      sauceLabs: {
-        testName: testName,
-        recordScreenshots: false,
-        startConnect: true,
-        tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER,
-        username: 'openlayers',
-        accessKey: process.env.SAUCE_ACCESS_KEY,
-        connectOptions: {
-          noSslBumpDomains: 'all',
-          connectRetries: 5
-        }
-      },
-      hostname: 'travis.dev',
-      reporters: ['dots', 'saucelabs'],
+      reporters: ['dots'],
       browserDisconnectTimeout: 10000,
       browserDisconnectTolerance: 1,
       captureTimeout: 240000,
       browserNoActivityTimeout: 240000,
-      customLaunchers: customLaunchers,
-      browsers: Object.keys(customLaunchers),
       preprocessors: {
         '../src/**/*.js': ['coverage']
       },
@@ -132,10 +67,6 @@ module.exports = function(karma) {
           }
         ]
       }
-    });
-  } else {
-    karma.set({
-      browsers: ['Chrome']
     });
   }
 };
