@@ -1,9 +1,8 @@
 /**
  * @module olgm/OLGoogleMaps
  */
-import {inherits} from 'ol/index.js';
 import Abstract from './Abstract.js';
-import Layers from './herald/Layers.js';
+import LayersHerald from './herald/Layers.js';
 
 /**
  * The main component of this library. It binds an existing OpenLayers map to
@@ -38,150 +37,149 @@ import Layers from './herald/Layers.js';
  * @extends {olgm.Abstract}
  * @api
  */
-const OLGoogleMaps = function(options) {
+class OLGoogleMaps extends Abstract {
+  constructor(options) {
+    /**
+     * @type {Array.<olgm.herald.Herald>}
+     * @private
+     */
+    this.heralds_ = [];
+
+    const gmapEl = document.createElement('div');
+    gmapEl.style.height = 'inherit';
+    gmapEl.style.width = 'inherit';
+
+    const gmap = new google.maps.Map(gmapEl, {
+      disableDefaultUI: true,
+      disableDoubleClickZoom: true,
+      draggable: false,
+      keyboardShortcuts: false,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      scrollwheel: false,
+      streetViewControl: false
+    });
+
+    super(options.map, gmap);
+
+    const watchOptions = options.watch !== undefined ?
+      options.watch : {};
+
+    const mapIconOptions = options.mapIconOptions !== undefined ?
+      options.mapIconOptions : {};
+
+    /**
+     * @type {olgm.herald.Layers}
+     * @private
+     */
+    this.layersHerald_ = new LayersHerald(
+      this.ol3map, this.gmap, mapIconOptions, watchOptions);
+    this.heralds_.push(this.layersHerald_);
+
+    /**
+     * @type {boolean}
+     * @private
+     */
+    this.active_ = false;
+  }
 
   /**
-   * @type {Array.<olgm.herald.Herald>}
-   * @private
+   * @api
    */
-  this.heralds_ = [];
+  activate() {
 
-  const gmapEl = document.createElement('div');
-  gmapEl.style.height = 'inherit';
-  gmapEl.style.width = 'inherit';
+    if (this.active_) {
+      return;
+    }
 
-  const gmap = new google.maps.Map(gmapEl, {
-    disableDefaultUI: true,
-    disableDoubleClickZoom: true,
-    draggable: false,
-    keyboardShortcuts: false,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    scrollwheel: false,
-    streetViewControl: false
-  });
+    // activate heralds
+    for (let i = 0, len = this.heralds_.length; i < len; i++) {
+      this.heralds_[i].activate();
+    }
 
-  Abstract.call(this, options.map, gmap);
+    this.active_ = true;
+  }
 
-  const watchOptions = options.watch !== undefined ?
-    options.watch : {};
-
-  const mapIconOptions = options.mapIconOptions !== undefined ?
-    options.mapIconOptions : {};
 
   /**
-   * @type {olgm.herald.Layers}
-   * @private
+   * @api
    */
-  this.layersHerald_ = new Layers(
-    this.ol3map, this.gmap, mapIconOptions, watchOptions);
-  this.heralds_.push(this.layersHerald_);
-};
+  deactivate() {
 
-inherits(OLGoogleMaps, Abstract);
+    if (!this.active_) {
+      return;
+    }
 
+    // deactivate heralds
+    for (let i = 0, len = this.heralds_.length; i < len; i++) {
+      this.heralds_[i].deactivate();
+    }
 
-/**
- * @type {boolean}
- * @private
- */
-OLGoogleMaps.prototype.active_ = false;
-
-
-/**
- * @api
- */
-OLGoogleMaps.prototype.activate = function() {
-
-  if (this.active_) {
-    return;
+    this.active_ = false;
   }
 
-  // activate heralds
-  for (let i = 0, len = this.heralds_.length; i < len; i++) {
-    this.heralds_[i].activate();
+
+  /**
+   * @return {boolean} whether or not google maps is active
+   * @api
+   */
+  getGoogleMapsActive() {
+    return this.active_ && this.layersHerald_.getGoogleMapsActive();
   }
 
-  this.active_ = true;
-};
 
-
-/**
- * @api
- */
-OLGoogleMaps.prototype.deactivate = function() {
-
-  if (!this.active_) {
-    return;
+  /**
+   * @return {google.maps.Map} the google maps map
+   * @api
+   */
+  getGoogleMapsMap() {
+    return this.gmap;
   }
 
-  // deactivate heralds
-  for (let i = 0, len = this.heralds_.length; i < len; i++) {
-    this.heralds_[i].deactivate();
+
+  /**
+   * Set the watch options
+   * @param {olgmx.herald.WatchOptions} watchOptions whether each layer type
+   * should be watched
+   * @api
+   */
+  setWatchOptions(watchOptions) {
+    const newWatchOptions = watchOptions !== undefined ? watchOptions : {};
+    this.layersHerald_.setWatchOptions(newWatchOptions);
   }
 
-  this.active_ = false;
-};
 
-
-/**
- * @return {boolean} whether or not google maps is active
- * @api
- */
-OLGoogleMaps.prototype.getGoogleMapsActive = function() {
-  return this.active_ && this.layersHerald_.getGoogleMapsActive();
-};
-
-
-/**
- * @return {google.maps.Map} the google maps map
- * @api
- */
-OLGoogleMaps.prototype.getGoogleMapsMap = function() {
-  return this.gmap;
-};
-
-
-/**
- * Set the watch options
- * @param {olgmx.herald.WatchOptions} watchOptions whether each layer type
- * should be watched
- * @api
- */
-OLGoogleMaps.prototype.setWatchOptions = function(watchOptions) {
-  const newWatchOptions = watchOptions !== undefined ? watchOptions : {};
-  this.layersHerald_.setWatchOptions(newWatchOptions);
-};
-
-
-/**
- * @api
- */
-OLGoogleMaps.prototype.toggle = function() {
-  if (this.active_) {
-    this.deactivate();
-  } else {
-    this.activate();
+  /**
+   * @api
+   */
+  toggle() {
+    if (this.active_) {
+      this.deactivate();
+    } else {
+      this.activate();
+    }
   }
-};
 
 
-/**
- * Trigger the layer ordering functions in the heralds. We listen for layers
- * added and removed, which usually happens when we change the order of the
- * layers in OL3, but this function allows refreshing it manually in case
- * the order is being change in another way.
- * @api
- */
-OLGoogleMaps.prototype.orderLayers = function() {
-  this.layersHerald_.orderLayers();
-};
+  /**
+   * Trigger the layer ordering functions in the heralds. We listen for layers
+   * added and removed, which usually happens when we change the order of the
+   * layers in OL3, but this function allows refreshing it manually in case
+   * the order is being change in another way.
+   * @api
+   */
+  orderLayers() {
+    this.layersHerald_.orderLayers();
+  }
 
 
-/**
- * Refresh layers and features that might need it (only ImageWMS so far)
- * @api
- */
-OLGoogleMaps.prototype.refresh = function() {
-  this.layersHerald_.refresh();
-};
+  /**
+   * Refresh layers and features that might need it (only ImageWMS so far)
+   * @api
+   */
+  refresh() {
+    this.layersHerald_.refresh();
+  }
+}
+
+
 export default OLGoogleMaps;

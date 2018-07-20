@@ -1,115 +1,113 @@
 /**
  * @module olgm/gm/MapIcon
  */
-import {inherits} from 'ol/index.js';
 import MapElement from './MapElement.js';
 
-/**
- * Creates a new map icon
- * @constructor
- * @extends {olgm.gm.MapElement}
- * @param {ol.style.Icon} imageStyle ol3 style properties
- * @param {Object.<string, *>=} opt_options Optional properties to set.
- * @api
- */
-const MapIcon = function(imageStyle, opt_options) {
+class MapIcon extends MapElement {
+  /**
+   * Creates a new map icon
+   * @constructor
+   * @extends {olgm.gm.MapElement}
+   * @param {ol.style.Icon} imageStyle ol3 style properties
+   * @param {Object.<string, *>=} opt_options Optional properties to set.
+   * @api
+   */
+  constructor(imageStyle, opt_options) {
+    super();
 
-  MapElement.call(this);
+    /**
+     * This object contains the ol3 style properties for the icon. We keep
+     * it as an object because its properties can change, for example the size
+     * is only defined after the image is done loading.
+     * @type {ol.style.Icon}
+     * @private
+     */
+    this.imageStyle_ = imageStyle;
+
+    this.setValues(opt_options);
+  }
+
 
   /**
-   * This object contains the ol3 style properties for the icon. We keep
-   * it as an object because its properties can change, for example the size
-   * is only defined after the image is done loading.
-   * @type {ol.style.Icon}
+   * Listen to property changes and react accordingly
+   * @param {string} prop property
+   * @api
+   * @override
+   */
+  changed(prop) {
+    switch (prop) {
+      case 'maxZoom':
+      case 'minZoom':
+      case 'offsetX':
+      case 'offsetY':
+      case 'position':
+        this.draw();
+        break;
+      default:
+        break;
+    }
+  }
+
+
+  /**
+   * Draws the icon to the canvas 2d context.
    * @private
    */
-  this.imageStyle_ = imageStyle;
+  drawCanvas_() {
+    const canvas = this.canvas_;
+    if (!canvas) {
+      return;
+    }
 
-  this.setValues(opt_options);
-};
+    const image = this.imageStyle_.getImage(1);
+    if (!image) {
+      return;
+    }
 
-inherits(MapIcon, MapElement);
+    const style = canvas.style;
 
+    style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
-/**
- * Listen to property changes and react accordingly
- * @param {string} prop property
- * @api
- * @override
- */
-MapIcon.prototype.changed = function(prop) {
-  switch (prop) {
-    case 'maxZoom':
-    case 'minZoom':
-    case 'offsetX':
-    case 'offsetY':
-    case 'position':
-      this.draw();
-      break;
-    default:
-      break;
-  }
-};
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    const anchor = this.imageStyle_.getAnchor() || [0, 0];
+    const scale = this.imageStyle_.getScale() || 1;
+    const rotation = this.imageStyle_.getRotation() || 0;
+    const opacity = this.imageStyle_.getOpacity() || 1;
 
-/**
- * Draws the icon to the canvas 2d context.
- * @private
- */
-MapIcon.prototype.drawCanvas_ = function() {
-  const canvas = this.canvas_;
-  if (!canvas) {
-    return;
-  }
+    const offsetX = anchor[0] * scale;
+    const offsetY = anchor[1] * scale;
 
-  const image = this.imageStyle_.getImage(1);
-  if (!image) {
-    return;
+    const x = canvas.width / 2 - offsetX;
+    const y = canvas.height / 2 - offsetY;
+
+    ctx.translate(x + offsetX, y + offsetY);
+    ctx.rotate(rotation);
+    ctx.translate(-x - offsetX, -y - offsetY);
+    ctx.globalAlpha = opacity;
+
+    ctx.drawImage(image, x, y,
+      image.width * scale, image.height * scale);
   }
 
-  const style = canvas.style;
 
-  style.zIndex = /** @type {number} */ (this.get('zIndex'));
+  /**
+   * Manage feature being added to the map
+   * @api
+   * @override
+   */
+  onAdd() {
+    const canvas = this.canvas_ = document.createElement('canvas');
+    const style = canvas.style;
+    style.position = 'absolute';
 
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    this.drawCanvas_();
 
-  const anchor = this.imageStyle_.getAnchor() || [0, 0];
-  const scale = this.imageStyle_.getScale() || 1;
-  const rotation = this.imageStyle_.getRotation() || 0;
-  const opacity = this.imageStyle_.getOpacity() || 1;
-
-  const offsetX = anchor[0] * scale;
-  const offsetY = anchor[1] * scale;
-
-  const x = canvas.width / 2 - offsetX;
-  const y = canvas.height / 2 - offsetY;
-
-  ctx.translate(x + offsetX, y + offsetY);
-  ctx.rotate(rotation);
-  ctx.translate(-x - offsetX, -y - offsetY);
-  ctx.globalAlpha = opacity;
-
-  ctx.drawImage(image, x, y,
-    image.width * scale, image.height * scale);
-};
-
-
-/**
- * Manage feature being added to the map
- * @api
- * @override
- */
-MapIcon.prototype.onAdd = function() {
-  const canvas = this.canvas_ = document.createElement('canvas');
-  const style = canvas.style;
-  style.position = 'absolute';
-
-  this.drawCanvas_();
-
-  const panes = this.getPanes();
-  if (panes) {
-    panes.markerLayer.appendChild(canvas);
+    const panes = this.getPanes();
+    if (panes) {
+      panes.markerLayer.appendChild(canvas);
+    }
   }
-};
+}
 export default MapIcon;

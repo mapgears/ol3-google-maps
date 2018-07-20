@@ -1,212 +1,207 @@
 /**
  * @module olgm/herald/VectorSource
  */
-import {inherits} from 'ol/index.js';
 import {unlistenAllByKey} from '../util.js';
 import {createStyle} from '../gm.js';
-import Source from './Source.js';
-import VectorFeature from './VectorFeature.js';
+import SourceHerald from './Source.js';
+import VectorFeatureHerald from './VectorFeature.js';
 
-/**
- * Listen to a Vector layer
- * @param {!ol.Map} ol3map openlayers map
- * @param {!google.maps.Map} gmap google maps map
- * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
- * @constructor
- * @extends {olgm.herald.Source}
- */
-const VectorSource = function(ol3map, gmap, mapIconOptions) {
+class VectorSourceHerald extends SourceHerald {
   /**
-  * @type {Array.<olgm.herald.VectorSource.LayerCache>}
-  * @private
-  */
-  this.cache_ = [];
-
-  /**
-  * @type {Array.<ol.layer.Vector>}
-  * @private
-  */
-  this.layers_ = [];
-
-  /**
-   * @type {olgmx.gm.MapIconOptions}
-   * @private
+   * Listen to a Vector layer
+   * @param {!ol.Map} ol3map openlayers map
+   * @param {!google.maps.Map} gmap google maps map
+   * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+   * @constructor
+   * @extends {olgm.herald.Source}
    */
-  this.mapIconOptions_ = mapIconOptions;
+  constructor(ol3map, gmap, mapIconOptions) {
+    super(ol3map, gmap);
 
-  Source.call(this, ol3map, gmap);
-};
+    /**
+    * @type {Array.<olgm.herald.VectorSource.LayerCache>}
+    * @private
+    */
+    this.cache_ = [];
 
-inherits(VectorSource, Source);
+    /**
+    * @type {Array.<ol.layer.Vector>}
+    * @private
+    */
+    this.layers_ = [];
 
-
-/**
- * @param {ol.layer.Base} layer layer to watch
- * @override
- */
-VectorSource.prototype.watchLayer = function(layer) {
-  const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
-
-  // Source required
-  const source = vectorLayer.getSource();
-  if (!source) {
-    return;
+    /**
+     * @type {olgmx.gm.MapIconOptions}
+     * @private
+     */
+    this.mapIconOptions_ = mapIconOptions;
   }
 
-  this.layers_.push(vectorLayer);
 
-  // Data
-  const data = new google.maps.Data({
-    'map': this.gmap
-  });
+  /**
+   * @param {ol.layer.Base} layer layer to watch
+   * @override
+   */
+  watchLayer(layer) {
+    const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
 
-  // Style
-  const gmStyle = createStyle(vectorLayer, this.mapIconOptions_);
-  if (gmStyle) {
-    data.setStyle(gmStyle);
-  }
+    // Source required
+    const source = vectorLayer.getSource();
+    if (!source) {
+      return;
+    }
 
-  // herald
-  const herald = new VectorFeature(
-    this.ol3map, this.gmap, source, data, this.mapIconOptions_);
+    this.layers_.push(vectorLayer);
 
-  // opacity
-  const opacity = vectorLayer.getOpacity();
+    // Data
+    const data = new google.maps.Data({
+      'map': this.gmap
+    });
 
-  const cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
-    data: data,
-    herald: herald,
-    layer: vectorLayer,
-    listenerKeys: [],
-    opacity: opacity
-  });
-
-  cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
-    () => this.handleVisibleChange_(cacheItem)));
-
-  const view = this.ol3map.getView();
-  cacheItem.listenerKeys.push(view.on('change:resolution',
-    () => this.handleResolutionChange_(cacheItem)));
-
-
-  this.activateCacheItem_(cacheItem);
-
-  this.cache_.push(cacheItem);
-};
-
-
-/**
- * Unwatch the vector layer
- * @param {ol.layer.Base} layer layer to unwatch
- * @override
- */
-VectorSource.prototype.unwatchLayer = function(layer) {
-  const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
-
-  const index = this.layers_.indexOf(vectorLayer);
-  if (index !== -1) {
-    this.layers_.splice(index, 1);
-
-    const cacheItem = this.cache_[index];
-    unlistenAllByKey(cacheItem.listenerKeys);
-
-    // data - unset
-    cacheItem.data.setMap(null);
+    // Style
+    const gmStyle = createStyle(vectorLayer, this.mapIconOptions_);
+    if (gmStyle) {
+      data.setStyle(gmStyle);
+    }
 
     // herald
-    cacheItem.herald.deactivate();
+    const herald = new VectorFeatureHerald(
+      this.ol3map, this.gmap, source, data, this.mapIconOptions_);
 
     // opacity
-    vectorLayer.setOpacity(cacheItem.opacity);
+    const opacity = vectorLayer.getOpacity();
 
-    this.cache_.splice(index, 1);
-  }
+    const cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
+      data: data,
+      herald: herald,
+      layer: vectorLayer,
+      listenerKeys: [],
+      opacity: opacity
+    });
 
-};
+    cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
+      () => this.handleVisibleChange_(cacheItem)));
 
-
-/**
- * Activate all cache items
- * @api
- * @override
- */
-VectorSource.prototype.activate = function() {
-  Source.prototype.activate.call(this);
-  this.cache_.forEach(this.activateCacheItem_, this);
-};
-
-
-/**
- * Activates an image WMS layer cache item.
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to activate
- * @private
- */
-VectorSource.prototype.activateCacheItem_ = function(
-  cacheItem) {
-  const layer = cacheItem.layer;
-  const visible = layer.getVisible();
-  if (visible && this.googleMapsIsActive) {
-    cacheItem.herald.activate();
-    cacheItem.layer.setOpacity(0);
-  }
-};
+    const view = this.ol3map.getView();
+    cacheItem.listenerKeys.push(view.on('change:resolution',
+      () => this.handleResolutionChange_(cacheItem)));
 
 
-/**
- * Deactivate all cache items
- * @api
- * @override
- */
-VectorSource.prototype.deactivate = function() {
-  Source.prototype.deactivate.call(this);
-  this.cache_.forEach(this.deactivateCacheItem_, this);
-};
-
-
-/**
- * Deactivates a Tile WMS layer cache item.
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to
- * deactivate
- * @private
- */
-VectorSource.prototype.deactivateCacheItem_ = function(
-  cacheItem) {
-  cacheItem.herald.deactivate();
-  cacheItem.layer.setOpacity(cacheItem.opacity);
-};
-
-
-VectorSource.prototype.handleResolutionChange_ = function(
-  cacheItem) {
-  const layer = cacheItem.layer;
-
-  const minResolution = layer.getMinResolution();
-  const maxResolution = layer.getMaxResolution();
-  const currentResolution = this.ol3map.getView().getResolution();
-  if (currentResolution < minResolution || currentResolution > maxResolution) {
-    cacheItem.herald.setVisible(false);
-  } else {
-    cacheItem.herald.setVisible(true);
-  }
-};
-
-
-/**
- * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
- * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem for the
- * watched layer
- * @private
- */
-VectorSource.prototype.handleVisibleChange_ = function(
-  cacheItem) {
-  const layer = cacheItem.layer;
-  const visible = layer.getVisible();
-  if (visible) {
     this.activateCacheItem_(cacheItem);
-  } else {
-    this.deactivateCacheItem_(cacheItem);
+
+    this.cache_.push(cacheItem);
   }
-};
+
+
+  /**
+   * Unwatch the vector layer
+   * @param {ol.layer.Base} layer layer to unwatch
+   * @override
+   */
+  unwatchLayer(layer) {
+    const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
+
+    const index = this.layers_.indexOf(vectorLayer);
+    if (index !== -1) {
+      this.layers_.splice(index, 1);
+
+      const cacheItem = this.cache_[index];
+      unlistenAllByKey(cacheItem.listenerKeys);
+
+      // data - unset
+      cacheItem.data.setMap(null);
+
+      // herald
+      cacheItem.herald.deactivate();
+
+      // opacity
+      vectorLayer.setOpacity(cacheItem.opacity);
+
+      this.cache_.splice(index, 1);
+    }
+
+  }
+
+
+  /**
+   * Activate all cache items
+   * @api
+   * @override
+   */
+  activate() {
+    super.activate();
+    this.cache_.forEach(this.activateCacheItem_, this);
+  }
+
+
+  /**
+   * Activates an image WMS layer cache item.
+   * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to activate
+   * @private
+   */
+  activateCacheItem_(cacheItem) {
+    const layer = cacheItem.layer;
+    const visible = layer.getVisible();
+    if (visible && this.googleMapsIsActive) {
+      cacheItem.herald.activate();
+      cacheItem.layer.setOpacity(0);
+    }
+  }
+
+
+  /**
+   * Deactivate all cache items
+   * @api
+   * @override
+   */
+  deactivate() {
+    super.deactivate();
+    this.cache_.forEach(this.deactivateCacheItem_, this);
+  }
+
+
+  /**
+   * Deactivates a Tile WMS layer cache item.
+   * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to
+   * deactivate
+   * @private
+   */
+  deactivateCacheItem_(cacheItem) {
+    cacheItem.herald.deactivate();
+    cacheItem.layer.setOpacity(cacheItem.opacity);
+  }
+
+
+  handleResolutionChange_(cacheItem) {
+    const layer = cacheItem.layer;
+
+    const minResolution = layer.getMinResolution();
+    const maxResolution = layer.getMaxResolution();
+    const currentResolution = this.ol3map.getView().getResolution();
+    if (currentResolution < minResolution || currentResolution > maxResolution) {
+      cacheItem.herald.setVisible(false);
+    } else {
+      cacheItem.herald.setVisible(true);
+    }
+  }
+
+
+  /**
+   * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
+   * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem for the
+   * watched layer
+   * @private
+   */
+  handleVisibleChange_(cacheItem) {
+    const layer = cacheItem.layer;
+    const visible = layer.getVisible();
+    if (visible) {
+      this.activateCacheItem_(cacheItem);
+    } else {
+      this.deactivateCacheItem_(cacheItem);
+    }
+  }
+}
 
 
 /**
@@ -218,5 +213,5 @@ VectorSource.prototype.handleVisibleChange_ = function(
  *   opacity: (number)
  * }}
  */
-VectorSource.LayerCache;
-export default VectorSource;
+VectorSourceHerald.LayerCache;
+export default VectorSourceHerald;

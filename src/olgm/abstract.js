@@ -10,19 +10,19 @@
  * @param {!google.maps.Map} gmap google maps map
  * @constructor
  */
-const Abstract = function(ol3map, gmap) {
+class Abstract {
+  constructor(ol3map, gmap) {
+    /**
+     * @type {!ol.Map}
+     * @protected
+     */
+    this.ol3map = ol3map;
 
-  /**
-   * @type {!ol.Map}
-   * @protected
-   */
-  this.ol3map = ol3map;
-
-  /**
-   * @type {!google.maps.Map}
-   * @protected
-   */
-  this.gmap = gmap;
-
-};
+    /**
+     * @type {!google.maps.Map}
+     * @protected
+     */
+    this.gmap = gmap;
+  }
+}
 export default Abstract;
