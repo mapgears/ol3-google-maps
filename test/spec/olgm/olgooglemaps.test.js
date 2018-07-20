@@ -1,7 +1,7 @@
 import View from 'ol/View.js';
 import Map from 'ol/Map.js';
-import OLGoogleMaps from '../../../src/olgm/OLGoogleMaps.js';
-import GoogleLayer from '../../../src/olgm/layer/Google.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
 
 describe('olgm.OLGoogleMaps', function() {
   const target = document.createElement('div');

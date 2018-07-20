@@ -29,6 +29,9 @@ module.exports = function(karma) {
     webpack: {
       devtool: 'inline-source-map',
       mode: 'development',
+      resolve: {
+        modules: [path.resolve(__dirname, '..', 'src'), 'node_modules']
+      },
       module: {
         rules: [{
           use: {

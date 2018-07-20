@@ -1,5 +1,5 @@
 import Map from 'ol/Map.js';
-import Layers from '../../../../src/olgm/herald/Layers.js';
+import Layers from 'olgm/herald/Layers.js';
 
 describe('olgm.herald.Layers', function() {
   // Setup constructor variables
