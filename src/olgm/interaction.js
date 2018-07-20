@@ -21,9 +21,9 @@ import DragPan from 'ol/interaction/DragPan.js';
  *   with Google Maps. It is excluded, but also replace by one that doesn't
  *   have kinetic enabled.
  *
- * @param {olx.interaction.DefaultsOptions=} opt_options Defaults options.
- * @return {ol.Collection.<ol.interaction.Interaction>} A collection of
- * interactions to be used with the ol.Map constructor's interactions option.
+ * @param {module:ol/interaction/Interaction~DefaultsOptions=} opt_options Defaults options.
+ * @return {module:ol/Collection.<ol.interaction.Interaction>} A collection of
+ * interactions to be used with the module:ol/PluggableMap constructor's interactions option.
  * @api stable
  */
 export function defaults(opt_options) {

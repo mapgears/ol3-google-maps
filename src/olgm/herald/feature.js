@@ -17,15 +17,15 @@ class FeatureHerald extends Herald {
    * - its geometry
    * - its style
    *
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
    * @param {olgmx.herald.FeatureOptions} options options
    */
   constructor(ol3map, gmap, options) {
     super(ol3map, gmap);
 
     /**
-     * @type {ol.Feature}
+     * @type {module:ol/Feature}
      * @private
      */
     this.feature_ = options.feature;
@@ -43,7 +43,7 @@ class FeatureHerald extends Herald {
     this.index_ = options.index;
 
     /**
-     * @type {olgmx.gm.MapIconOptions}
+     * @type {module:olgm/gm/MapIcon~Options}
      * @private
      */
     this.mapIconOptions_ = options.mapIconOptions;
@@ -61,7 +61,7 @@ class FeatureHerald extends Herald {
     this.gmapFeature_ = null;
 
     /**
-     * @type {olgm.gm.MapLabel}
+     * @type {module:olgm/gm/MapLabel}
      * @private
      */
     this.label_ = null;
@@ -70,7 +70,7 @@ class FeatureHerald extends Herald {
      * The marker object contains a marker to draw on a canvas instead of using
      * the Google Maps API. If useCanvas_ is set to false, this variable won't
      * be used.
-     * @type {olgm.gm.MapIcon}
+     * @type {module:olgm/gm/MapIcon}
      * @private
      */
     this.marker_ = null;
@@ -198,13 +198,13 @@ class FeatureHerald extends Herald {
 
   /**
    * @private
-   * @return {ol.geom.Geometry} the feature's geometry
+   * @return {module:ol/geom/Geometry} the feature's geometry
    */
   getGeometry_() {
     const geometry = this.feature_.getGeometry();
     assert(
       geometry !== undefined, 'Expected feature to have geometry');
-    return /** @type {ol.geom.Geometry} */ (geometry);
+    return /** @type {module:ol/geom/Geometry} */ (geometry);
   }
 
 

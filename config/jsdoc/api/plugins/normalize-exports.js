@@ -17,8 +17,13 @@ function addDefaultExportPath(obj) {
     if (matches) {
       matches.forEach(module => {
         if (!/[~\.]/.test(module)) {
-          const checkFile = path.resolve(moduleRoot, module.replace(/^module\:/, ''));
-          const file = fs.readFileSync(require.resolve(checkFile), 'utf-8');
+          const checkFile = module.replace(/^module\:/, '');
+          let file;
+          try {
+            file = fs.readFileSync(require.resolve(path.join(moduleRoot, checkFile)), 'utf-8');
+          } catch (Error) {
+            file = fs.readFileSync(require.resolve(path.join(moduleRoot, '..', 'node_modules', checkFile)), 'utf-8');
+          }
           const lines = file.split('\n');
           let hasDefaultExport = false;
           for (let i = 0, ii = lines.length; i < ii; ++i) {

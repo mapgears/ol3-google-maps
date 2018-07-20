@@ -19,13 +19,13 @@ import MapIcon from './gm/MapIcon.js';
 
 /**
  * Create a Google Maps feature using an OpenLayers one.
- * @param {ol.Feature} feature feature to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/Feature} feature feature to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.Feature} google Feature
  */
 export function createFeature(feature, opt_ol3map) {
-  const geometry = /** @type {ol.geom.Geometry} */ (feature.getGeometry());
+  const geometry = /** @type {module:ol/geom/Geometry} */ (feature.getGeometry());
   const gmapGeometry = createFeatureGeometry(geometry, opt_ol3map);
   return new google.maps.Data.Feature({
     geometry: gmapGeometry
@@ -35,10 +35,10 @@ export function createFeature(feature, opt_ol3map) {
 
 /**
  * Create a Google Maps geometry using an OpenLayers one.
- * @param {ol.geom.Geometry} geometry geometry to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/geom/Geometry} geometry geometry to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.Geometry|google.maps.LatLng|google.maps.LatLng}
+ * @return {google.maps.Data.Geometry|google.maps.LatLng}
  * google Geometry or LatLng
  */
 export function createFeatureGeometry(geometry, opt_ol3map) {
@@ -56,7 +56,7 @@ export function createFeatureGeometry(geometry, opt_ol3map) {
   }
 
   assert(gmapGeometry !== null,
-    'Expected geometry to be ol.geom.Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon');
+    'Expected geometry to be module:ol/geom/Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon');
 
   return gmapGeometry;
 }
@@ -64,8 +64,8 @@ export function createFeatureGeometry(geometry, opt_ol3map) {
 
 /**
  * Create a Google Maps LatLng object using an OpenLayers Point.
- * @param {ol.geom.Point|ol.Coordinate} object coordinate to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/geom/Point|module:ol/coordinate~Coordinate} object coordinate to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.LatLng} google LatLng object
  */
@@ -85,8 +85,8 @@ export function createLatLng(object, opt_ol3map) {
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.MultiPoint|ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/geom/MultiPoint|module:ol/geom/LineString|module:ol/geom/Polygon|module:ol/geom/MultiLineString|module:ol/geom/MultiPolygon} geometry geometry to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.MultiPoint|google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon|google.maps.Data.MultiPolygon} google
  * LineString or Polygon
@@ -136,8 +136,8 @@ export function createGeometry(geometry, opt_ol3map) {
 /**
  * Convert a list of OpenLayers coordinates to a list of google maps LatLng.
  *
- * @param {Array.<ol.Coordinate>} coordinates List of coordinate
- * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @param {Array.<module:ol/coordinate~Coordinate>} coordinates List of coordinate
+ * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
  * @return {Array.<google.maps.LatLng>} List of lat lng.
  * @private
  */
@@ -157,8 +157,8 @@ export function genLatLngs_(coordinates, opt_inProj) {
  * Convert a list of OpenLayers multi-coordinates to a list of multi
  * google maps LatLng.
  *
- * @param {Array.<Array.<ol.Coordinate>>} coordinates List of multi coordinate
- * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @param {Array.<Array.<module:ol/coordinate~Coordinate>>} coordinates List of multi coordinate
+ * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
  * @return {Array.<Array.<google.maps.LatLng>>} List of multi lat lng.
  * @private
  */
@@ -175,8 +175,8 @@ export function genMultiLatLngs_(coordinates, opt_inProj) {
 /**
  * Convert a list of OpenLayers polygons to a list of google maps polygons.
  *
- * @param {Array.<ol.geom.Polygon>} polygons List of polygons.
- * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
+ * @param {Array.<module:ol/geom/Polygon>} polygons List of polygons.
+ * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
  * @return {Array.<google.maps.Data.Polygon>} List of polygons.
  * @private
  */
@@ -196,9 +196,9 @@ export function genMultiPolygon_(polygons, opt_inProj) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers object.
- * @param {ol.style.Style|ol.StyleFunction|ol.layer.Vector|ol.Feature}
+ * @param {module:ol/style/Style|module:ol/style/Style~StyleFunction|module:ol/layer/Vector|module:ol/Feature}
  * object style object
- * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+ * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {?google.maps.Data.StyleOptions} google style options
  */
@@ -214,8 +214,8 @@ export function createStyle(object, mapIconOptions, opt_index) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
- * @param {ol.style.Style} style style object
- * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+ * @param {module:ol/style/Style} style style object
+ * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {google.maps.Data.StyleOptions} google style options
  */
@@ -266,7 +266,7 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
       mapIconOptions.useCanvas : false;
 
     if (image instanceof Circle || image instanceof RegularShape) {
-      // --- ol.style.Circle ---
+      // --- module:ol/style/Circle ---
       if (image instanceof Circle) {
         gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
       } else if (image instanceof RegularShape) {
@@ -335,7 +335,7 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
         gmSymbol['scale'] = imageRadius;
       }
     } else if (image instanceof Icon && !useCanvas) {
-      // --- ol.style.Icon ---
+      // --- module:ol/style/Icon ---
 
       const imageSrc = image.getSrc();
       if (imageSrc) {
@@ -383,7 +383,7 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
 
   // if, at this very last point, there aren't any style options that have
   // been set, then tell Google Maps to render the feature invisible because
-  // we're dealing with an empty `ol.style.Style` object.
+  // we're dealing with an empty `module:ol/style/Style` object.
   if (Object.keys(/** @type {!Object} */ (gmStyle)).length === 0) {
     gmStyle['visible'] = false;
   } else if (opt_index !== undefined) {
@@ -400,10 +400,10 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
 
 /**
  * Create a MapLabel object from a text style and Lat/Lng location.
- * @param {ol.style.Text} textStyle style for the text
+ * @param {module:ol/style/Text} textStyle style for the text
  * @param {google.maps.LatLng} latLng position of the label
  * @param {number} index index for the label
- * @return {olgm.gm.MapLabel} map label
+ * @return {module:olgm/gm/MapLabel} map label
  */
 export function createLabel(textStyle, latLng, index) {
 
@@ -470,10 +470,10 @@ export function createLabel(textStyle, latLng, index) {
 
 /**
  * Create a mapIcon object from an image style and Lat/Lng location
- * @param {ol.style.Icon} iconStyle style for the icon
+ * @param {module:ol/style/Icon} iconStyle style for the icon
  * @param {google.maps.LatLng} latLng position of the label
  * @param {number} index index for the label
- * @return {olgm.gm.MapIcon} map label
+ * @return {module:olgm/gm/MapIcon} map icon
  */
 export function createMapIcon(iconStyle, latLng, index) {
 

@@ -4,6 +4,12 @@
 import FeatureHerald from './Feature.js';
 import Herald from './Herald.js';
 
+/**
+ * @typedef {Object} Cache
+ * @property {module:ol/Feature} feature
+ * @property {module:olgm/herald/Feature} herald
+ */
+
 class VectorFeatureHerald extends Herald {
   /**
    * The VectorFeature Herald is responsible of sychronizing the features from
@@ -11,17 +17,17 @@ class VectorFeatureHerald extends Herald {
    * added and removed are all managed. Each existing or added feature is bound
    * to a `olgm.herald.Feature` object. It gets unbound when removed.
    *
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
-   * @param {!ol.source.Vector} source vector source
-   * @param {!google.maps.Data} data google maps data object
-   * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
+   * @param {ol.source.Vector} source vector source
+   * @param {google.maps.Data} data google maps data object
+   * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
    */
   constructor(ol3map, gmap, source, data, mapIconOptions) {
     super(ol3map, gmap);
 
     /**
-     * @type {Array.<ol.Feature>}
+     * @type {Array.<module:ol/Feature>}
      * @private
      */
     this.features_ = [];
@@ -45,7 +51,7 @@ class VectorFeatureHerald extends Herald {
     this.source_ = source;
 
     /**
-     * @type {olgmx.gm.MapIconOptions}
+     * @type {module:olgm/gm/MapIcon~Options}
      * @private
      */
     this.mapIconOptions_ = mapIconOptions;
@@ -102,7 +108,7 @@ class VectorFeatureHerald extends Herald {
    * @private
    */
   handleAddFeature_(event) {
-    const feature = /** @type {ol.Feature} */ (event.feature);
+    const feature = /** @type {module:ol/Feature} */ (event.feature);
     this.watchFeature_(feature);
   }
 
@@ -112,13 +118,13 @@ class VectorFeatureHerald extends Herald {
    * @private
    */
   handleRemoveFeature_(event) {
-    const feature = /** @type {ol.Feature} */ (event.feature);
+    const feature = /** @type {module:ol/Feature} */ (event.feature);
     this.unwatchFeature_(feature);
   }
 
 
   /**
-   * @param {ol.Feature} feature feature to watch
+   * @param {module:ol/Feature} feature feature to watch
    * @private
    */
   watchFeature_(feature) {
@@ -152,7 +158,7 @@ class VectorFeatureHerald extends Herald {
 
 
   /**
-   * @param {ol.Feature} feature feature to unwatch
+   * @param {module:ol/Feature} feature feature to unwatch
    * @private
    */
   unwatchFeature_(feature) {
@@ -169,11 +175,4 @@ class VectorFeatureHerald extends Herald {
 }
 
 
-/**
- * @typedef {{
- *   feature: (ol.Feature),
- *   herald: (olgm.herald.Feature)
- * }}
- */
-VectorFeatureHerald.Cache;
 export default VectorFeatureHerald;

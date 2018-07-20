@@ -6,30 +6,39 @@ import {createStyle} from '../gm.js';
 import SourceHerald from './Source.js';
 import VectorFeatureHerald from './VectorFeature.js';
 
+/**
+ * @typedef {Object} LayerCache
+ * @property {google.maps.Data} data
+ * @property {module:olgm/herald/VectorFeature} herald
+ * @property {module:ol/layer/Vector} layer
+ * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {number} opacity
+ */
+
 class VectorSourceHerald extends SourceHerald {
   /**
    * Listen to a Vector layer
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
-   * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
+   * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
    */
   constructor(ol3map, gmap, mapIconOptions) {
     super(ol3map, gmap);
 
     /**
-    * @type {Array.<olgm.herald.VectorSource.LayerCache>}
+    * @type {Array.<module:olgm/herald/VectorSource~LayerCache>}
     * @private
     */
     this.cache_ = [];
 
     /**
-    * @type {Array.<ol.layer.Vector>}
+    * @type {Array.<module:ol/layer/Vector>}
     * @private
     */
     this.layers_ = [];
 
     /**
-     * @type {olgmx.gm.MapIconOptions}
+     * @type {module:olgm/gm/MapIcon~Options}
      * @private
      */
     this.mapIconOptions_ = mapIconOptions;
@@ -37,11 +46,11 @@ class VectorSourceHerald extends SourceHerald {
 
 
   /**
-   * @param {ol.layer.Base} layer layer to watch
+   * @param {module:ol/layer/Base} layer layer to watch
    * @override
    */
   watchLayer(layer) {
-    const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
+    const vectorLayer = /** @type {module:ol/layer/Vector} */ (layer);
 
     // Source required
     const source = vectorLayer.getSource();
@@ -69,7 +78,7 @@ class VectorSourceHerald extends SourceHerald {
     // opacity
     const opacity = vectorLayer.getOpacity();
 
-    const cacheItem = /** {@type olgm.herald.VectorSource.LayerCache} */ ({
+    const cacheItem = /** {@type module:olgm/herald/VectorSource~LayerCache} */ ({
       data: data,
       herald: herald,
       layer: vectorLayer,
@@ -93,11 +102,11 @@ class VectorSourceHerald extends SourceHerald {
 
   /**
    * Unwatch the vector layer
-   * @param {ol.layer.Base} layer layer to unwatch
+   * @param {module:ol/layer/Base} layer layer to unwatch
    * @override
    */
   unwatchLayer(layer) {
-    const vectorLayer = /** @type {ol.layer.Vector} */ (layer);
+    const vectorLayer = /** @type {module:ol/layer/Vector} */ (layer);
 
     const index = this.layers_.indexOf(vectorLayer);
     if (index !== -1) {
@@ -134,7 +143,7 @@ class VectorSourceHerald extends SourceHerald {
 
   /**
    * Activates an image WMS layer cache item.
-   * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to activate
+   * @param {module:olgm/herald/VectorSource~LayerCache} cacheItem cacheItem to activate
    * @private
    */
   activateCacheItem_(cacheItem) {
@@ -160,7 +169,7 @@ class VectorSourceHerald extends SourceHerald {
 
   /**
    * Deactivates a Tile WMS layer cache item.
-   * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem to
+   * @param {module:olgm/herald/VectorSource~LayerCache} cacheItem cacheItem to
    * deactivate
    * @private
    */
@@ -186,7 +195,7 @@ class VectorSourceHerald extends SourceHerald {
 
   /**
    * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
-   * @param {olgm.herald.VectorSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/VectorSource~LayerCache} cacheItem cacheItem for the
    * watched layer
    * @private
    */
@@ -202,14 +211,4 @@ class VectorSourceHerald extends SourceHerald {
 }
 
 
-/**
- * @typedef {{
- *   data: (google.maps.Data),
- *   herald: (olgm.herald.VectorFeature),
- *   layer: (ol.layer.Vector),
- *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>),
- *   opacity: (number)
- * }}
- */
-VectorSourceHerald.LayerCache;
 export default VectorSourceHerald;

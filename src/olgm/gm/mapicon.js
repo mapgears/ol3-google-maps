@@ -3,10 +3,15 @@
  */
 import MapElement from './MapElement.js';
 
+/**
+ * @typedef {Object} Options
+ * @property {boolean} [useCanvas] Whether or not we should draw on canvases when we can, instead of using the Google Maps API. This fixes z-index issues with labels on margers
+ */
+
 class MapIcon extends MapElement {
   /**
    * Creates a new map icon
-   * @param {ol.style.Icon} imageStyle ol3 style properties
+   * @param {module:ol/style/Icon} imageStyle ol3 style properties
    * @param {Object.<string, *>=} opt_options Optional properties to set.
    * @api
    */
@@ -17,7 +22,7 @@ class MapIcon extends MapElement {
      * This object contains the ol3 style properties for the icon. We keep
      * it as an object because its properties can change, for example the size
      * is only defined after the image is done loading.
-     * @type {ol.style.Icon}
+     * @type {module:ol/style/Icon}
      * @private
      */
     this.imageStyle_ = imageStyle;

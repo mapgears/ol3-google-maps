@@ -5,46 +5,52 @@ import Abstract from './Abstract.js';
 import LayersHerald from './herald/Layers.js';
 
 /**
- * The main component of this library. It binds an existing OpenLayers map to
- * a Google Maps map it creates through the use of `herald` objects. Each
- * herald is responsible of synchronizing something from the OpenLayers map
- * to the Google Maps one, which makes OpenLayers the master source of
- * interactions. This allows the development of applications without having
- * to worry about writing code that uses the Google Maps API.
- *
- * Here's an architecture overview of what the different heralds, where they
- * are created and on what they act:
- *
- *
- * olgm.OLGoogleMaps <-- ol.Map
- *  |
- *  |__ olgm.herald.Layers <-- ol.Collection.<ol.layer.Base>
- *       |                      |
- *       |                      |__olgm.layer.Google
- *       |                      |
- *       |                      |__ol.layer.Vector
- *       |
- *       |__olgm.herald.View <-- ol.View
- *       |
- *       |__olgm.herald.VectorSource <-- ol.source.Vector
- *          |
- *          |__olgm.herald.Feature <-- ol.Feature
- *
- *
- *
- * @param {!olgmx.OLGoogleMapsOptions} options Options.
- * @api
+ * @typedef {Object} Options
+ * @property {module:ol/PluggableMap} map The OpenLayers map.
+ * @property {module:olgm/gm/MapIcon~Options} [mapIconOptions] Options for the MapIcon object if it exists
+ * @property {module:olgm/herald/Herald~WatchOptions} [watch] For each layer type, a boolean indicating whether the library should watch and let layers of that type should be rendered by Google Maps or not. Defaults to `true` for each option.
  */
+
 class OLGoogleMaps extends Abstract {
+  /**
+   * @classdesc
+   * The main component of this library. It binds an existing OpenLayers map to
+   * a Google Maps map it creates through the use of `herald` objects. Each
+   * herald is responsible of synchronizing something from the OpenLayers map
+   * to the Google Maps one, which makes OpenLayers the master source of
+   * interactions. This allows the development of applications without having
+   * to worry about writing code that uses the Google Maps API.
+   *
+   * Here's an architecture overview of what the different heralds, where they
+   * are created and on what they act:
+   *
+   *     olgm.OLGoogleMaps <-- ol.Map
+   *      |
+   *      |__olgm.herald.Layers <-- ol.Collection.<ol.layer.Base>
+   *         |                      |
+   *         |                      |__olgm.layer.Google
+   *         |                      |
+   *         |                      |__ol.layer.Vector
+   *         |                      |
+   *         |                      |__ol.layer.TileLayer
+   *         |                      |
+   *         |                      |__ol.layer.ImageLayer
+   *         |
+   *         |__olgm.herald.View <-- ol.View
+   *         |
+   *         |__olgm.herald.TileSource <-- ol.source.Tile
+   *         |
+   *         |__olgm.herald.ImageWMSSource <-- ol.source.ImageWMS
+   *         |
+   *         |__olgm.herald.VectorSource <-- ol.source.Vector
+   *            |
+   *            |__olgm.herald.Feature <-- ol.Feature
+   *
+   *
+   * @param {module:olgm/OLGoogleMaps~Options} options Options.
+   * @api
+   */
   constructor(options) {
-    super();
-
-    /**
-     * @type {Array.<olgm.herald.Herald>}
-     * @private
-     */
-    this.heralds_ = [];
-
     const gmapEl = document.createElement('div');
     gmapEl.style.height = 'inherit';
     gmapEl.style.width = 'inherit';
@@ -61,6 +67,12 @@ class OLGoogleMaps extends Abstract {
 
     super(options.map, gmap);
 
+    /**
+     * @type {Array.<module:olgm/herald/Herald>}
+     * @private
+     */
+    this.heralds_ = [];
+
     const watchOptions = options.watch !== undefined ?
       options.watch : {};
 
@@ -68,7 +80,7 @@ class OLGoogleMaps extends Abstract {
       options.mapIconOptions : {};
 
     /**
-     * @type {olgm.herald.Layers}
+     * @type {module:olgm/herald/Layers}
      * @private
      */
     this.layersHerald_ = new LayersHerald(
@@ -138,7 +150,7 @@ class OLGoogleMaps extends Abstract {
 
   /**
    * Set the watch options
-   * @param {olgmx.herald.WatchOptions} watchOptions whether each layer type
+   * @param {module:olgm/herald/Herald~WatchOptions} watchOptions whether each layer type
    * should be watched
    * @api
    */

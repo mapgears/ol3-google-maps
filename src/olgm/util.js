@@ -41,8 +41,8 @@ export const RESOLUTIONS = [
 
 
 /**
- * @param {ol.geom.Geometry} geometry the geometry to get the center of
- * @return {ol.Coordinate} the center coordinates
+ * @param {module:ol/geom/Geometry} geometry the geometry to get the center of
+ * @return {module:ol/coordinate~Coordinate} the center coordinates
  */
 export function getCenterOf(geometry) {
 
@@ -61,7 +61,7 @@ export function getCenterOf(geometry) {
 
 
 /**
- * @param {ol.Color|ol.ColorLike} color the color
+ * @param {module:ol/color~Color|module:ol/color~ColorLike} color the color
  * to parse
  * @return {string} the parsed color
  */
@@ -90,7 +90,7 @@ export function getColor(color) {
 
 
 /**
- * @param {ol.Color|ol.ColorLike} color the color
+ * @param {module:ol/color~Color|module:ol/color~ColorLike} color the color
  * to check
  * @return {?number} the color's opacity
  */
@@ -118,9 +118,9 @@ export function getColorOpacity(color) {
 
 /**
  * Get the style from the specified object.
- * @param {ol.style.Style|ol.StyleFunction|ol.layer.Vector|ol.Feature}
+ * @param {module:ol/style/Style|module:ol/style/Style~StyleFunction|module:ol/layer/Vector|module:ol/Feature}
  object object from which we get the style
- * @return {?ol.style.Style} the style of the object
+ * @return {?module:ol/style/Style} the style of the object
  */
 export function getStyleOf(object) {
 
@@ -144,7 +144,7 @@ export function getStyleOf(object) {
 
 /**
  * @param {number} resolution the resolution to get the zoom from
- * @return {number} the zoom from the resolution, which can be fractionnal
+ * @return {number} the zoom from the resolution, which can be fractional
  */
 export function getZoomFromResolution(resolution) {
 
@@ -212,9 +212,9 @@ export function stringStartsWith(string, needle) {
 
 
 /**
- * @param {Array.<ol.EventsKey|Array.<ol.EventsKey>>} listenerKeys listener
+ * @param {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys listener
  * keys
- * @param {Array.<ol.EventsKey>=} opt_olgmListenerKeys olgm listener keys
+ * @param {Array.<module:ol/events~EventsKey>=} opt_olgmListenerKeys olgm listener keys
  */
 export function unlistenAllByKey(listenerKeys, opt_olgmListenerKeys) {
   listenerKeys.forEach(unByKey);

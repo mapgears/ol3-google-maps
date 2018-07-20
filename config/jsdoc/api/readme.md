@@ -9,20 +9,17 @@ JSDoc annotations are used for metadata used by the compiler, for defining the u
 In the simplest case, a JSDoc block can look like this:
 ```js
 /**
- * Add the given control to the map.
- * @param {ol.control.Control} control Control.
+ * Activate OpenLayers map
  * @api
  */
-ol.Map.prototype.addControl = function(control) {
+olgm.OLGoogleMaps.prototype.activateOpenLayers = function() {
   // ...
 };
 ```
 The first line is text for the user documentation. This can be long, and it can
 contain Markdown.
 
-The second line tells the Closure compiler the type of the argument.
-
-The third line (`@api`) marks the method as part of the api and thus exportable. Without such an api annotation, the method will not be documented in the generated API documentation. Symbols without an api annotation will also not be exportable.
+The second line (`@api`) marks the method as part of the api and thus exportable. Without such an api annotation, the method will not be documented in the generated API documentation. Symbols without an api annotation will also not be exportable.
 
 The `@api` annotation can be used in conjunction with the `@inheritDoc` annotation to export a symbol that is documented on a parent class (where the method may be abstract).  In general, `@api` annotations should never be used on abstract methods (only on their implementations).
 

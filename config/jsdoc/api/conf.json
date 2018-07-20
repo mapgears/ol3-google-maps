@@ -10,7 +10,7 @@
     "includePattern": ".+\\.js(doc)?$",
     "excludePattern": "(^|\\/|\\\\)_",
     "include": [
-      "src/ol"
+      "src/olgm"
     ]
   },
   "plugins": [
@@ -30,7 +30,7 @@
     "default": {
       "outputSourceFiles": false
     },
-    "applicationName": "OpenLayers"
+    "applicationName": "OL-Google-Maps"
   },
   "jsVersion": 180
 }

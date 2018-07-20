@@ -12,6 +12,12 @@ import VectorSourceHerald from './VectorSource.js';
 import ViewHerald from './View.js';
 import GoogleLayer from '../layer/Google.js';
 
+/**
+ * @typedef {Object} GoogleLayerCache
+ * @property {module:olgm/layer/Google} layer
+ * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ */
+
 class LayersHerald extends Herald {
   /**
    * The Layers Herald is responsible of synchronizing the layers from the
@@ -26,27 +32,25 @@ class LayersHerald extends Herald {
    *
    * The supported layers are:
    *
-   * `olgm.layer.Google`
-   * -------------------
-   *     When a google layer is added, the process of enabling the
-   *     Google Maps  map is activated (if it is the first and if it's visible).
-   *     If there is an existing and visible `olgm.layer.Google` in the map,
-   *     then the top-most is used to define the map type id Google Maps has to
-   *     switch to. **Limitation** The Google Maps map is always below the
-   *     OpenLayers map, which means that the other OpenLayers layers are always
-   *     on top of Google Maps.
+   * * {@link module:olgm/layer/Google~GoogleLayer}:
+   * When a google layer is added, the process of enabling the
+   * Google Maps  map is activated (if it is the first and if it's visible).
+   * If there is an existing and visible {@link module:olgm/layer/Google~GoogleLayer} in the map,
+   * then the top-most is used to define the map type id Google Maps has to
+   * switch to. **Limitation** The Google Maps map is always below the
+   * OpenLayers map, which means that the other OpenLayers layers are always
+   * on top of Google Maps.
    *
-   * `ol.layer.Vector`
-   * -----------------
-   *     When a vector layers is added, a `olgm.herald.VectorFeature` is created
-   *     to manage its `ol.source.Vector`. The layer is immediately rendered
-   *     fully transparent, making the interactions still possible over it
-   *     while being invisible.
+   * * {@link module:ol/layer/Vector~VectorLayer}:
+   * When a vector layers is added, a {@link module:olgm/herald/VectorFeature~VectorFeatureHerald} is created
+   * to manage its `ol.source.Vector`. The layer is immediately rendered
+   * fully transparent, making the interactions still possible over it
+   * while being invisible.
    *
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
-   * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
-   * @param {olgmx.herald.WatchOptions} watchOptions for each layer,
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
+   * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
+   * @param {module:olgm/herald/Herald~WatchOptions} watchOptions for each layer,
    * whether we should watch that type of layer or not
    */
   constructor(ol3map, gmap, mapIconOptions, watchOptions) {
@@ -54,44 +58,44 @@ class LayersHerald extends Herald {
     super(ol3map, gmap);
 
     /**
-     * @type {Array.<olgm.layer.Google>}
+     * @type {Array.<module:olgm/layer/Google>}
      * @private
      */
     this.googleLayers_ = [];
 
     /**
-     * @type {Array.<olgm.herald.Layers.GoogleLayerCache>}
+     * @type {Array.<module:olgm/herald/Layers~GoogleLayerCache>}
      * @private
      */
     this.googleCache_ = [];
 
     /**
-     * @type {olgm.herald.ImageWMSSource}
+     * @type {module:olgm/herald/ImageWMSSource}
      * @private
      */
     this.imageWMSSourceHerald_ = new ImageWMSSourceHerald(ol3map, gmap);
 
     /**
-     * @type {olgm.herald.TileSource}
+     * @type {module:olgm/herald/TileSource}
      * @private
      */
     this.tileSourceHerald_ = new TileSourceHerald(ol3map, gmap);
 
     /**
-     * @type {olgm.herald.VectorSource}
+     * @type {module:olgm/herald/VectorSource}
      * @private
      */
     this.vectorSourceHerald_ = new VectorSourceHerald(
       ol3map, gmap, mapIconOptions);
 
     /**
-     * @type {olgm.herald.View}
+     * @type {module:olgm/herald/View}
      * @private
      */
     this.viewHerald_ = new ViewHerald(ol3map, gmap);
 
     /**
-     * @type {olgmx.herald.WatchOptions}
+     * @type {module:olgm/herald/Herald~WatchOptions}
      * @private
      */
     this.watchOptions_ = watchOptions;
@@ -205,7 +209,7 @@ class LayersHerald extends Herald {
 
   /**
    * Set the watch options
-   * @param {olgmx.herald.WatchOptions} watchOptions whether each layer type
+   * @param {module:olgm/herald/Herald~WatchOptions} watchOptions whether each layer type
    * should be watched
    * @api
    */
@@ -220,11 +224,11 @@ class LayersHerald extends Herald {
 
   /**
    * Callback method fired when a new layer is added to the map.
-   * @param {ol.Collection.Event} event Collection event.
+   * @param {module:ol/Collection~CollectionEvent} event Collection event.
    * @private
    */
   handleLayersAdd_(event) {
-    const layer = /** @type {ol.layer.Base} */ (event.element);
+    const layer = /** @type {module:ol/layer/Base} */ (event.element);
     this.watchLayer_(layer);
     this.orderLayers();
   }
@@ -232,11 +236,11 @@ class LayersHerald extends Herald {
 
   /**
    * Callback method fired when a layer is removed from the map.
-   * @param {ol.Collection.Event} event Collection event.
+   * @param {module:ol/Collection~CollectionEvent} event Collection event.
    * @private
    */
   handleLayersRemove_(event) {
-    const layer = /** @type {ol.layer.Base} */ (event.element);
+    const layer = /** @type {module:ol/layer/Base} */ (event.element);
     this.unwatchLayer_(layer);
     this.orderLayers();
   }
@@ -244,7 +248,7 @@ class LayersHerald extends Herald {
 
   /**
    * Watch the layer
-   * @param {ol.layer.Base} layer layer to watch
+   * @param {module:ol/layer/Base} layer layer to watch
    * @private
    */
   watchLayer_(layer) {
@@ -265,12 +269,12 @@ class LayersHerald extends Herald {
 
   /**
    * Watch the google layer
-   * @param {olgm.layer.Google} layer google layer to watch
+   * @param {module:olgm/layer/Google} layer google layer to watch
    * @private
    */
   watchGoogleLayer_(layer) {
     this.googleLayers_.push(layer);
-    this.googleCache_.push(/** @type {olgm.herald.Layers.GoogleLayerCache} */ ({
+    this.googleCache_.push(/** @type {module:olgm/herald/Layers~GoogleLayerCache} */ ({
       layer: layer,
       listenerKeys: [
         layer.on('change:visible', () => this.toggleGoogleMaps_())
@@ -282,7 +286,7 @@ class LayersHerald extends Herald {
 
   /**
    * Unwatch the layer
-   * @param {ol.layer.Base} layer layer to unwatch
+   * @param {module:ol/layer/Base} layer layer to unwatch
    * @private
    */
   unwatchLayer_(layer) {
@@ -300,7 +304,7 @@ class LayersHerald extends Herald {
 
   /**
    * Unwatch the google layer
-   * @param {olgm.layer.Google} layer google layer to unwatch
+   * @param {module:olgm/layer/Google} layer google layer to unwatch
    * @private
    */
   unwatchGoogleLayer_(layer) {
@@ -454,11 +458,4 @@ class LayersHerald extends Herald {
 }
 
 
-/**
- * @typedef {{
- *   layer: (olgm.layer.Google),
- *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>)
- * }}
- */
-LayersHerald.GoogleLayerCache;
 export default LayersHerald;

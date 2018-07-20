@@ -8,30 +8,41 @@ import {unlistenAllByKey} from '../util.js';
 import PanesOverlay from '../gm/PanesOverlay.js';
 import SourceHerald from './Source.js';
 
+/**
+ * @typedef {Object} LayerCache
+ * @property {Node|null} element
+ * @property {google.maps.ImageMapType} googleTileLayer
+ * @property {boolean} ignoreNextOpacityChange
+ * @property {module:ol/layer/Tile} layer
+ * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {number} opacity
+ * @property {number} zIndex
+ */
+
 class TileSourceHerald extends SourceHerald {
   /**
    * Listen to a tiled layer
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);
 
     /**
-    * @type {Array.<olgm.herald.TileSource.LayerCache>}
+    * @type {Array.<module:olgm/herald/TileSource~LayerCache>}
     * @private
     */
     this.cache_ = [];
 
     /**
-    * @type {Array.<ol.layer.Tile>}
+    * @type {Array.<module:ol/layer/Tile>}
     * @private
     */
     this.layers_ = [];
 
     /**
      * Panes accessor
-     * @type {olgm.gm.PanesOverlay}
+     * @type {module:olgm/gm/PanesOverlay}
      * @private
      */
     this.panesOverlay_ = new PanesOverlay(gmap);
@@ -48,11 +59,11 @@ class TileSourceHerald extends SourceHerald {
 
 
   /**
-   * @param {ol.layer.Base} layer layer to watch
+   * @param {module:ol/layer/Base} layer layer to watch
    * @override
    */
   watchLayer(layer) {
-    const tileLayer = /** @type {ol.layer.Tile} */ (layer);
+    const tileLayer = /** @type {module:ol/layer/Tile} */ (layer);
 
     // Source must be TileImage
     const source = tileLayer.getSource();
@@ -65,7 +76,7 @@ class TileSourceHerald extends SourceHerald {
     // opacity
     const opacity = tileLayer.getOpacity();
 
-    const cacheItem = /** {@type olgm.herald.TileSource.LayerCache} */ ({
+    const cacheItem = /** {@type module:olgm/herald/TileSource~LayerCache} */ ({
       element: null,
       ignoreNextOpacityChange: true,
       layer: tileLayer,
@@ -117,7 +128,7 @@ class TileSourceHerald extends SourceHerald {
   /**
    * This function is used by google maps to get the url for a tile at the given
    * coordinates and zoom level
-   * @param {ol.layer.Tile} tileLayer layer to query
+   * @param {module:ol/layer/Tile} tileLayer layer to query
    * @param {google.maps.Point} coords coordinates of the tile
    * @param {number} zoom current zoom level
    * @return {string|undefined} url to the tile
@@ -217,11 +228,11 @@ class TileSourceHerald extends SourceHerald {
 
   /**
    * Unwatch the tile layer
-   * @param {ol.layer.Base} layer layer to unwatch
+   * @param {module:ol/layer/Base} layer layer to unwatch
    * @override
    */
   unwatchLayer(layer) {
-    const tileLayer = /** @type {ol.layer.Tile} */ (layer);
+    const tileLayer = /** @type {module:ol/layer/Tile} */ (layer);
 
     const index = this.layers_.indexOf(tileLayer);
     if (index !== -1) {
@@ -261,7 +272,7 @@ class TileSourceHerald extends SourceHerald {
 
   /**
    * Activates an tile layer cache item.
-   * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to activate
+   * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem to activate
    * @private
    */
   activateCacheItem_(cacheItem) {
@@ -287,7 +298,7 @@ class TileSourceHerald extends SourceHerald {
 
   /**
    * Deactivates a Tile layer cache item.
-   * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem to deactivate
+   * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem to deactivate
    * @private
    */
   deactivateCacheItem_(cacheItem) {
@@ -352,7 +363,7 @@ class TileSourceHerald extends SourceHerald {
 
   /**
    * Handle the opacity being changed on the tile layer
-   * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem for the
    * watched layer
    * @private
    */
@@ -383,7 +394,7 @@ class TileSourceHerald extends SourceHerald {
 
   /**
    * Deal with the google tile layer when we enable or disable the OL3 tile layer
-   * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem for the
    * watched layer
    * @private
    */
@@ -417,7 +428,7 @@ class TileSourceHerald extends SourceHerald {
    * Called the source of layer fires the 'change' event. Reload the google tile
    * layer.
    *
-   * @param {olgm.herald.TileSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem for the
    * watched layer
    * @private
    */
@@ -429,16 +440,4 @@ class TileSourceHerald extends SourceHerald {
 }
 
 
-/**
- * @typedef {{
- *   element: (Node|null),
- *   googleTileLayer: (google.maps.ImageMapType),
- *   ignoreNextOpacityChange: (boolean),
- *   layer: (ol.layer.Tile),
- *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>),
- *   opacity: (number),
- *   zIndex: (number)
- * }}
- */
-TileSourceHerald.LayerCache;
 export default TileSourceHerald;

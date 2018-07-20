@@ -3,18 +3,27 @@
  */
 import LayerGroup from 'ol/layer/Group.js';
 
+/**
+ * @typedef {Object} Options
+ * @property {boolean} [visible=true] Visibility.
+ * @property {google.maps.MapTypeId.<(number|string)>|string|undefined} [mapTypeId=google.maps.MapTypeId.ROADMAP] The type of google map
+ * @property {Array.<google.maps.MapTypeStyle>|undefined} [styles] Google map styling
+ */
+
+/**
+ * @classdesc
+ * An ol3 layer object serving the purpose of being added to the ol3 map
+ * as dummy layer. The `mapTypeId` defines which Google Maps map type the
+ * layer represents.
+ */
 class GoogleLayer extends LayerGroup {
   /**
-   * An ol3 layer object serving the purpose of being added to the ol3 map
-   * as dummy layer. The `mapTypeId` defines which Google Maps map type the
-   * layer represents.
-   *
-   * @param {!olgmx.layer.GoogleOptions=} opt_options Options.
+   * @param {module:olgm/layer/Google~Options} opt_options Layer options.
    * @api
    */
   constructor(opt_options) {
     super(opt_options);
-    const options = opt_options !== undefined ? opt_options : {};
+    const options = opt_options ? opt_options : {};
 
     /**
      * @type {google.maps.MapTypeId.<(number|string)>|string}

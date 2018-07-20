@@ -1,13 +1,13 @@
+/* Based on https://github.com/openlayers/openlayers/blob/master/src/ol/events.js */
 /**
  * @module olgm/events
  */
-/* Based on https://github.com/openlayers/openlayers/blob/master/src/ol/events.js */
-import {clear} from './obj';
+import {clear} from './obj.js';
 
 
 /**
- * @param {ol.EventsKey} listenerObj Listener object.
- * @return {ol.EventsListenerFunctionType} Bound listener.
+ * @param {module:ol/events~EventsKey} listenerObj Listener object.
+ * @return {module:ol/events~ListenerFunction} Bound listener.
  */
 export function bindListener(listenerObj) {
   const boundListener = function(evt) {
@@ -27,8 +27,8 @@ export function bindListener(listenerObj) {
  * Finds the matching {@link module:ol/events~EventsKey} in the given listener
  * array.
  *
- * @param {!Array<!module:ol/events~EventsKey>} listeners Array of listeners.
- * @param {!Function} listener The listener function.
+ * @param {Array<module:ol/events~EventsKey>} listeners Array of listeners.
+ * @param {Function} listener The listener function.
  * @param {Object=} opt_this The `this` value inside the listener.
  * @param {boolean=} opt_setDeleteIndex Set the deleteIndex on the matching
  *     listener, for {@link module:ol/events~unlistenByKey}.
@@ -105,7 +105,7 @@ function removeListeners(target, type) {
 
 /**
  * Registers an event listener on an event target. Inspired by
- * {@link https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html}
+ * https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html
  *
  * This function efficiently binds a `listener` to a `this` object, and returns
  * a key for use with {@link module:ol/events~unlistenByKey}.
@@ -148,7 +148,7 @@ export function listen(target, type, listener, opt_this, opt_once) {
 
 /**
  * Registers a one-off event listener on an event target. Inspired by
- * {@link https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html}
+ * https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html
  *
  * This function efficiently binds a `listener` as self-unregistering listener
  * to a `this` object, and returns a key for use with
@@ -173,7 +173,7 @@ export function listenOnce(target, type, listener, opt_this) {
 
 /**
  * Unregisters an event listener on an event target. Inspired by
- * {@link https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html}
+ * https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html
  *
  * To return a listener, this function needs to be called with the exact same
  * arguments that were used for a previous {@link module:ol/events~listen} call.
@@ -197,7 +197,7 @@ export function unlisten(target, type, listener, opt_this) {
 
 /**
  * Unregisters event listeners on an event target. Inspired by
- * {@link https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html}
+ * https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html
  *
  * The argument passed to this function is the key returned from
  * {@link module:ol/events~listen} or {@link module:ol/events~listenOnce}.
@@ -224,7 +224,7 @@ export function unlistenByKey(key) {
 
 /**
  * Unregisters all event listeners on an event target. Inspired by
- * {@link https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html}
+ * https://google.github.io/closure-library/api/source/closure/goog/events/events.js.src.html
  *
  * @param {module:ol/events/EventTarget~EventTargetLike} target Target.
  */

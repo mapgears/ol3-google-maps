@@ -8,8 +8,8 @@ class SourceHerald extends Herald {
    * This is an abstract class. Children of this class will listen to one or
    * multiple layers of a specific class to render them using the Google Maps
    * API whenever a Google Maps layer is active.
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
    * @abstract
    */
   constructor(ol3map, gmap) {
@@ -29,7 +29,7 @@ class SourceHerald extends Herald {
    * Watch the layer. This adds the layer to the list of layers the herald is
    * listening to, so that it can display it using Google Maps as soon as the
    * layer becomes visible.
-   * @param {ol.layer.Base} layer layer to watch
+   * @param {module:ol/layer/Base} layer layer to watch
    * @abstract
    * @api
    */
@@ -39,7 +39,7 @@ class SourceHerald extends Herald {
   /**
    * Stop watching the layer. This removes the layer from the list of layers the
    * herald is listening to, and restores its original opacity.
-   * @param {ol.layer.Base} layer layer to unwatch
+   * @param {module:ol/layer/Base} layer layer to unwatch
    * @abstract
    * @api
    */
@@ -58,7 +58,7 @@ class SourceHerald extends Herald {
 
   /**
    * Find the index of a layer in the ol3 map's layers
-   * @param {ol.layer.Base} layer layer to find in ol3's layers array
+   * @param {module:ol/layer/Base} layer layer to find in ol3's layers array
    * @returns {number} suggested zIndex for that layer
    * @api
    */

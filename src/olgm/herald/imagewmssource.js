@@ -11,23 +11,33 @@ import SorceHerald from './Source.js';
 import {assign} from '../obj.js';
 import {appendParams} from '../uri.js';
 
+/**
+ * @typedef {Object} LayerCache
+ * @property {module:olgm/gm/ImageOverlay} imageOverlay
+ * @property {string|null} lastUrl
+ * @property {module:ol/layer/Image} layer
+ * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {number} opacity
+ * @property {number} zIndex
+ */
+
 class ImageWMSSourceHerald extends SorceHerald {
   /**
    * Listen to a Image WMS layer
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);
 
     /**
-    * @type {Array.<olgm.herald.ImageWMSSource.LayerCache>}
+    * @type {Array.<module:olgm/herald/ImageWMSSource~LayerCache>}
     * @private
     */
     this.cache_ = [];
 
     /**
-    * @type {Array.<ol.layer.Image>}
+    * @type {Array.<module:ol/layer/Image>}
     * @private
     */
     this.layers_ = [];
@@ -35,11 +45,11 @@ class ImageWMSSourceHerald extends SorceHerald {
 
 
   /**
-   * @param {ol.layer.Base} layer layer to watch
+   * @param {module:ol/layer/Base} layer layer to watch
    * @override
    */
   watchLayer(layer) {
-    const imageLayer = /** @type {ol.layer.Image} */ (layer);
+    const imageLayer = /** @type {module:ol/layer/Image} */ (layer);
 
     // Source must be ImageWMS
     const source = imageLayer.getSource();
@@ -52,7 +62,7 @@ class ImageWMSSourceHerald extends SorceHerald {
     // opacity
     const opacity = imageLayer.getOpacity();
 
-    const cacheItem = /** {@type olgm.herald.ImageWMSSource.LayerCache} */ ({
+    const cacheItem = /** {@type module:olgm/herald/ImageWMSSource~LayerCache} */ ({
       imageOverlay: null,
       lastUrl: null,
       layer: imageLayer,
@@ -84,11 +94,11 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Unwatch the WMS Image layer
-   * @param {ol.layer.Base} layer layer to unwatch
+   * @param {module:ol/layer/Base} layer layer to unwatch
    * @override
    */
   unwatchLayer(layer) {
-    const imageLayer = /** @type {ol.layer.Image} */ (layer);
+    const imageLayer = /** @type {module:ol/layer/Image} */ (layer);
 
     const index = this.layers_.indexOf(imageLayer);
     if (index !== -1) {
@@ -120,7 +130,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Activates an image WMS layer cache item.
-   * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem to
+   * @param {module:olgm/herald/ImageWMSSource~LayerCache} cacheItem cacheItem to
    * activate
    * @private
    */
@@ -148,7 +158,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Deactivates an Image WMS layer cache item.
-   * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem to
+   * @param {module:olgm/herald/ImageWMSSource~LayerCache} cacheItem cacheItem to
    * deactivate
    * @private
    */
@@ -164,7 +174,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Generate a wms request url for a single image
-   * @param {ol.layer.Image} layer layer to query
+   * @param {module:ol/layer/Image} layer layer to query
    * @return {string} url to the requested tile
    * @private
    */
@@ -262,7 +272,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Clean-up the image overlay
-   * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem
+   * @param {module:olgm/herald/ImageWMSSource~LayerCache} cacheItem cacheItem
    * @private
    */
   resetImageOverlay_(cacheItem) {
@@ -279,7 +289,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Refresh the custom image overlay on google maps
-   * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/ImageWMSSource~LayerCache} cacheItem cacheItem for the
    * layer to update
    * @param {boolean=} opt_force whether we should refresh even if the
    * url for the request hasn't changed. Defaults to false.
@@ -386,7 +396,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Deal with the google WMS layer when we enable or disable the OL3 WMS layer
-   * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/ImageWMSSource~LayerCache} cacheItem cacheItem for the
    * watched layer
    * @private
    */
@@ -405,7 +415,7 @@ class ImageWMSSourceHerald extends SorceHerald {
 
   /**
    * Handle the map being panned when an ImageWMS layer is present
-   * @param {olgm.herald.ImageWMSSource.LayerCache} cacheItem cacheItem for the
+   * @param {module:olgm/herald/ImageWMSSource~LayerCache} cacheItem cacheItem for the
    * watched layer
    * @private
    */
@@ -418,15 +428,4 @@ class ImageWMSSourceHerald extends SorceHerald {
 }
 
 
-/**
- * @typedef {{
- *   imageOverlay: (olgm.gm.ImageOverlay),
- *   lastUrl: (string|null),
- *   layer: (ol.layer.Image),
- *   listenerKeys: (Array.<ol.EventsKey|Array.<ol.EventsKey>>),
- *   opacity: (number),
- *   zIndex: (number)
- * }}
- */
-ImageWMSSourceHerald.LayerCache;
 export default ImageWMSSourceHerald;

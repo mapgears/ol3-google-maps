@@ -14,8 +14,8 @@ class ViewHerald extends Herald {
    *
    * When the browser window gets resized, the gmap map is also updated.
    *
-   * @param {!ol.Map} ol3map openlayers map
-   * @param {!google.maps.Map} gmap google maps map
+   * @param {module:ol/PluggableMap} ol3map openlayers map
+   * @param {google.maps.Map} gmap google maps map
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);
