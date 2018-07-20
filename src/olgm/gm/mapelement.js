@@ -14,11 +14,11 @@
 class MapElement extends ((window.google && window.google.maps && google.maps.OverlayView) || Object) {
   /**
    * Creates a new Map Element, to be drawn as an OverlayView
-   * @constructor
-   * @extends {google.maps.OverlayView}
    * @api
    */
   constructor() {
+    super();
+
     /**
      * @type {boolean}
      * @private

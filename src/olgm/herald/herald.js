@@ -12,8 +12,6 @@ class Herald extends Abstract {
    *
    * @param {!ol.Map} ol3map openlayers map
    * @param {!google.maps.Map} gmap google maps map
-   * @constructor
-   * @extends {olgm.Abstract}
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);

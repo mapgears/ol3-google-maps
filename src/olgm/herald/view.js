@@ -16,8 +16,6 @@ class ViewHerald extends Herald {
    *
    * @param {!ol.Map} ol3map openlayers map
    * @param {!google.maps.Map} gmap google maps map
-   * @constructor
-   * @extends {olgm.herald.Herald}
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);

@@ -12,8 +12,6 @@ class VectorSourceHerald extends SourceHerald {
    * @param {!ol.Map} ol3map openlayers map
    * @param {!google.maps.Map} gmap google maps map
    * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
-   * @constructor
-   * @extends {olgm.herald.Source}
    */
   constructor(ol3map, gmap, mapIconOptions) {
     super(ol3map, gmap);

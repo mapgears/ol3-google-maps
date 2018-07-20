@@ -16,8 +16,6 @@ class ImageWMSSourceHerald extends SorceHerald {
    * Listen to a Image WMS layer
    * @param {!ol.Map} ol3map openlayers map
    * @param {!google.maps.Map} gmap google maps map
-   * @constructor
-   * @extends {olgm.herald.Source}
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);

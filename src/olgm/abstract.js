@@ -8,7 +8,6 @@
  *
  * @param {!ol.Map} ol3map openlayers map
  * @param {!google.maps.Map} gmap google maps map
- * @constructor
  */
 class Abstract {
   constructor(ol3map, gmap) {

@@ -6,8 +6,6 @@ import MapElement from './MapElement.js';
 class MapIcon extends MapElement {
   /**
    * Creates a new map icon
-   * @constructor
-   * @extends {olgm.gm.MapElement}
    * @param {ol.style.Icon} imageStyle ol3 style properties
    * @param {Object.<string, *>=} opt_options Optional properties to set.
    * @api

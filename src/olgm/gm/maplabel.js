@@ -39,8 +39,6 @@ import MapElement from './MapElement.js';
 class MapLabel extends MapElement {
   /**
    * Creates a new Map Label
-   * @constructor
-   * @extends {olgm.gm.MapElement}
    * @param {Object.<string, *>=} opt_options Optional properties to set.
    * @api
    */

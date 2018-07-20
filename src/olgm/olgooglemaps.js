@@ -33,12 +33,12 @@ import LayersHerald from './herald/Layers.js';
  *
  *
  * @param {!olgmx.OLGoogleMapsOptions} options Options.
- * @constructor
- * @extends {olgm.Abstract}
  * @api
  */
 class OLGoogleMaps extends Abstract {
   constructor(options) {
+    super();
+
     /**
      * @type {Array.<olgm.herald.Herald>}
      * @private

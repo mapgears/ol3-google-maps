@@ -20,8 +20,6 @@ class FeatureHerald extends Herald {
    * @param {!ol.Map} ol3map openlayers map
    * @param {!google.maps.Map} gmap google maps map
    * @param {olgmx.herald.FeatureOptions} options options
-   * @constructor
-   * @extends {olgm.herald.Herald}
    */
   constructor(ol3map, gmap, options) {
     super(ol3map, gmap);

@@ -10,8 +10,6 @@ class GoogleLayer extends LayerGroup {
    * layer represents.
    *
    * @param {!olgmx.layer.GoogleOptions=} opt_options Options.
-   * @constructor
-   * @extends {ol.layer.Group}
    * @api
    */
   constructor(opt_options) {

@@ -13,8 +13,6 @@ class TileSourceHerald extends SourceHerald {
    * Listen to a tiled layer
    * @param {!ol.Map} ol3map openlayers map
    * @param {!google.maps.Map} gmap google maps map
-   * @constructor
-   * @extends {olgm.herald.Source}
    */
   constructor(ol3map, gmap) {
     super(ol3map, gmap);

@@ -48,8 +48,6 @@ class LayersHerald extends Herald {
    * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
    * @param {olgmx.herald.WatchOptions} watchOptions for each layer,
    * whether we should watch that type of layer or not
-   * @constructor
-   * @extends {olgm.herald.Herald}
    */
   constructor(ol3map, gmap, mapIconOptions, watchOptions) {
 
@@ -108,13 +106,13 @@ class LayersHerald extends Herald {
     this.gmapEl_ = gmap.getDiv();
 
     /**
-     * @type {Element}
+     * @type {HTMLElement}
      * @private
      */
     this.ol3mapEl_ = ol3map.getViewport();
 
     /**
-     * @type {Element}
+     * @type {HTMLElement}
      * @private
      */
     this.targetEl_ = ol3map.getTargetElement();

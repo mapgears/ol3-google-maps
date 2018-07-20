@@ -16,8 +16,6 @@ class VectorFeatureHerald extends Herald {
    * @param {!ol.source.Vector} source vector source
    * @param {!google.maps.Data} data google maps data object
    * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
-   * @constructor
-   * @extends {olgm.herald.Herald}
    */
   constructor(ol3map, gmap, source, data, mapIconOptions) {
     super(ol3map, gmap);
