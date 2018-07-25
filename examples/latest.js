@@ -1,48 +1,65 @@
-document.getElementById('google-maps-version').innerHTML = google.maps.version;
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import VectorLayer from 'ol/layer/Vector.js';
+import OSMSource from 'ol/source/OSM.js';
+import VectorSource from 'ol/source/Vector.js';
+import Feature from 'ol/Feature.js';
+import Point from 'ol/geom/Point.js';
+import Style from 'ol/style/Style.js';
+import Stroke from 'ol/style/Stroke.js';
+import Fill from 'ol/style/Fill.js';
+import Circle from 'ol/style/Circle.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
 
-var center = [-7908084, 6177492];
 
-var googleLayer = new olgm.layer.Google();
+const center = [-7908084, 6177492];
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const googleLayer = new GoogleLayer();
+
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   visible: false
 });
 
-var source = new ol.source.Vector();
-var feature = new ol.Feature(new ol.geom.Point(center));
-feature.setStyle(new ol.style.Style({
-    image: new ol.style.Circle({
-      'fill': new ol.style.Fill({color: 'rgba(153,51,51,0.3)'}),
-      'stroke': new ol.style.Stroke({color: 'rgb(153,51,51)', width: 2}),
-      'radius': 20
-    })
-  }));
+const source = new VectorSource();
+const feature = new Feature(new Point(center));
+feature.setStyle(new Style({
+  image: new Circle({
+    'fill': new Fill({color: 'rgba(153,51,51,0.3)'}),
+    'stroke': new Stroke({color: 'rgb(153,51,51)', width: 2}),
+    'radius': 20
+  })
+}));
 source.addFeature(feature);
-var vector = new ol.layer.Vector({
+const vector = new VectorLayer({
   source: source
 });
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer,
     osmLayer,
     vector
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();
 
 
-function toggle() {
+document.getElementById('toggle').addEventListener('click', function() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
-};
+});
+
+document.getElementById('google-maps-version').innerHTML = google.maps.version;

@@ -1,34 +1,43 @@
-var center = [-7908084, 6177492];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import OSMSource from 'ol/source/OSM.js';
+import LayerSwitcher from 'ol-layerswitcher';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
+
+const center = [-7908084, 6177492];
 
 // This dummy layer tells Google Maps to switch to its default map type
-var googleLayer = new olgm.layer.Google({
+const googleLayer = new GoogleLayer({
   title: 'Google',
   type: 'base'
 });
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   title: 'OSM',
   type: 'base'
 });
 
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer,
     osmLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();
 
-var layerSwitcher = new ol.control.LayerSwitcher();
+const layerSwitcher = new LayerSwitcher();
 map.addControl(layerSwitcher);

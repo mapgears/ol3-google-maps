@@ -62,6 +62,7 @@
     "mkdirp": "^0.5.1",
     "mocha": "5.2.0",
     "ol": "5.0.3",
+    "ol-layerswitcher": "^2.0.0",
     "phantomjs-prebuilt": "^2.1.16",
     "recast": "0.15.2",
     "rollup": "0.63.2",

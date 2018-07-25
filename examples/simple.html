@@ -1,49 +1,16 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE HTML>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="robots" content="index, all" />
-    <title>OL3-Google-Maps simple example</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
-    <link rel="stylesheet" href="../css/ol3gm.css" type="text/css" />
-    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
-  </head>
-  <body>
-
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span12">
-          <div id="map" class="map"></div>
-        </div>
-      </div>
-      <div class="row-fluid">
-        <div class="span12">
-          <h4>Simple example</h4>
-          <p>
-            A simple map containing a single Google layer. OpenLayers is
-            on top of Google Maps and controls all interactions on the map.
-          </p>
-          <p>
-            As soon as the OpenLayers map has a visible Google layer
-            (see below) in it, the Google Maps map is activated by the library,
-            which puts the OpenLayers map on top of the Google Maps one.
-          </p>
-          <pre>olgm.layer.Google</pre>
-        </div>
-      </div>
-    </div>
-
-    <script src="../node_modules/openlayers/build/ol.js"></script>
-
-    <!-- When loading Google Maps outside of localhost, replace the src with
-         https://maps.googleapis.com/maps/api/js?v=3&key=mykey
-         where mykey is your Google Maps API key -->
-    <script type="text/javascript"
-            src="https://maps.googleapis.com/maps/api/js?v=3"></script>
-
-    <script src="/@loader"></script>
-    <script src="simple.js"></script>
-  </body>
-</html>
+---
+layout: example.html
+title: Simple
+shortdesc: A simple map containing a single Google layer. OpenLayers is on top of Google Maps and controls all interactions on the map.
+docs: >
+  <p>
+    A simple map containing a single Google layer. OpenLayers is
+    on top of Google Maps and controls all interactions on the map.
+  </p>
+  <p>
+    As soon as the OpenLayers map has a visible Google layer
+    in it, the Google Maps map is activated by the library,
+    which puts the OpenLayers map on top of the Google Maps one.
+  </p>
+---
+<div id="map" class="map"></div>

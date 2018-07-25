@@ -1,38 +1,48 @@
-var center = [-10997148, 4569099];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import OSMSource from 'ol/source/OSM.js';
+import XYZSource from 'ol/source/XYZ.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
 
-var googleLayer = new olgm.layer.Google();
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const center = [-10997148, 4569099];
+
+const googleLayer = new GoogleLayer();
+
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   visible: false
 });
 
-var xyzLayer = new ol.layer.Tile({
-  source: new ol.source.XYZ({
+const xyzLayer = new TileLayer({
+  source: new XYZSource({
     url: 'http://{a-c}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png'
   }),
   opacity: 0.5
 });
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer,
     osmLayer,
     xyzLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 4
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();
 
-function toggleOSM() {
+document.getElementById('toggle').addEventListener('click', function() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
-};
+});

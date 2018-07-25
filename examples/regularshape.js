@@ -1,28 +1,45 @@
-var center = [-7908084, 6177492];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import VectorLayer from 'ol/layer/Vector.js';
+import OSMSource from 'ol/source/OSM.js';
+import VectorSource from 'ol/source/Vector.js';
+import Feature from 'ol/Feature.js';
+import Point from 'ol/geom/Point.js';
+import Style from 'ol/style/Style.js';
+import Stroke from 'ol/style/Stroke.js';
+import Fill from 'ol/style/Fill.js';
+import RegularShape from 'ol/style/RegularShape.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
+
+
+const center = [-7908084, 6177492];
 
 // This dummy layer tells Google Maps to switch to its default map type
-var googleLayer = new olgm.layer.Google();
+const googleLayer = new GoogleLayer();
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   visible: false
 });
 
-var stroke = new ol.style.Stroke({color: 'black', width: 2});
+const stroke = new Stroke({color: 'black', width: 2});
 
-var styles = {
-  'square': [new ol.style.Style({
-    image: new ol.style.RegularShape({
-      fill: new ol.style.Fill({color: 'red'}),
+const styles = {
+  'square': [new Style({
+    image: new RegularShape({
+      fill: new Fill({color: 'red'}),
       stroke: stroke,
       points: 4,
       radius: 10,
       angle: Math.PI / 4
     })
   })],
-  'triangle': [new ol.style.Style({
-    image: new ol.style.RegularShape({
-      fill: new ol.style.Fill({color: 'yellow'}),
+  'triangle': [new Style({
+    image: new RegularShape({
+      fill: new Fill({color: 'yellow'}),
       stroke: stroke,
       points: 3,
       radius: 10,
@@ -30,9 +47,9 @@ var styles = {
       angle: 0
     })
   })],
-  'star': [new ol.style.Style({
-    image: new ol.style.RegularShape({
-      fill: new ol.style.Fill({color: 'green'}),
+  'star': [new Style({
+    image: new RegularShape({
+      fill: new Fill({color: 'green'}),
       stroke: stroke,
       points: 5,
       radius: 10,
@@ -40,17 +57,17 @@ var styles = {
       angle: 0
     })
   })],
-  'pentagon': [new ol.style.Style({
-    image: new ol.style.RegularShape({
-      fill: new ol.style.Fill({color: 'blue'}),
+  'pentagon': [new Style({
+    image: new RegularShape({
+      fill: new Fill({color: 'blue'}),
       stroke: stroke,
       points: 5,
       radius: 10,
-      angle: 0,
+      angle: 0
     })
   })],
-  'x': [new ol.style.Style({
-    image: new ol.style.RegularShape({
+  'x': [new Style({
+    image: new RegularShape({
       stroke: stroke,
       points: 4,
       radius: 10,
@@ -61,46 +78,46 @@ var styles = {
 };
 
 
-var styleKeys = ['x', 'pentagon', 'star', 'triangle', 'square'];
-var count = 50;
-var features = new Array(count);
-var spread = 20000;
-for (var i = 0; i < count; ++i) {
-  var x = center[0]-(spread/2) + Math.random()*spread;
-  var y = center[1]-(spread/2) + Math.random()*spread;
-  var coordinates = [x, y];
-  features[i] = new ol.Feature(new ol.geom.Point(coordinates));
-  var style = styles[styleKeys[Math.floor(Math.random() * 5)]][0];
+const styleKeys = ['x', 'pentagon', 'star', 'triangle', 'square'];
+const count = 50;
+const features = new Array(count);
+const spread = 20000;
+for (let i = 0; i < count; ++i) {
+  const x = center[0] - (spread / 2) + Math.random() * spread;
+  const y = center[1] - (spread / 2) + Math.random() * spread;
+  const coordinates = [x, y];
+  features[i] = new Feature(new Point(coordinates));
+  const style = styles[styleKeys[Math.floor(Math.random() * 5)]][0];
   features[i].setStyle(style);
 }
 
-var source = new ol.source.Vector({
+const source = new VectorSource({
   features: features
 });
 
-var vectorLayer = new ol.layer.Vector({
+const vectorLayer = new VectorLayer({
   source: source
 });
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer,
     osmLayer,
     vectorLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();
 
-function toggleOSM() {
+document.getElementById('toggle').addEventListener('click', function() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
-};
+});

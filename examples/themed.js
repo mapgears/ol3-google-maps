@@ -1,37 +1,44 @@
-var center = [-7908084, 6177492];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
 
-var regularLayer = new olgm.layer.Google({
+
+const center = [-7908084, 6177492];
+
+const regularLayer = new GoogleLayer({
   visible: false
 });
 
-var themedLayer = new olgm.layer.Google({
+const themedLayer = new GoogleLayer({
   styles: [{
-    "stylers": [{
-      "saturation": -100
-    },{
-       "gamma": 2.25
+    'stylers': [{
+      'saturation': -100
+    }, {
+      'gamma': 2.25
     }]
   }]
 });
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     regularLayer,
     themedLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();
 
-function toggle() {
+document.getElementById('toggle').addEventListener('click', function() {
   regularLayer.setVisible(!regularLayer.getVisible());
   themedLayer.setVisible(!themedLayer.getVisible());
-};
+});

@@ -1,44 +1,55 @@
-var center = [-7908084, 6177492];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import OSMSource from 'ol/source/OSM.js';
+import OverviewMap from 'ol/control/OverviewMap.js';
+import {defaults as defaultControls} from 'ol/control.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
 
-var googleLayer = new olgm.layer.Google();
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const center = [-7908084, 6177492];
+
+const googleLayer = new GoogleLayer();
+
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   visible: false
 });
 
 // Create the overview map control
-var overviewMapControl = new ol.control.OverviewMap({
+const overviewMapControl = new OverviewMap({
   className: 'ol-overviewmap ol-custom-overviewmap',
   collapsed: false
 });
 
-var map = new ol.Map({
-  controls: ol.control.defaults().extend([
+const map = new Map({
+  controls: defaultControls().extend([
     overviewMapControl
   ]),
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer,
     osmLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({
+const olGM = new OLGoogleMaps({
   map: map
 });
 
 // Get the map in the overview box
-var overviewMap = overviewMapControl.getOverviewMap();
+const overviewMap = overviewMapControl.getOverviewMap();
 
 // Setup an instance of olGM for the overview
-var overviewOLGM = new olgm.OLGoogleMaps({
+const overviewOLGM = new OLGoogleMaps({
   map: overviewMap
 });
 
@@ -50,7 +61,7 @@ google.maps.event.addListenerOnce(overviewOLGM.gmap, 'idle', function() {
   olGM.activate();
 });
 
-function toggle() {
+document.getElementById('toggle').addEventListener('click', function() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
-}
+});

@@ -1,37 +1,53 @@
-var center = [-7908084, 6177492];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import VectorLayer from 'ol/layer/Vector.js';
+import OSMSource from 'ol/source/OSM.js';
+import VectorSource from 'ol/source/Vector.js';
+import Feature from 'ol/Feature.js';
+import Point from 'ol/geom/Point.js';
+import Style from 'ol/style/Style.js';
+import Icon from 'ol/style/Icon.js';
+import DragPanInteraction from 'ol/interaction/DragPan.js';
+import {defaults as defaultInteractions} from 'ol/interaction.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
 
-var googleLayer = new olgm.layer.Google();
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const center = [-7908084, 6177492];
+
+const googleLayer = new GoogleLayer();
+
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   visible: false
 });
 
-var source = new ol.source.Vector();
-var feature = new ol.Feature(new ol.geom.Point(center));
-feature.setStyle(new ol.style.Style({
-    image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
-      anchor: [0.5, 46],
-      anchorXUnits: 'fraction',
-      anchorYUnits: 'pixels',
-      size: [32, 48],
-      scale: 0.75,
-      src: 'data/icon.png',
-      rotation: 0.25 * Math.PI,
-      opacity: 0.5
-    }))
-  }));
+const source = new VectorSource();
+const feature = new Feature(new Point(center));
+feature.setStyle(new Style({
+  image: new Icon(/** @type {olx.style.IconOptions} */ ({
+    anchor: [0.5, 46],
+    anchorXUnits: 'fraction',
+    anchorYUnits: 'pixels',
+    size: [32, 48],
+    scale: 0.75,
+    src: 'data/icon.png',
+    rotation: 0.25 * Math.PI,
+    opacity: 0.5
+  }))
+}));
 source.addFeature(feature);
-var vector = new ol.layer.Vector({
+const vector = new VectorLayer({
   source: source
 });
 
-var interactionOptions = {'dragPan': false};
-var interactions = ol.interaction.defaults(interactionOptions).extend([
-  new ol.interaction.DragPan()
+const interactionOptions = {'dragPan': false};
+const interactions = defaultInteractions(interactionOptions).extend([
+  new DragPanInteraction()
 ]);
 
-var map = new ol.Map({
+const map = new Map({
   interactions: interactions,
   layers: [
     googleLayer,
@@ -39,22 +55,22 @@ var map = new ol.Map({
     vector
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     rotation: Math.PI / 3,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({
+const olGM = new OLGoogleMaps({
   map: map,
   mapIconOptions: {
     useCanvas: true
-  }}); // map is the ol.Map instance
+  }}); // map is the Map instance
 olGM.activate();
 
 
-function toggle() {
+document.getElementById('toggle').addEventListener('click', function() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
-};
+});

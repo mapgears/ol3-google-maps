@@ -1,0 +1,27 @@
+.ol-custom-overviewmap,
+.ol-custom-overviewmap.ol-uncollapsible {
+  bottom: auto;
+  left: auto;
+  right: 0;
+  top: 0;
+}
+
+.ol-custom-overviewmap .ol-overviewmap-map {
+  border: none;
+  width: 300px;
+}
+
+/* Remove attributions from the overview
+    They already appear on the main map */
+
+.ol-custom-overviewmap .ol-overviewmap-map a {
+  display: none;
+}
+
+.ol-custom-overviewmap .ol-overviewmap-map a div img {
+  display: none;
+}
+
+.ol-custom-overviewmap .ol-overviewmap-map .gmnoprint {
+  display: none;
+}

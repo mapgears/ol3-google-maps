@@ -1,15 +1,26 @@
-var center = [-10997148, 4569099];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import TileLayer from 'ol/layer/Tile.js';
+import ImageLayer from 'ol/layer/Image.js';
+import OSMSource from 'ol/source/OSM.js';
+import ImageWMSSource from 'ol/source/ImageWMS.js';
+import TileWMSSource from 'ol/source/TileWMS.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
 
-var googleLayer = new olgm.layer.Google();
+const center = [-10997148, 4569099];
 
-var osmLayer = new ol.layer.Tile({
-  source: new ol.source.OSM(),
+const googleLayer = new GoogleLayer();
+
+const osmLayer = new TileLayer({
+  source: new OSMSource(),
   visible: false
 });
 
-var tileWMSLayer  =  new ol.layer.Tile({
+const tileWMSLayer = new TileLayer({
   extent: [-13884991, 2870341, -7455066, 6338219],
-  source: new ol.source.TileWMS({
+  source: new TileWMSSource({
     url: 'http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en',
     params: {'LAYERS': 'limits', 'TILED': true},
     serverType: 'geoserver'
@@ -17,9 +28,9 @@ var tileWMSLayer  =  new ol.layer.Tile({
   visible: true
 });
 
-var tileWMSLayer2  =  new ol.layer.Tile({
+const tileWMSLayer2 = new TileLayer({
   extent: [-13884991, 2870341, -7455066, 6338219],
-  source: new ol.source.TileWMS({
+  source: new TileWMSSource({
     url: 'http://demo.boundlessgeo.com/geoserver/wms',
     params: {'LAYERS': 'topp:states', 'TILED': true},
     serverType: 'geoserver'
@@ -27,29 +38,29 @@ var tileWMSLayer2  =  new ol.layer.Tile({
   visible: true
 });
 
-var imageWMSLayer = new ol.layer.Image({
+const imageWMSLayer = new ImageLayer({
   extent: [-13884991, 2870341, -7455066, 6338219],
-  source: new ol.source.ImageWMS({
+  source: new ImageWMSSource({
     url: 'http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en',
     params: {'LAYERS': 'limits', 'TILED': true},
     serverType: 'geoserver'
   }),
   visible: false
-})
+});
 
-var imageWMSLayer2 = new ol.layer.Image({
+const imageWMSLayer2 = new ImageLayer({
   extent: [-13884991, 2870341, -7455066, 6338219],
-  source: new ol.source.ImageWMS({
+  source: new ImageWMSSource({
     url: 'http://demo.boundlessgeo.com/geoserver/wms',
     params: {'LAYERS': 'topp:states', 'TILED': true},
     serverType: 'geoserver'
   }),
   visible: false
-})
+});
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer,
     osmLayer,
@@ -59,35 +70,35 @@ var map = new ol.Map({
     imageWMSLayer2
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 4
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();
 
-function toggleOSM() {
+document.getElementById('toggleOSM').addEventListener('click', function() {
   googleLayer.setVisible(!googleLayer.getVisible());
   osmLayer.setVisible(!osmLayer.getVisible());
-};
+});
 
-function toggleWMS() {
+document.getElementById('toggleWMS').addEventListener('click', function() {
   tileWMSLayer.setVisible(!tileWMSLayer.getVisible());
   tileWMSLayer2.setVisible(!tileWMSLayer2.getVisible());
   imageWMSLayer.setVisible(!imageWMSLayer.getVisible());
   imageWMSLayer2.setVisible(!imageWMSLayer2.getVisible());
-  var spanText = tileWMSLayer.getVisible() ? 'tiled' : 'image';
+  const spanText = tileWMSLayer.getVisible() ? 'tiled' : 'image';
   document.getElementById('currentMode').innerHTML = spanText;
-}
+});
 
-function setRandomParam() {
-  var params = {
+document.getElementById('setRandomParam').addEventListener('click', function() {
+  const params = {
     'random': Math.random()
   };
   tileWMSLayer.getSource().updateParams(params);
   tileWMSLayer2.getSource().updateParams(params);
   imageWMSLayer.getSource().updateParams(params);
   imageWMSLayer2.getSource().updateParams(params);
-};
+});
