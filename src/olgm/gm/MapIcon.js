@@ -8,10 +8,10 @@ import MapElement from './MapElement.js';
  * @property {boolean} [useCanvas] Whether or not we should draw on canvases when we can, instead of using the Google Maps API. This fixes z-index issues with labels on margers
  */
 
- /**
-  * @classdesc
-  * @api
-  */
+/**
+ * @classdesc
+ * @api
+ */
 class MapIcon extends MapElement {
   /**
    * Creates a new map icon
