@@ -12,7 +12,7 @@ class MapIcon extends MapElement {
   /**
    * Creates a new map icon
    * @param {module:ol/style/Icon} imageStyle ol3 style properties
-   * @param {Object.<string, *>=} opt_options Optional properties to set.
+   * @param {Object<string, *>=} opt_options Optional properties to set.
    * @api
    */
   constructor(imageStyle, opt_options) {
