@@ -7,7 +7,7 @@ import LayerGroup from 'ol/layer/Group.js';
  * @typedef {Object} Options
  * @property {boolean} [visible=true] Visibility.
  * @property {google.maps.MapTypeId.<(number|string)>|string|undefined} [mapTypeId=google.maps.MapTypeId.ROADMAP] The type of google map
- * @property {Array.<google.maps.MapTypeStyle>|undefined} [styles] Google map styling
+ * @property {Array<google.maps.MapTypeStyle>|undefined} [styles] Google map styling
  */
 
 /**
@@ -33,7 +33,7 @@ class GoogleLayer extends LayerGroup {
       google.maps.MapTypeId.ROADMAP;
 
     /**
-     * @type {?Array.<google.maps.MapTypeStyle>}
+     * @type {?Array<google.maps.MapTypeStyle>}
      * @private
      */
     this.styles_ = options.styles ? options.styles : null;
@@ -51,7 +51,7 @@ class GoogleLayer extends LayerGroup {
 
 
   /**
-   * @return {?Array.<google.maps.MapTypeStyle>} map styles
+   * @return {?Array<google.maps.MapTypeStyle>} map styles
    */
   getStyles() {
     return this.styles_;

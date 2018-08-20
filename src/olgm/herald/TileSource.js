@@ -14,7 +14,7 @@ import SourceHerald from './Source.js';
  * @property {google.maps.ImageMapType} googleTileLayer
  * @property {boolean} ignoreNextOpacityChange
  * @property {module:ol/layer/Tile} layer
- * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
  * @property {number} opacity
  * @property {number} zIndex
  */
@@ -29,13 +29,13 @@ class TileSourceHerald extends SourceHerald {
     super(ol3map, gmap);
 
     /**
-    * @type {Array.<module:olgm/herald/TileSource~LayerCache>}
+    * @type {Array<module:olgm/herald/TileSource~LayerCache>}
     * @private
     */
     this.cache_ = [];
 
     /**
-    * @type {Array.<module:ol/layer/Tile>}
+    * @type {Array<module:ol/layer/Tile>}
     * @private
     */
     this.layers_ = [];

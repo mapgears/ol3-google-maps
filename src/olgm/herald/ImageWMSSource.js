@@ -16,7 +16,7 @@ import {appendParams} from '../uri.js';
  * @property {module:olgm/gm/ImageOverlay} imageOverlay
  * @property {string|null} lastUrl
  * @property {module:ol/layer/Image} layer
- * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
  * @property {number} opacity
  * @property {number} zIndex
  */
@@ -31,13 +31,13 @@ class ImageWMSSourceHerald extends SorceHerald {
     super(ol3map, gmap);
 
     /**
-    * @type {Array.<module:olgm/herald/ImageWMSSource~LayerCache>}
+    * @type {Array<module:olgm/herald/ImageWMSSource~LayerCache>}
     * @private
     */
     this.cache_ = [];
 
     /**
-    * @type {Array.<module:ol/layer/Image>}
+    * @type {Array<module:ol/layer/Image>}
     * @private
     */
     this.layers_ = [];

@@ -27,13 +27,13 @@ class VectorFeatureHerald extends Herald {
     super(ol3map, gmap);
 
     /**
-     * @type {Array.<module:ol/Feature>}
+     * @type {Array<module:ol/Feature>}
      * @private
      */
     this.features_ = [];
 
     /**
-     * @type {Array.<olgm.herald.VectorFeature.Cache>}
+     * @type {Array<olgm.herald.VectorFeature.Cache>}
      * @private
      */
     this.cache_ = [];

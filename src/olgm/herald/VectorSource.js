@@ -11,7 +11,7 @@ import VectorFeatureHerald from './VectorFeature.js';
  * @property {google.maps.Data} data
  * @property {module:olgm/herald/VectorFeature} herald
  * @property {module:ol/layer/Vector} layer
- * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
  * @property {number} opacity
  */
 
@@ -26,13 +26,13 @@ class VectorSourceHerald extends SourceHerald {
     super(ol3map, gmap);
 
     /**
-    * @type {Array.<module:olgm/herald/VectorSource~LayerCache>}
+    * @type {Array<module:olgm/herald/VectorSource~LayerCache>}
     * @private
     */
     this.cache_ = [];
 
     /**
-    * @type {Array.<module:ol/layer/Vector>}
+    * @type {Array<module:ol/layer/Vector>}
     * @private
     */
     this.layers_ = [];

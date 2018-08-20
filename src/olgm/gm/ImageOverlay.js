@@ -5,7 +5,7 @@ class ImageOverlay extends ((window.google && window.google.maps && google.maps.
   /**
    * Creates a new image overlay.
    * @param {string} src url to the image
-   * @param {Array.<number>} size size of the image
+   * @param {Array<number>} size size of the image
    * @param {google.maps.LatLng} topLeft topLeft corner
    * @api
    */
@@ -19,7 +19,7 @@ class ImageOverlay extends ((window.google && window.google.maps && google.maps.
     this.src_ = src;
 
     /**
-     * @type {Array.<number>}
+     * @type {Array<number>}
      * @private
      */
     this.size_ = size;

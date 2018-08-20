@@ -24,13 +24,13 @@ class Herald extends Abstract {
     super(ol3map, gmap);
 
     /**
-     * @type {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>}
+     * @type {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>}
      * @protected
      */
     this.listenerKeys = [];
 
     /**
-     * @type {Array.<module:ol/events~EventsKey>}
+     * @type {Array<module:ol/events~EventsKey>}
      * @protected
      */
     this.olgmListenerKeys = [];

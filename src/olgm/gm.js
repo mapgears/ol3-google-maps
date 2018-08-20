@@ -136,9 +136,9 @@ export function createGeometry(geometry, opt_ol3map) {
 /**
  * Convert a list of OpenLayers coordinates to a list of google maps LatLng.
  *
- * @param {Array.<module:ol/coordinate~Coordinate>} coordinates List of coordinate
+ * @param {Array<module:ol/coordinate~Coordinate>} coordinates List of coordinate
  * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
- * @return {Array.<google.maps.LatLng>} List of lat lng.
+ * @return {Array<google.maps.LatLng>} List of lat lng.
  * @private
  */
 export function genLatLngs_(coordinates, opt_inProj) {
@@ -157,9 +157,9 @@ export function genLatLngs_(coordinates, opt_inProj) {
  * Convert a list of OpenLayers multi-coordinates to a list of multi
  * google maps LatLng.
  *
- * @param {Array.<Array.<module:ol/coordinate~Coordinate>>} coordinates List of multi coordinate
+ * @param {Array<Array<module:ol/coordinate~Coordinate>>} coordinates List of multi coordinate
  * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
- * @return {Array.<Array.<google.maps.LatLng>>} List of multi lat lng.
+ * @return {Array<Array<google.maps.LatLng>>} List of multi lat lng.
  * @private
  */
 export function genMultiLatLngs_(coordinates, opt_inProj) {
@@ -175,9 +175,9 @@ export function genMultiLatLngs_(coordinates, opt_inProj) {
 /**
  * Convert a list of OpenLayers polygons to a list of google maps polygons.
  *
- * @param {Array.<module:ol/geom/Polygon>} polygons List of polygons.
+ * @param {Array<module:ol/geom/Polygon>} polygons List of polygons.
  * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
- * @return {Array.<google.maps.Data.Polygon>} List of polygons.
+ * @return {Array<google.maps.Data.Polygon>} List of polygons.
  * @private
  */
 export function genMultiPolygon_(polygons, opt_inProj) {

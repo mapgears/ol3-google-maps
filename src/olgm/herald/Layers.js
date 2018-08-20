@@ -15,7 +15,7 @@ import GoogleLayer from '../layer/Google.js';
 /**
  * @typedef {Object} GoogleLayerCache
  * @property {module:olgm/layer/Google} layer
- * @property {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
  */
 
 class LayersHerald extends Herald {
@@ -58,13 +58,13 @@ class LayersHerald extends Herald {
     super(ol3map, gmap);
 
     /**
-     * @type {Array.<module:olgm/layer/Google>}
+     * @type {Array<module:olgm/layer/Google>}
      * @private
      */
     this.googleLayers_ = [];
 
     /**
-     * @type {Array.<module:olgm/herald/Layers~GoogleLayerCache>}
+     * @type {Array<module:olgm/herald/Layers~GoogleLayerCache>}
      * @private
      */
     this.googleCache_ = [];

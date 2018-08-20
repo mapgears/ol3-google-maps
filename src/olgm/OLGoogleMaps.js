@@ -68,7 +68,7 @@ class OLGoogleMaps extends Abstract {
     super(options.map, gmap);
 
     /**
-     * @type {Array.<module:olgm/herald/Herald>}
+     * @type {Array<module:olgm/herald/Herald>}
      * @private
      */
     this.heralds_ = [];

@@ -11,7 +11,7 @@ import Style from 'ol/style/Style.js';
 import {unlistenByKey} from './events.js';
 
 /**
- * @type {!Array.<number>}
+ * @type {!Array<number>}
  */
 export const RESOLUTIONS = [
   156543.03390625,
@@ -183,7 +183,7 @@ export function getZoomFromResolution(resolution) {
  * Source: http://stackoverflow.com/questions/7543818/\
  *     regex-javascript-to-match-both-rgb-and-rgba
  * @param {string} rgbaString the rgbaString to parse
- * @return {?Array.<number>} the rgba color in number array format
+ * @return {?Array<number>} the rgba color in number array format
  */
 export function parseRGBA(rgbaString) {
   let rgba = null;
@@ -212,9 +212,9 @@ export function stringStartsWith(string, needle) {
 
 
 /**
- * @param {Array.<module:ol/events~EventsKey|Array.<module:ol/events~EventsKey>>} listenerKeys listener
+ * @param {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys listener
  * keys
- * @param {Array.<module:ol/events~EventsKey>=} opt_olgmListenerKeys olgm listener keys
+ * @param {Array<module:ol/events~EventsKey>=} opt_olgmListenerKeys olgm listener keys
  */
 export function unlistenAllByKey(listenerKeys, opt_olgmListenerKeys) {
   listenerKeys.forEach(unByKey);
