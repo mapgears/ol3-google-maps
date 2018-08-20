@@ -22,16 +22,17 @@ To install the Node.js dependencies run
 
 ## Running examples
 
-To run the examples you first need to start the dev server:
-
-    $ npm run serve-examples
-
-The first time you run this command, you will be asked for a Google Maps API
-key. If you don't already have one, follow the instructions on
+Before you run any examples, you must assign your Google Maps API key to the
+environment variable GOOGLE_MAPS_API_KEY. If you don't already have one, follow
+the instructions on
 [this page](https://developers.google.com/maps/documentation/javascript/get-api-key)
 to create one.
 
-Then, load <http://localhost:5000/> in your browser.
+Then you can start the dev server:
+
+    $ npm run serve-examples
+
+Then, load <http://localhost:8080/> in your browser.
 
 ## Google Maps externs file
 
