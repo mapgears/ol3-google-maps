@@ -2,6 +2,7 @@
  * @module olgm/gm/MapElement
  */
 /**
+ * @classdesc
  * This class is a parent for all elements that are drawn manually onto Google
  * Maps. This means drawing elements on a canvas attached to the Google Maps
  * map instead of drawing features on map tiles using their API.
@@ -10,11 +11,11 @@
  *
  * Some of this code was borrowed from the MapLabel project, whose source code
  * can be found here: https://github.com/googlemaps/js-map-label
+ * @api
  */
 class MapElement extends ((window.google && window.google.maps && google.maps.OverlayView) || Object) {
   /**
    * Creates a new Map Element, to be drawn as an OverlayView
-   * @api
    */
   constructor() {
     super();

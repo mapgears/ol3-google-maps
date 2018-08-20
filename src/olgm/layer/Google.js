@@ -15,11 +15,11 @@ import LayerGroup from 'ol/layer/Group.js';
  * An ol3 layer object serving the purpose of being added to the ol3 map
  * as dummy layer. The `mapTypeId` defines which Google Maps map type the
  * layer represents.
+ * @api
  */
 class GoogleLayer extends LayerGroup {
   /**
    * @param {module:olgm/layer/Google~Options} opt_options Layer options.
-   * @api
    */
   constructor(opt_options) {
     super(opt_options);

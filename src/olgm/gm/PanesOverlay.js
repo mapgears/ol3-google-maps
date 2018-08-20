@@ -1,12 +1,15 @@
 /**
  * @module olgm/gm/PanesOverlay
  */
+/**
+ * @classdesc
+ * @api
+ */
 class PanesOverlay extends ((window.google && window.google.maps && google.maps.OverlayView) || Object) {
   /**
    * This overlay doesn't actually do anything, it's only a way to get the map's
    * panes since Google Maps' API doesn't offer any other way to do so.
    * @param {google.maps.Map} gmap Google Maps map
-   * @api
    */
   constructor(gmap) {
     super();

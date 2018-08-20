@@ -36,11 +36,14 @@
 
 import MapElement from './MapElement.js';
 
+/**
+ * @classdesc
+ * @api
+ */
 class MapLabel extends MapElement {
   /**
    * Creates a new Map Label
    * @param {Object<string, *>=} opt_options Optional properties to set.
-   * @api
    */
   constructor(opt_options) {
     super();

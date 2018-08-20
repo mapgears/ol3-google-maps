@@ -1,13 +1,16 @@
 /**
  * @module olgm/gm/ImageOverlay
  */
+/**
+ * @classdesc
+ * @api
+ */
 class ImageOverlay extends ((window.google && window.google.maps && google.maps.OverlayView) || Object) {
   /**
    * Creates a new image overlay.
    * @param {string} src url to the image
    * @param {Array<number>} size size of the image
    * @param {google.maps.LatLng} topLeft topLeft corner
-   * @api
    */
   constructor(src, size, topLeft) {
     super();

@@ -11,44 +11,45 @@ import LayersHerald from './herald/Layers.js';
  * @property {module:olgm/herald/Herald~WatchOptions} [watch] For each layer type, a boolean indicating whether the library should watch and let layers of that type should be rendered by Google Maps or not. Defaults to `true` for each option.
  */
 
+/**
+ * @classdesc
+ * The main component of this library. It binds an existing OpenLayers map to
+ * a Google Maps map it creates through the use of `herald` objects. Each
+ * herald is responsible of synchronizing something from the OpenLayers map
+ * to the Google Maps one, which makes OpenLayers the master source of
+ * interactions. This allows the development of applications without having
+ * to worry about writing code that uses the Google Maps API.
+ *
+ * Here's an architecture overview of what the different heralds, where they
+ * are created and on what they act:
+ *
+ *     olgm.OLGoogleMaps <-- ol.Map
+ *      |
+ *      |__olgm.herald.Layers <-- ol.Collection<ol.layer.Base>
+ *         |                      |
+ *         |                      |__olgm.layer.Google
+ *         |                      |
+ *         |                      |__ol.layer.Vector
+ *         |                      |
+ *         |                      |__ol.layer.TileLayer
+ *         |                      |
+ *         |                      |__ol.layer.ImageLayer
+ *         |
+ *         |__olgm.herald.View <-- ol.View
+ *         |
+ *         |__olgm.herald.TileSource <-- ol.source.Tile
+ *         |
+ *         |__olgm.herald.ImageWMSSource <-- ol.source.ImageWMS
+ *         |
+ *         |__olgm.herald.VectorSource <-- ol.source.Vector
+ *            |
+ *            |__olgm.herald.Feature <-- ol.Feature
+ *
+ * @api
+ */
 class OLGoogleMaps extends Abstract {
   /**
-   * @classdesc
-   * The main component of this library. It binds an existing OpenLayers map to
-   * a Google Maps map it creates through the use of `herald` objects. Each
-   * herald is responsible of synchronizing something from the OpenLayers map
-   * to the Google Maps one, which makes OpenLayers the master source of
-   * interactions. This allows the development of applications without having
-   * to worry about writing code that uses the Google Maps API.
-   *
-   * Here's an architecture overview of what the different heralds, where they
-   * are created and on what they act:
-   *
-   *     olgm.OLGoogleMaps <-- ol.Map
-   *      |
-   *      |__olgm.herald.Layers <-- ol.Collection<ol.layer.Base>
-   *         |                      |
-   *         |                      |__olgm.layer.Google
-   *         |                      |
-   *         |                      |__ol.layer.Vector
-   *         |                      |
-   *         |                      |__ol.layer.TileLayer
-   *         |                      |
-   *         |                      |__ol.layer.ImageLayer
-   *         |
-   *         |__olgm.herald.View <-- ol.View
-   *         |
-   *         |__olgm.herald.TileSource <-- ol.source.Tile
-   *         |
-   *         |__olgm.herald.ImageWMSSource <-- ol.source.ImageWMS
-   *         |
-   *         |__olgm.herald.VectorSource <-- ol.source.Vector
-   *            |
-   *            |__olgm.herald.Feature <-- ol.Feature
-   *
-   *
    * @param {module:olgm/OLGoogleMaps~Options} options Options.
-   * @api
    */
   constructor(options) {
     const gmapEl = document.createElement('div');
