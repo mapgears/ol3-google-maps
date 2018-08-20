@@ -22,7 +22,7 @@ import DragPan from 'ol/interaction/DragPan.js';
  *   have kinetic enabled.
  *
  * @param {module:ol/interaction/Interaction~DefaultsOptions=} opt_options Defaults options.
- * @return {module:ol/Collection.<ol.interaction.Interaction>} A collection of
+ * @return {module:ol/Collection<ol.interaction.Interaction>} A collection of
  * interactions to be used with the module:ol/PluggableMap constructor's interactions option.
  * @api stable
  */

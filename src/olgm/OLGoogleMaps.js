@@ -26,7 +26,7 @@ class OLGoogleMaps extends Abstract {
    *
    *     olgm.OLGoogleMaps <-- ol.Map
    *      |
-   *      |__olgm.herald.Layers <-- ol.Collection.<ol.layer.Base>
+   *      |__olgm.herald.Layers <-- ol.Collection<ol.layer.Base>
    *         |                      |
    *         |                      |__olgm.layer.Google
    *         |                      |
