@@ -34,7 +34,7 @@
     "url": "https://github.com/mapgears/ol3-google-maps/issues"
   },
   "peerDependencies": {
-    "ol": "^5.0.0"
+    "ol": "^5.0.0 || ^4.0.0"
   },
   "devDependencies": {
     "buble": "^0.19.3",
