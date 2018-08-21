@@ -1,26 +1,28 @@
+/**
+ * @module olgm/obj
+ */
 /* Based on https://github.com/openlayers/openlayers/blob/master/src/ol/obj.js */
-goog.provide('olgm.obj');
 
 
 /**
  * Polyfill for Object.assign().  Assigns enumerable and own properties from
  * one or more source objects to a target object.
+ * See https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign.
  *
- * @see https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
  * @param {!Object} target The target object.
  * @param {...Object} var_sources The source object(s).
  * @return {!Object} The modified target object.
  */
-olgm.obj.assign = (typeof Object.assign === 'function') ? Object.assign : function(target, var_sources) {
+export const assign = (typeof Object.assign === 'function') ? Object.assign : function(target, var_sources) {
   if (target === undefined || target === null) {
     throw new TypeError('Cannot convert undefined or null to object');
   }
 
-  var output = Object(target);
-  for (var i = 1, ii = arguments.length; i < ii; ++i) {
-    var source = arguments[i];
+  const output = Object(target);
+  for (let i = 1, ii = arguments.length; i < ii; ++i) {
+    const source = arguments[i];
     if (source !== undefined && source !== null) {
-      for (var key in source) {
+      for (const key in source) {
         if (source.hasOwnProperty(key)) {
           output[key] = source[key];
         }
@@ -35,11 +37,11 @@ olgm.obj.assign = (typeof Object.assign === 'function') ? Object.assign : functi
  * Removes all properties from an object.
  * @param {Object} object The object to clear.
  */
-olgm.obj.clear = function(object) {
-  for (var property in object) {
+export function clear(object) {
+  for (const property in object) {
     delete object[property];
   }
-};
+}
 
 
 /**
@@ -48,13 +50,13 @@ olgm.obj.clear = function(object) {
  * @return {!Array<V>} The property values.
  * @template K,V
  */
-olgm.obj.getValues = function(object) {
-  var values = [];
-  for (var property in object) {
+export function getValues(object) {
+  const values = [];
+  for (const property in object) {
     values.push(object[property]);
   }
   return values;
-};
+}
 
 
 /**
@@ -62,10 +64,10 @@ olgm.obj.getValues = function(object) {
  * @param {Object} object The object to check.
  * @return {boolean} The object is empty.
  */
-olgm.obj.isEmpty = function(object) {
-  var property;
+export function isEmpty(object) {
+  let property;
   for (property in object) {
     return false;
   }
   return !property;
-};
+}

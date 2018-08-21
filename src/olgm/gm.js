@@ -1,196 +1,194 @@
-goog.provide('olgm.gm');
-
-goog.require('ol.geom.LineString');
-goog.require('ol.geom.Point');
-goog.require('ol.geom.Polygon');
-goog.require('ol.geom.MultiLineString');
-goog.require('ol.geom.MultiPolygon');
-goog.require('ol.geom.MultiPoint');
-goog.require('ol.proj');
-goog.require('ol.style.Circle');
-goog.require('ol.style.Icon');
-goog.require('ol.style.RegularShape');
-goog.require('olgm');
-goog.require('olgm.asserts');
-goog.require('olgm.gm.MapLabel');
-goog.require('olgm.gm.MapIcon');
-
-
-// === Data ===
+/**
+ * @module olgm/gm
+ */
+import LineString from 'ol/geom/LineString.js';
+import Point from 'ol/geom/Point.js';
+import Polygon from 'ol/geom/Polygon.js';
+import MultiLineString from 'ol/geom/MultiLineString.js';
+import MultiPolygon from 'ol/geom/MultiPolygon.js';
+import MultiPoint from 'ol/geom/MultiPoint.js';
+import {transform} from 'ol/proj.js';
+import Circle from 'ol/style/Circle.js';
+import Icon from 'ol/style/Icon.js';
+import RegularShape from 'ol/style/RegularShape.js';
+import {getStyleOf, getColor, getColorOpacity} from './util.js';
+import {assert} from './asserts.js';
+import MapLabel from './gm/MapLabel.js';
+import MapIcon from './gm/MapIcon.js';
 
 
 /**
  * Create a Google Maps feature using an OpenLayers one.
- * @param {ol.Feature} feature feature to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/Feature} feature feature to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.Feature} google Feature
  */
-olgm.gm.createFeature = function(feature, opt_ol3map) {
-  var geometry = /** @type {ol.geom.Geometry} */ (feature.getGeometry());
-  var gmapGeometry = olgm.gm.createFeatureGeometry(geometry, opt_ol3map);
+export function createFeature(feature, opt_ol3map) {
+  const geometry = /** @type {module:ol/geom/Geometry} */ (feature.getGeometry());
+  const gmapGeometry = createFeatureGeometry(geometry, opt_ol3map);
   return new google.maps.Data.Feature({
     geometry: gmapGeometry
   });
-};
+}
 
 
 /**
  * Create a Google Maps geometry using an OpenLayers one.
- * @param {ol.geom.Geometry} geometry geometry to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/geom/Geometry} geometry geometry to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
- * @return {google.maps.Data.Geometry|google.maps.LatLng|google.maps.LatLng}
+ * @return {google.maps.Data.Geometry|google.maps.LatLng}
  * google Geometry or LatLng
  */
-olgm.gm.createFeatureGeometry = function(geometry, opt_ol3map) {
+export function createFeatureGeometry(geometry, opt_ol3map) {
 
-  var gmapGeometry = null;
+  let gmapGeometry = null;
 
-  if (geometry instanceof ol.geom.Point) {
-    gmapGeometry = olgm.gm.createLatLng(geometry, opt_ol3map);
-  } else if (geometry instanceof ol.geom.MultiPoint ||
-             geometry instanceof ol.geom.LineString ||
-             geometry instanceof ol.geom.MultiLineString ||
-             geometry instanceof ol.geom.Polygon ||
-             geometry instanceof ol.geom.MultiPolygon) {
-    gmapGeometry = olgm.gm.createGeometry(geometry, opt_ol3map);
+  if (geometry instanceof Point) {
+    gmapGeometry = createLatLng(geometry, opt_ol3map);
+  } else if (geometry instanceof MultiPoint ||
+             geometry instanceof LineString ||
+             geometry instanceof MultiLineString ||
+             geometry instanceof Polygon ||
+             geometry instanceof MultiPolygon) {
+    gmapGeometry = createGeometry(geometry, opt_ol3map);
   }
 
-  olgm.asserts.assert(gmapGeometry !== null,
-      'Expected geometry to be ol.geom.Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon');
+  assert(gmapGeometry !== null,
+    'Expected geometry to be module:ol/geom/Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon');
 
   return gmapGeometry;
-};
+}
 
 
 /**
  * Create a Google Maps LatLng object using an OpenLayers Point.
- * @param {ol.geom.Point|ol.Coordinate} object coordinate to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/geom/Point|module:ol/coordinate~Coordinate} object coordinate to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.LatLng} google LatLng object
  */
-olgm.gm.createLatLng = function(object, opt_ol3map) {
-  var inProj = (opt_ol3map !== undefined) ?
+export function createLatLng(object, opt_ol3map) {
+  const inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
-  var coordinates;
-  if (object instanceof ol.geom.Point) {
+  let coordinates;
+  if (object instanceof Point) {
     coordinates = object.getCoordinates();
   } else {
     coordinates = object;
   }
-  var lonLatCoords = ol.proj.transform(coordinates, inProj, 'EPSG:4326');
+  const lonLatCoords = transform(coordinates, inProj, 'EPSG:4326');
   return new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]);
-};
+}
 
 
 /**
  * Create a Google Maps LineString or Polygon object using an OpenLayers one.
- * @param {ol.geom.MultiPoint|ol.geom.LineString|ol.geom.Polygon|ol.geom.MultiLineString|ol.geom.MultiPolygon} geometry geometry to create
- * @param {ol.Map=} opt_ol3map For reprojection purpose. If undefined, then
+ * @param {module:ol/geom/MultiPoint|module:ol/geom/LineString|module:ol/geom/Polygon|module:ol/geom/MultiLineString|module:ol/geom/MultiPolygon} geometry geometry to create
+ * @param {module:ol/PluggableMap=} opt_ol3map For reprojection purpose. If undefined, then
  *     `EPSG:3857` is used.
  * @return {google.maps.Data.MultiPoint|google.maps.Data.LineString|google.maps.Data.MultiLineString|google.maps.Data.Polygon|google.maps.Data.MultiPolygon} google
  * LineString or Polygon
  */
-olgm.gm.createGeometry = function(geometry, opt_ol3map) {
-  var inProj = (opt_ol3map !== undefined) ?
+export function createGeometry(geometry, opt_ol3map) {
+  const inProj = (opt_ol3map !== undefined) ?
     opt_ol3map.getView().getProjection() : 'EPSG:3857';
 
-  var gmapGeometry = null;
+  let gmapGeometry = null;
 
-  if (geometry instanceof ol.geom.LineString) {
-    var lineStringlatLngs = olgm.gm.genLatLngs_(
-        geometry.getCoordinates(),
-        inProj
+  if (geometry instanceof LineString) {
+    const lineStringlatLngs = genLatLngs_(
+      geometry.getCoordinates(),
+      inProj
     );
     gmapGeometry = new google.maps.Data.LineString(lineStringlatLngs);
-  } else if (geometry instanceof ol.geom.Polygon) {
-    var polygonlatLngs = olgm.gm.genLatLngs_(
-        geometry.getCoordinates()[0],
-        inProj
+  } else if (geometry instanceof Polygon) {
+    const polygonlatLngs = genLatLngs_(
+      geometry.getCoordinates()[0],
+      inProj
     );
     gmapGeometry = new google.maps.Data.Polygon([polygonlatLngs]);
-  } else if (geometry instanceof ol.geom.MultiLineString) {
-    var multiLineStringlatLngs = olgm.gm.genMultiLatLngs_(
-        geometry.getCoordinates(),
-        inProj
+  } else if (geometry instanceof MultiLineString) {
+    const multiLineStringlatLngs = genMultiLatLngs_(
+      geometry.getCoordinates(),
+      inProj
     );
     gmapGeometry = new google.maps.Data.MultiLineString(multiLineStringlatLngs);
-  } else if (geometry instanceof ol.geom.MultiPolygon) {
-    var multiPolygons = olgm.gm.genMultiPolygon_(
-        geometry.getPolygons(),
-        inProj
+  } else if (geometry instanceof MultiPolygon) {
+    const multiPolygons = genMultiPolygon_(
+      geometry.getPolygons(),
+      inProj
     );
     gmapGeometry = new google.maps.Data.MultiPolygon(multiPolygons);
-  } else if (geometry instanceof ol.geom.MultiPoint) {
-    var multiPoints = olgm.gm.genLatLngs_(
-        geometry.getCoordinates(),
-        inProj
+  } else if (geometry instanceof MultiPoint) {
+    const multiPoints = genLatLngs_(
+      geometry.getCoordinates(),
+      inProj
     );
     gmapGeometry = new google.maps.Data.MultiPoint(multiPoints);
   }
 
   return gmapGeometry;
-};
+}
 
 
 /**
  * Convert a list of OpenLayers coordinates to a list of google maps LatLng.
  *
- * @param {Array.<ol.Coordinate>} coordinates List of coordinate
- * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
- * @return {Array.<google.maps.LatLng>} List of lat lng.
+ * @param {Array<module:ol/coordinate~Coordinate>} coordinates List of coordinate
+ * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array<google.maps.LatLng>} List of lat lng.
  * @private
  */
-olgm.gm.genLatLngs_ = function(coordinates, opt_inProj) {
-  var inProj = opt_inProj || 'EPSG:3857';
-  var latLngs = [];
-  var lonLatCoords;
-  for (var i = 0, ii = coordinates.length; i < ii; i++) {
-    lonLatCoords = ol.proj.transform(coordinates[i], inProj, 'EPSG:4326');
+export function genLatLngs_(coordinates, opt_inProj) {
+  const inProj = opt_inProj || 'EPSG:3857';
+  const latLngs = [];
+  let lonLatCoords;
+  for (let i = 0, ii = coordinates.length; i < ii; i++) {
+    lonLatCoords = transform(coordinates[i], inProj, 'EPSG:4326');
     latLngs.push(new google.maps.LatLng(lonLatCoords[1], lonLatCoords[0]));
   }
   return latLngs;
-};
+}
 
 
 /**
  * Convert a list of OpenLayers multi-coordinates to a list of multi
  * google maps LatLng.
  *
- * @param {Array.<Array.<ol.Coordinate>>} coordinates List of multi coordinate
- * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
- * @return {Array.<Array.<google.maps.LatLng>>} List of multi lat lng.
+ * @param {Array<Array<module:ol/coordinate~Coordinate>>} coordinates List of multi coordinate
+ * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array<Array<google.maps.LatLng>>} List of multi lat lng.
  * @private
  */
-olgm.gm.genMultiLatLngs_ = function(coordinates, opt_inProj) {
-  var inProj = opt_inProj || 'EPSG:3857';
-  var multiLatLngs = [];
-  for (var i = 0, len = coordinates.length; i < len; i++) {
-    multiLatLngs.push(olgm.gm.genLatLngs_(coordinates[i], inProj));
+export function genMultiLatLngs_(coordinates, opt_inProj) {
+  const inProj = opt_inProj || 'EPSG:3857';
+  const multiLatLngs = [];
+  for (let i = 0, len = coordinates.length; i < len; i++) {
+    multiLatLngs.push(genLatLngs_(coordinates[i], inProj));
   }
   return multiLatLngs;
-};
+}
 
 
 /**
  * Convert a list of OpenLayers polygons to a list of google maps polygons.
  *
- * @param {Array.<ol.geom.Polygon>} polygons List of polygons.
- * @param {ol.ProjectionLike=} opt_inProj Projection of the features.
- * @return {Array.<google.maps.Data.Polygon>} List of polygons.
+ * @param {Array<module:ol/geom/Polygon>} polygons List of polygons.
+ * @param {module:ol/proj~ProjectionLike=} opt_inProj Projection of the features.
+ * @return {Array<google.maps.Data.Polygon>} List of polygons.
  * @private
  */
-olgm.gm.genMultiPolygon_ = function(polygons, opt_inProj) {
-  var mutliPolygons = [];
-  for (var i = 0, len = polygons.length; i < len; i++) {
-    var latLgns = olgm.gm.genMultiLatLngs_(polygons[i].getCoordinates(), opt_inProj);
-    var multiPolygon = new google.maps.Data.Polygon(latLgns);
+export function genMultiPolygon_(polygons, opt_inProj) {
+  const mutliPolygons = [];
+  for (let i = 0, len = polygons.length; i < len; i++) {
+    const latLgns = genMultiLatLngs_(polygons[i].getCoordinates(), opt_inProj);
+    const multiPolygon = new google.maps.Data.Polygon(latLgns);
     mutliPolygons.push(multiPolygon);
   }
   return mutliPolygons;
-};
+}
 
 
 // === Style ===
@@ -198,48 +196,48 @@ olgm.gm.genMultiPolygon_ = function(polygons, opt_inProj) {
 
 /**
  * Create a Google Maps data style options from an OpenLayers object.
- * @param {ol.style.Style|ol.StyleFunction|ol.layer.Vector|ol.Feature}
+ * @param {module:ol/style/Style|module:ol/style/Style~StyleFunction|module:ol/layer/Vector|module:ol/Feature}
  * object style object
- * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+ * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {?google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyle = function(object, mapIconOptions, opt_index) {
-  var gmStyle = null;
-  var style = olgm.getStyleOf(object);
+export function createStyle(object, mapIconOptions, opt_index) {
+  let gmStyle = null;
+  const style = getStyleOf(object);
   if (style) {
-    gmStyle = olgm.gm.createStyleInternal(style, mapIconOptions, opt_index);
+    gmStyle = createStyleInternal(style, mapIconOptions, opt_index);
   }
   return gmStyle;
-};
+}
 
 
 /**
  * Create a Google Maps data style options from an OpenLayers style object.
- * @param {ol.style.Style} style style object
- * @param {olgmx.gm.MapIconOptions} mapIconOptions map icon options
+ * @param {module:ol/style/Style} style style object
+ * @param {module:olgm/gm/MapIcon~Options} mapIconOptions map icon options
  * @param {number=} opt_index index for the object
  * @return {google.maps.Data.StyleOptions} google style options
  */
-olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
+export function createStyleInternal(style, mapIconOptions, opt_index) {
 
-  var gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
+  const gmStyle = /** @type {google.maps.Data.StyleOptions} */ ({});
 
   // strokeColor
   // strokeOpacity
   // strokeWeight
-  var stroke = style.getStroke();
+  const stroke = style.getStroke();
   if (stroke) {
-    var strokeColor = stroke.getColor();
+    const strokeColor = stroke.getColor();
     if (strokeColor) {
-      gmStyle['strokeColor'] = olgm.getColor(strokeColor);
-      var strokeOpacity = olgm.getColorOpacity(strokeColor);
+      gmStyle['strokeColor'] = getColor(strokeColor);
+      const strokeOpacity = getColorOpacity(strokeColor);
       if (strokeOpacity !== null) {
         gmStyle['strokeOpacity'] = strokeOpacity;
       }
     }
 
-    var strokeWidth = stroke.getWidth();
+    const strokeWidth = stroke.getWidth();
     if (strokeWidth) {
       gmStyle['strokeWeight'] = strokeWidth;
     }
@@ -247,42 +245,41 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
 
   // fillColor
   // fillOpacity
-  var fill = style.getFill();
+  const fill = style.getFill();
   if (fill) {
-    var fillColor = fill.getColor();
+    const fillColor = fill.getColor();
     if (fillColor) {
-      gmStyle['fillColor'] = olgm.getColor(fillColor);
-      var fillOpacity = olgm.getColorOpacity(fillColor);
+      gmStyle['fillColor'] = getColor(fillColor);
+      const fillOpacity = getColorOpacity(fillColor);
       if (fillOpacity !== null) {
         gmStyle['fillOpacity'] = fillOpacity;
       }
     }
   }
 
-  var image = style.getImage();
+  const image = style.getImage();
   if (image) {
 
-    var gmIcon = {};
-    var gmSymbol = {};
-    var useCanvas = mapIconOptions.useCanvas !== undefined ?
+    const gmIcon = {};
+    const gmSymbol = {};
+    const useCanvas = mapIconOptions.useCanvas !== undefined ?
       mapIconOptions.useCanvas : false;
 
-    if (image instanceof ol.style.Circle ||
-        image instanceof ol.style.RegularShape) {
-      // --- ol.style.Circle ---
-      if (image instanceof ol.style.Circle) {
+    if (image instanceof Circle || image instanceof RegularShape) {
+      // --- module:ol/style/Circle ---
+      if (image instanceof Circle) {
         gmSymbol['path'] = google.maps.SymbolPath.CIRCLE;
-      } else if (image instanceof ol.style.RegularShape) {
+      } else if (image instanceof RegularShape) {
         // Google Maps support SVG Paths. We'll build one manually.
-        var path = 'M ';
+        let path = 'M ';
 
         // Get a few variables from the image style;
-        var nbPoints = image.getPoints();
-        var outerRadius = image.getRadius();
-        var innerRadius = image.getRadius2() !== undefined ?
+        let nbPoints = image.getPoints();
+        const outerRadius = image.getRadius();
+        const innerRadius = image.getRadius2() !== undefined ?
           image.getRadius2() : image.getRadius();
-        var size = 0.1;
-        var rotation = image.getRotation() + image.getAngle();
+        const size = 0.1;
+        const rotation = image.getRotation() + image.getAngle();
 
         if (innerRadius == 0 && image.getRadius2() === undefined) {
           nbPoints = nbPoints / 2;
@@ -292,12 +289,12 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
           nbPoints = nbPoints * 2;
         }
 
-        for (var i = 0; i < nbPoints; i++) {
-          var radius = i % 2 == 0 ? outerRadius : innerRadius;
-          var angle = (i * 2 * Math.PI / nbPoints) - (Math.PI / 2) + rotation;
+        for (let i = 0; i < nbPoints; i++) {
+          const radius = i % 2 == 0 ? outerRadius : innerRadius;
+          const angle = (i * 2 * Math.PI / nbPoints) - (Math.PI / 2) + rotation;
 
-          var x = size * radius * Math.cos(angle);
-          var y = size * radius * Math.sin(angle);
+          const x = size * radius * Math.cos(angle);
+          const y = size * radius * Math.sin(angle);
           path += x + ',' + y + ' ';
         }
 
@@ -306,23 +303,23 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
         gmSymbol['path'] = path;
       }
 
-      var imageStroke = image.getStroke();
+      const imageStroke = image.getStroke();
       if (imageStroke) {
-        var imageStrokeColor = imageStroke.getColor();
+        const imageStrokeColor = imageStroke.getColor();
         if (imageStrokeColor) {
-          gmSymbol['strokeColor'] = olgm.getColor(imageStrokeColor);
+          gmSymbol['strokeColor'] = getColor(imageStrokeColor);
         }
 
         gmSymbol['strokeWeight'] = imageStroke.getWidth();
       }
 
-      var imageFill = image.getFill();
+      const imageFill = image.getFill();
       if (imageFill) {
-        var imageFillColor = imageFill.getColor();
+        const imageFillColor = imageFill.getColor();
         if (imageFillColor) {
-          gmSymbol['fillColor'] = olgm.getColor(imageFillColor);
+          gmSymbol['fillColor'] = getColor(imageFillColor);
 
-          var imageFillOpacity = olgm.getColorOpacity(imageFillColor);
+          const imageFillOpacity = getColorOpacity(imageFillColor);
           if (imageFillOpacity !== null) {
             gmSymbol['fillOpacity'] = imageFillOpacity;
           } else {
@@ -333,44 +330,44 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
         }
       }
 
-      var imageRadius = image.getRadius();
+      const imageRadius = image.getRadius();
       if (imageRadius) {
         gmSymbol['scale'] = imageRadius;
       }
-    } else if (image instanceof ol.style.Icon && !useCanvas) {
-      // --- ol.style.Icon ---
+    } else if (image instanceof Icon && !useCanvas) {
+      // --- module:ol/style/Icon ---
 
-      var imageSrc = image.getSrc();
+      const imageSrc = image.getSrc();
       if (imageSrc) {
         gmSymbol['url'] = imageSrc;
       }
 
-      var imageScale = image.getScale();
+      const imageScale = image.getScale();
 
-      var imageAnchor = image.getAnchor();
+      const imageAnchor = image.getAnchor();
       if (imageAnchor) {
         if (imageScale !== undefined) {
           gmSymbol['anchor'] = new google.maps.Point(
-              imageAnchor[0] * imageScale, imageAnchor[1] * imageScale);
+            imageAnchor[0] * imageScale, imageAnchor[1] * imageScale);
         } else {
           gmSymbol['anchor'] = new google.maps.Point(
-              imageAnchor[0], imageAnchor[1]);
+            imageAnchor[0], imageAnchor[1]);
         }
       }
 
-      var imageOrigin = image.getOrigin();
+      const imageOrigin = image.getOrigin();
       if (imageOrigin) {
         gmSymbol['origin'] = new google.maps.Point(
-            imageOrigin[0], imageOrigin[1]);
+          imageOrigin[0], imageOrigin[1]);
       }
 
-      var imageSize = image.getSize();
+      const imageSize = image.getSize();
       if (imageSize) {
         gmSymbol['size'] = new google.maps.Size(imageSize[0], imageSize[1]);
 
         if (imageScale !== undefined) {
           gmSymbol['scaledSize'] = new google.maps.Size(
-              imageSize[0] * imageScale, imageSize[1] * imageScale);
+            imageSize[0] * imageScale, imageSize[1] * imageScale);
         }
       }
 
@@ -386,16 +383,16 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
 
   // if, at this very last point, there aren't any style options that have
   // been set, then tell Google Maps to render the feature invisible because
-  // we're dealing with an empty `ol.style.Style` object.
+  // we're dealing with an empty `module:ol/style/Style` object.
   if (Object.keys(/** @type {!Object} */ (gmStyle)).length === 0) {
     gmStyle['visible'] = false;
   } else if (opt_index !== undefined) {
-    var zIndex = opt_index * 2;
+    const zIndex = opt_index * 2;
     gmStyle['zIndex'] = zIndex;
   }
 
   return gmStyle;
-};
+}
 
 
 // === Label ===
@@ -403,88 +400,88 @@ olgm.gm.createStyleInternal = function(style, mapIconOptions, opt_index) {
 
 /**
  * Create a MapLabel object from a text style and Lat/Lng location.
- * @param {ol.style.Text} textStyle style for the text
+ * @param {module:ol/style/Text} textStyle style for the text
  * @param {google.maps.LatLng} latLng position of the label
  * @param {number} index index for the label
- * @return {olgm.gm.MapLabel} map label
+ * @return {module:olgm/gm/MapLabel} map label
  */
-olgm.gm.createLabel = function(textStyle, latLng, index) {
+export function createLabel(textStyle, latLng, index) {
 
-  var labelOptions = {
+  const labelOptions = {
     align: 'center',
     position: latLng,
     zIndex: index * 2 + 1
   };
 
-  var text = textStyle.getText();
+  const text = textStyle.getText();
   if (text) {
     labelOptions['text'] = text;
   }
 
-  var font = textStyle.getFont();
+  const font = textStyle.getFont();
   if (font) {
     labelOptions['font'] = font;
   }
 
-  var fill = textStyle.getFill();
+  const fill = textStyle.getFill();
   if (fill) {
-    var fillColor = fill.getColor();
+    const fillColor = fill.getColor();
     if (fillColor) {
       labelOptions['fontColor'] = fillColor;
     }
   }
 
-  var stroke = textStyle.getStroke();
+  const stroke = textStyle.getStroke();
   if (stroke) {
-    var strokeColor = stroke.getColor();
+    const strokeColor = stroke.getColor();
     if (strokeColor) {
       labelOptions['strokeColor'] = strokeColor;
     }
 
-    var strokeWidth = stroke.getWidth();
+    const strokeWidth = stroke.getWidth();
     if (strokeWidth) {
       labelOptions['strokeWeight'] = strokeWidth;
     }
   }
 
-  var offsetX = textStyle.getOffsetX();
+  const offsetX = textStyle.getOffsetX();
   if (offsetX) {
     labelOptions['offsetX'] = offsetX;
   }
 
-  var offsetY = textStyle.getOffsetY();
+  const offsetY = textStyle.getOffsetY();
   if (offsetY) {
     labelOptions['offsetY'] = offsetY;
   }
 
-  var textAlign = textStyle.getTextAlign();
+  const textAlign = textStyle.getTextAlign();
   if (textAlign) {
     labelOptions['textAlign'] = textAlign;
   }
 
-  var textBaseline = textStyle.getTextBaseline();
+  const textBaseline = textStyle.getTextBaseline();
   if (textBaseline) {
     labelOptions['textBaseline'] = textBaseline;
   }
 
-  return new olgm.gm.MapLabel(labelOptions);
-};
+  return new MapLabel(labelOptions);
+}
 
 
 /**
  * Create a mapIcon object from an image style and Lat/Lng location
- * @param {ol.style.Icon} iconStyle style for the icon
+ * @param {module:ol/style/Icon} iconStyle style for the icon
  * @param {google.maps.LatLng} latLng position of the label
  * @param {number} index index for the label
- * @return {olgm.gm.MapIcon} map label
+ * @return {module:olgm/gm/MapIcon} map icon
  */
-olgm.gm.createMapIcon = function(iconStyle, latLng, index) {
+export function createMapIcon(iconStyle, latLng, index) {
 
-  var iconOptions = {
+  const iconOptions = {
     align: 'center',
     position: latLng,
     zIndex: index * 2 + 1
   };
 
-  return new olgm.gm.MapIcon(iconStyle, iconOptions);
-};
+  return new MapIcon(iconStyle, iconOptions);
+}

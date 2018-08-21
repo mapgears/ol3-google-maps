@@ -1,106 +1,46 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE HTML>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="robots" content="index, all" />
-    <title>OL3-Google-Maps WMTS example</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="../node_modules/openlayers/css/ol.css" type="text/css" />
-    <link rel="stylesheet" href="./resources/layout.css" type="text/css" />
-  </head>
-  <body>
-
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span12">
-          <div id="map" class="map"></div>
-        </div>
-      </div>
-      <div class="row-fluid">
-        <div class="span12">
-          <h4>Tiles example</h4>
-          <p>
-            Shows different tile layers displayed on google maps. Note: the
-            layers are displayed in the order that you enable them.
-          </p>
-
-          <input id="toggleOSM" type="button" onclick="toggleOSM();"
-                       value="Toggle between OL3 and GMAPS" />
-          <table>
-            <tr>
-              <td>
-                <input type="checkbox" onclick="toggleLayer(0, this.checked);">
-                  TileJSON
-                </input>
-              </td>
-              <td>
-                <input type="checkbox" onclick="toggleLayer(1, this.checked);">
-                  TMS
-                </input>
-              </td>
-              <td>
-                <input type="checkbox" onclick="toggleLayer(2, this.checked);">
-                  WMS
-                </input>
-              </td>
-              <td>
-                <input type="checkbox" onclick="toggleLayer(3, this.checked);">
-                  WMTS
-                </input>
-              </td>
-              <td>
-                <input type="checkbox" onclick="toggleLayer(4, this.checked);">
-                  XYZ
-                </input>
-              </td>
-            </tr>
-          </table>
-          <br/>
-          <p>
-            Whenever the opacity is changed on an OL3 layer, the same change
-            is applied to the layer rendered by Google Maps. However, while
-            Google Maps is active, all OL3 layers have their opacity set to 0.
-            This means whenever the opacity is changed, OL3-Google-Maps changes
-            it back to 0.
-          </p>
-          <p>
-            To do this, we listen to the opacity:change event. This event is
-            not fired if the value doesn't change. This means that setting the
-            value to 0 on the OL3 layer won't work, the value should be set to
-            something close to 0 instead. The slider below goes from 0.01 to 1,
-            although Number.MIN_VALUE could be used instead.
-          </p>
-          <table>
-            <tr>
-              <td colspan="5">
-                Opacity: <span id="opacityValue"></span>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="5">
-                <input type="range"
-                       min="1"
-                       max="100"
-                       value="100"
-                       oninput="changeOpacity(this);"
-                       onchange="changeOpacity(this);">
-              </td>
-            </tr>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <script src="../node_modules/openlayers/build/ol.js"></script>
-
-    <!-- When loading Google Maps outside of localhost, replace the src with
-         https://maps.googleapis.com/maps/api/js?v=3&key=mykey
-         where mykey is your Google Maps API key -->
-    <script type="text/javascript"
-            src="https://maps.googleapis.com/maps/api/js?v=3"></script>
-
-    <script src="/@loader"></script>
-    <script src="tiles.js"></script>
-  </body>
-</html>
+---
+layout: example.html
+title: Tiles
+shortdesc: Example of different tile layers rendered in Google Maps.
+docs: >
+  <p>
+    Shows different tile layers rendered in Google Maps. Note: the
+    layers are displayed in the order that you enable them.
+  </p>
+  <p>
+    Whenever the opacity is changed on an OL3 layer, the same change
+    is applied to the layer rendered by Google Maps. However, while
+    Google Maps is active, all OL3 layers have their opacity set to 0.
+    This means whenever the opacity is changed, OL3-Google-Maps changes
+    it back to 0.
+  </p>
+  <p>
+    To do this, we listen to the opacity:change event. This event is
+    not fired if the value doesn't change. This means that setting the
+    value to 0 on the OL3 layer won't work, the value should be set to
+    something close to 0 instead. The slider below goes from 0.01 to 1,
+    although Number.MIN_VALUE could be used instead.
+  </p>
+---
+<div id="map" class="map"></div>
+<button id="toggleOSM" title="Toggle between OL and GMaps">Toggle between OL and GMaps</button>
+<div id="toggleLayers">
+  <input id="toggleTileJSON" type="checkbox" name="TileJSON" value="TileJSON" />
+  <label for="toggleTileJSON">TileJSON</label>
+  <input id="toggleTMS" type="checkbox" name="TMS" value="TMS" />
+  <label for="toggleTMS">TMS</label>
+  <input id="toggleWMS" type="checkbox" name="WMS" value="WMS" />
+  <label for="toggleWMS">WMS</label>
+  <input id="toggleWMTS" type="checkbox" name="WMTS" value="WMTS" />
+  <label for="toggleWMTS">WMTS</label>
+  <input id="toggleXYZ" type="checkbox" name="XYZ" value="XYZ" />
+  <label for="toggleXYZ">XYZ</label>
+</div>
+<div>
+  <label for="opacity">Opacity: <span id="opacityValue">1</span></label>
+  <input id="opacity"
+         type="range"
+         min="1"
+         max="100"
+         value="100">
+</div>

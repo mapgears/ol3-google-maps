@@ -1,20 +1,27 @@
-var center = [-7908084, 6177492];
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import GoogleLayer from 'olgm/layer/Google.js';
+import {defaults as defaultInteractions} from 'olgm/interaction.js';
+
+
+const center = [-7908084, 6177492];
 
 // This dummy layer tells Google Maps to switch to its default map type
-var googleLayer = new olgm.layer.Google();
+const googleLayer = new GoogleLayer();
 
-var map = new ol.Map({
+const map = new Map({
   // use OL3-Google-Maps recommended default interactions
-  interactions: olgm.interaction.defaults(),
+  interactions: defaultInteractions(),
   layers: [
     googleLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
 });
 
-var olGM = new olgm.OLGoogleMaps({map: map}); // map is the ol.Map instance
+const olGM = new OLGoogleMaps({map: map}); // map is the Map instance
 olGM.activate();

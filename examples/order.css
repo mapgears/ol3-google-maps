@@ -1,0 +1,18 @@
+#layerTree {
+  border: solid black 2px;
+  margin: 5px;
+  width: 512px;
+}
+#layerTree div {
+  position: relative;
+  border: solid black 1px;
+  padding: 8px;
+}
+#layerTree button.up {
+  position: absolute;
+  right: 50px;
+}
+#layerTree button.down {
+  position: absolute;
+  right: 10px;
+}

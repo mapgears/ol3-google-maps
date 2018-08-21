@@ -1,0 +1,12 @@
+{
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["src"]
+      }
+    }
+  },
+  "rules": {
+    "no-unused-vars": [2, {"varsIgnorePattern": "^map"}]
+  }
+}

@@ -1,8 +1,4 @@
-_site
-.build
-api_key.txt
-build/jsdoc/info/conf-generated.json
-dist
-examples/example-list.js
-node_modules
-.vscode
+/build/
+/coverage/
+/dist/
+node_modules/

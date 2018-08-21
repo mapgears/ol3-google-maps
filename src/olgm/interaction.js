@@ -1,7 +1,8 @@
-goog.provide('olgm.interaction');
-
-goog.require('ol.interaction');
-goog.require('ol.interaction.DragPan');
+/**
+ * @module olgm/interaction
+ */
+import {defaults as olDefaults} from 'ol/interaction.js';
+import DragPan from 'ol/interaction/DragPan.js';
 
 
 /**
@@ -20,21 +21,21 @@ goog.require('ol.interaction.DragPan');
  *   with Google Maps. It is excluded, but also replace by one that doesn't
  *   have kinetic enabled.
  *
- * @param {olx.interaction.DefaultsOptions=} opt_options Defaults options.
- * @return {ol.Collection.<ol.interaction.Interaction>} A collection of
- * interactions to be used with the ol.Map constructor's interactions option.
+ * @param {module:ol/interaction/Interaction~DefaultsOptions=} opt_options Defaults options.
+ * @return {module:ol/Collection<ol.interaction.Interaction>} A collection of
+ * interactions to be used with the module:ol/PluggableMap constructor's interactions option.
  * @api stable
  */
-olgm.interaction.defaults = function(opt_options) {
+export function defaults(opt_options) {
 
-  var options = (opt_options !== undefined) ? opt_options : {};
+  const options = (opt_options !== undefined) ? opt_options : {};
 
   options['altShiftDragRotate'] = false;
   options['dragPan'] = false;
   options['pinchRotate'] = false;
 
-  return ol.interaction.defaults(options).extend([
-    new ol.interaction.DragPan()
+  return olDefaults(options).extend([
+    new DragPan()
   ]);
 
-};
+}
