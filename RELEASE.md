@@ -33,7 +33,7 @@ number in the `"version"` attribute, without the `v` prefix.
 
 Then, commit and push the changes:
 
-    make dist
+    npm install
     git add package.json package-lock.json
     git commit -m 'Update package version to 0.8.0'
     git push origin

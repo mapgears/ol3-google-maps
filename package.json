@@ -1,6 +1,6 @@
 {
   "name": "olgm",
-  "version": "0.21.0",
+  "version": "1.0.0-beta.1",
   "description": "OpenLayers Google Maps integration library",
   "keywords": [
     "map",
