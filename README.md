@@ -68,7 +68,7 @@ olGM.activate();
 
 ## Live examples
 
-See OL3-Google-Maps in action:
+See OL3-Google-Maps in action (version v0.20.0):
 
  * [Simple](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/simple.html)
  * [Vector](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/vector.html)
@@ -80,8 +80,9 @@ http://mapgears.github.io/ol3-google-maps/examples/
 
 ## Developing
 
-See the [developing](DEVELOPING.md) instructions if you want to contribute
-new features or patches to OL3-Google-Maps.
+See the [developing](DEVELOPING.md) instructions if you want to
+contribute new features or patches to OL3-Google-Maps or if you want
+to see the examples in action using the latest version.
 
 Note that contributions have to meet some minimum quality requirements
 in order to be included in the official package, but that's the same

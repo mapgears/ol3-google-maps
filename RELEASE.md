@@ -5,10 +5,11 @@
 Update your repository with `git checkout master` and make sure there are no
 changes when running `git status`.
 
-### Run checks ###
+### Run linter and tests ###
 
-Type `make check` to run the linter, builder and the tests. If an error is
-raised, it needs to be fixed and committed before going to the next step.
+Type `npm run lint` to run the linter.
+
+Type `npm run test` to test the building of the JS code.
 
 ### Create a changelog ###
 
@@ -52,19 +53,13 @@ upstream):
 
 ### Create a distributable package ###
 
-Create a zip containing the compiled code using the following commands:
-
-    make dist
-    ./tasks/package.sh v0.8.0
-
-It will appear in the directory where you ran the command
+OLGM currently no longer distribute a package.
 
 ### Create the release description on GitHub ###
 
 With the tag pushed, a new release will appear on the
 [releases](https://github.com/mapgears/ol3-google-maps/releases) page. Create a
-description including the major points and the changelog. Include the package
-generated in the last step in the files attached to the release.
+description including the major points and the changelog.
 
 ### Publish to npm ###
 
@@ -73,12 +68,12 @@ send it to npm. When running this command, you need to include the version
 number, without the `v` prefix. You also need to have a npm account and be a
 contributor to the project.
 
-    rm *.zip
     ./tasks/publish.sh 0.8.0
 
-The zip file containing the compiled code is removed first.
-
 ### Update the website ###
+
+FIXME - these instructions are deprecated. In order for these pages to
+work, we would need to have a distribution package.
 
 The website should be updated with the latest compiled examples and a link to
 the packaged library.
