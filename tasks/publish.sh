@@ -74,9 +74,9 @@ main() {
   assert_clean
   checkout_tag ${1}
   assert_version_match ${1}
-  rm -rf ${BUILDS}
+  #rm -rf ${BUILDS} # todo - restore dist
   npm install
-  make dist
+  #make dist - todo - restore dist
   npm publish
 }
 
