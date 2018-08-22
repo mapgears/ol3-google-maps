@@ -63,12 +63,15 @@ description including the major points and the changelog.
 
 ### Publish to npm ###
 
-Run the `publish.sh` task. It will run checks on the library, then it will
-send it to npm. When running this command, you need to include the version
-number, without the `v` prefix. You also need to have a npm account and be a
-contributor to the project.
+You'll need to have a npm account and be a contributor to the project
+in order to publish a new release.
 
-    ./tasks/publish.sh 0.8.0
+Run:
+
+```
+npm run publish
+```
+
 
 ### Update the website ###
 

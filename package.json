@@ -8,6 +8,7 @@
     "ol",
     "google maps"
   ],
+  "private": true,
   "homepage": "http://mapgears.github.io/ol3-google-maps/",
   "scripts": {
     "lint": "eslint tasks test src/olgm examples",
@@ -16,12 +17,14 @@
     "karma": "karma start test/karma.config.js",
     "serve-examples": "webpack-dev-server --config examples/webpack/config.js --mode development --watch",
     "build-examples": "webpack --config examples/webpack/config.js --mode production",
-    "build-package": "npm run transpile && npm run copy-css && node tasks/prepare-package",
+    "build-package": "npm run transpile && npm run copy-css && npm run copy-readme && node tasks/prepare-package",
     "build-index": "npm run build-package && node tasks/generate-index",
     "build-legacy": "rm -rf build && npm run build-index && rollup --config config/rollup.js && cleancss --source-map src/olgm/olgm.css -o build/olgm.css",
     "copy-css": "cp src/olgm/olgm.css build/olgm/olgm.css",
+    "copy-readme": "cp README.md build/olgm/",
     "transpile": "rm -rf build/olgm && mkdirp build && buble --input src/olgm --output build/olgm --no modules --sourcemap",
-    "apidoc": "jsdoc config/jsdoc/api/index.md -c config/jsdoc/api/conf.json -P package.json -d build/apidoc"
+    "apidoc": "jsdoc config/jsdoc/api/index.md -c config/jsdoc/api/conf.json -P package.json -d build/apidoc",
+    "publish": "npm run build-package && npm publish build/olgm"
   },
   "main": "index.js",
   "repository": {
