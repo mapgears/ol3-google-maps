@@ -29,8 +29,6 @@ class ViewHerald extends Herald {
      * @private
      */
     this.windowResizeTimerId_ = null;
-
-    this.viewListener = null;
   }
 
 

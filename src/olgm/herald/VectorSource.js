@@ -83,25 +83,18 @@ class VectorSourceHerald extends SourceHerald {
       data: data,
       herald: herald,
       layer: vectorLayer,
-      listeners: [
-        new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
-          if (oldView) {
-            if (oldView.get('resolution') !== view.get('resolution')) {
-              this.handleResolutionChange_(cacheItem);
-            }
-            if (oldView.get('visible') !== view.get('visible')) {
-              this.handleVisibleChange_(cacheItem);
-            }
-          }
-
-          return new Listener([
-            view.on('change:resolution', () => this.handleResolutionChange_(cacheItem)),
-            view.on('change:visible', () => this.handleVisibleChange_(cacheItem))
-          ]);
-        })
-      ],
+      listeners: [],
       opacity: opacity
     });
+
+    cacheItem.listeners.push(
+      new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
+        return [
+          new PropertyListener(view, oldView, 'resolution', () => this.handleResolutionChange_(cacheItem)),
+          new PropertyListener(view, oldView, 'visible', () => this.handleVisibleChange_(cacheItem))
+        ];
+      })
+    );
 
     this.activateCacheItem_(cacheItem);
 
@@ -129,7 +122,6 @@ class VectorSourceHerald extends SourceHerald {
 
       // herald
       cacheItem.herald.deactivate();
-
 
       // opacity
       vectorLayer.setOpacity(cacheItem.opacity);

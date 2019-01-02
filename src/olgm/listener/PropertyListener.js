@@ -10,7 +10,7 @@ class PropertyListener extends AbstractListener {
    * @param {function} listen Takes the current and previous property value as arguments.
    * Called on initialization and when the property value changes.
    * On initialization, the previous property value will be taken from the old target, if any.
-   * Can return an AbstractListener which will be unlistened when the property value changes.
+   * Can return an AbstractListener or an array of AbstractListeners which will be unlistened when the property value changes.
    */
   constructor(target, oldTarget, key, listen) {
     super();
@@ -30,7 +30,11 @@ class PropertyListener extends AbstractListener {
    */
   unlisten() {
     if (this.innerListener) {
-      this.innerListener.unlisten();
+      if (Array.isArray(this.innerListener)) {
+        this.innerListener.forEach(listener => listener.unlisten());
+      } else {
+        this.innerListener.unlisten();
+      }
     }
     unByKey(this.targetListenerKey);
   }

@@ -86,18 +86,6 @@ class TileSourceHerald extends SourceHerald {
       zIndex: 0
     });
 
-    cacheItem.listeners.push(
-      // Hide the google layer when the ol3 layer is invisible
-      new Listener(tileLayer.on('change:visible', () => this.handleVisibleChange_(cacheItem))),
-      new Listener(tileLayer.on('change:opacity', () => this.handleOpacityChange_(cacheItem))),
-      new PropertyListener(tileLayer, null, 'source', (source, oldSource) => {
-        if (oldSource) {
-          this.handleSourceChange_(cacheItem);
-        }
-        return new Listener(source.on('change', () => this.handleSourceChange_(cacheItem)));
-      })
-    );
-
     const tileGrid = source.getTileGrid();
     let tileSize = 256;
 
@@ -123,6 +111,18 @@ class TileSourceHerald extends SourceHerald {
       this.gmap.overlayMapTypes.push(googleTileLayer);
     }
     cacheItem.googleTileLayer = googleTileLayer;
+
+    cacheItem.listeners.push(
+      // Hide the google layer when the ol3 layer is invisible
+      new Listener(tileLayer.on('change:visible', () => this.handleVisibleChange_(cacheItem))),
+      new Listener(tileLayer.on('change:opacity', () => this.handleOpacityChange_(cacheItem))),
+      new PropertyListener(tileLayer, null, 'source', (source, oldSource) => {
+        if (oldSource) {
+          this.handleSourceChange_(cacheItem);
+        }
+        return new Listener(source.on('change', () => this.handleSourceChange_(cacheItem)));
+      })
+    );
 
     // Activate the cache item
     this.activateCacheItem_(cacheItem);
