@@ -4,18 +4,19 @@
 import ImageLayer from 'ol/layer/Image.js';
 import TileLayer from 'ol/layer/Tile.js';
 import VectorLayer from 'ol/layer/Vector.js';
-import {unlistenAllByKey} from '../util.js';
 import Herald from './Herald.js';
 import ImageWMSSourceHerald from './ImageWMSSource.js';
 import TileSourceHerald from './TileSource.js';
 import VectorSourceHerald from './VectorSource.js';
 import ViewHerald from './View.js';
 import GoogleLayer from '../layer/Google.js';
+import PropertyListener from '../listener/PropertyListener.js';
+import Listener from '../listener/Listener.js';
 
 /**
  * @typedef {Object} GoogleLayerCache
  * @property {module:olgm/layer/Google} layer
- * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:olgm/AbstractListener~AbstractListener>} listeners
  */
 
 class LayersHerald extends Herald {
@@ -163,15 +164,20 @@ class LayersHerald extends Herald {
   activate() {
     super.activate();
 
-    const layers = this.ol3map.getLayers();
+    this.listener = new PropertyListener(this.ol3map, null, 'layergroup', (layerGroup, oldLayerGroup) => {
+      return new PropertyListener(layerGroup, oldLayerGroup, 'layers', (layers, oldLayers) => {
+        if (oldLayers) {
+          oldLayers.forEach(layer => this.unwatchLayer_(layer));
+        }
+        layers.forEach(layer => this.watchLayer_(layer));
 
-    // watch existing layers
-    layers.forEach((layer) => this.watchLayer_(layer));
-
-    // event listeners
-    const keys = this.listenerKeys;
-    keys.push(layers.on('add', (event) => this.handleLayersAdd_(event)));
-    keys.push(layers.on('remove', (event) => this.handleLayersRemove_(event)));
+        return new Listener([
+          // watch existing layers
+          layers.on('add', event => this.handleLayersAdd_(event)),
+          layers.on('remove', event => this.handleLayersRemove_(event))
+        ]);
+      });
+    });
   }
 
 
@@ -276,11 +282,8 @@ class LayersHerald extends Herald {
     this.googleLayers_.push(layer);
     this.googleCache_.push(/** @type {module:olgm/herald/Layers~GoogleLayerCache} */ ({
       layer: layer,
-      listenerKeys: [
-        layer.on('change:visible', () => this.toggleGoogleMaps_())
-      ]
+      listener: new PropertyListener(layer, null, 'visible', () => this.toggleGoogleMaps_())
     }));
-    this.toggleGoogleMaps_();
   }
 
 
@@ -313,7 +316,7 @@ class LayersHerald extends Herald {
       this.googleLayers_.splice(index, 1);
 
       const cacheItem = this.googleCache_[index];
-      unlistenAllByKey(cacheItem.listenerKeys);
+      cacheItem.listener.unlisten();
 
       this.googleCache_.splice(index, 1);
 

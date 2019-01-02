@@ -4,19 +4,20 @@
 import {getTopLeft} from 'ol/extent.js';
 import {transform} from 'ol/proj.js';
 import ImageWMS from 'ol/source/ImageWMS.js';
-import {unlistenAllByKey} from '../util.js';
 import {assert} from '../asserts.js';
 import ImageOverlay from '../gm/ImageOverlay.js';
 import SorceHerald from './Source.js';
 import {assign} from '../obj.js';
 import {appendParams} from '../uri.js';
+import PropertyListener from '../listener/PropertyListener.js';
+import Listener from '../listener/Listener.js';
 
 /**
  * @typedef {Object} LayerCache
  * @property {module:olgm/gm/ImageOverlay} imageOverlay
  * @property {string|null} lastUrl
  * @property {module:ol/layer/Image} layer
- * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:olgm/AbstractListener~AbstractListener>} listeners
  * @property {number} opacity
  * @property {number} zIndex
  */
@@ -66,25 +67,26 @@ class ImageWMSSourceHerald extends SorceHerald {
       imageOverlay: null,
       lastUrl: null,
       layer: imageLayer,
-      listenerKeys: [],
+      listeners: [],
       opacity: opacity,
       zIndex: 0
     });
-
-    // Hide the google layer when the ol3 layer is invisible
-    cacheItem.listenerKeys.push(imageLayer.on('change:visible',
-      () => this.handleVisibleChange_(cacheItem)));
-
-    cacheItem.listenerKeys.push(this.ol3map.on('moveend',
-      () => this.handleMoveEnd_(cacheItem)));
-
-    cacheItem.listenerKeys.push(this.ol3map.getView().on('change:resolution',
-      () => this.handleMoveEnd_(cacheItem)));
-
-    // Make sure that any change to the layer source itself also updates the
-    // google maps layer
-    cacheItem.listenerKeys.push(imageLayer.getSource().on('change',
-      () => this.handleMoveEnd_(cacheItem)));
+    cacheItem.listeners.push(
+      // Hide the google layer when the ol3 layer is invisible
+      new Listener(imageLayer.on('change:visible', () => this.handleVisibleChange_(cacheItem))),
+      new Listener(this.ol3map.on('moveend', () => this.handleMoveEnd_(cacheItem))),
+      new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
+        return new PropertyListener(view, oldView, 'resolution', () => this.handleMoveEnd_(cacheItem));
+      }),
+      // Make sure that any change to the layer source itself also updates the
+      // google maps layer
+      new PropertyListener(imageLayer, null, 'source', source => {
+        if (source) {
+          this.handleMoveEnd_(cacheItem);
+        }
+        return new Listener(source.on('change', () => this.handleMoveEnd_(cacheItem)));
+      })
+    );
 
     // Activate the cache item
     this.activateCacheItem_(cacheItem);
@@ -105,7 +107,7 @@ class ImageWMSSourceHerald extends SorceHerald {
       this.layers_.splice(index, 1);
 
       const cacheItem = this.cache_[index];
-      unlistenAllByKey(cacheItem.listenerKeys);
+      cacheItem.forEach(listener => listener.unlisten());
 
       // Clean previous overlay
       this.resetImageOverlay_(cacheItem);
@@ -134,8 +136,7 @@ class ImageWMSSourceHerald extends SorceHerald {
    * activate
    * @private
    */
-  activateCacheItem_(
-    cacheItem) {
+  activateCacheItem_(cacheItem) {
     const layer = cacheItem.layer;
     const visible = layer.getVisible();
     if (visible && this.googleMapsIsActive) {
@@ -162,8 +163,7 @@ class ImageWMSSourceHerald extends SorceHerald {
    * deactivate
    * @private
    */
-  deactivateCacheItem_(
-    cacheItem) {
+  deactivateCacheItem_(cacheItem) {
     if (cacheItem.imageOverlay) {
       cacheItem.imageOverlay.setMap(null);
       cacheItem.imageOverlay = null;
@@ -400,8 +400,7 @@ class ImageWMSSourceHerald extends SorceHerald {
    * watched layer
    * @private
    */
-  handleVisibleChange_(
-    cacheItem) {
+  handleVisibleChange_(cacheItem) {
     const layer = cacheItem.layer;
     const visible = layer.getVisible();
 
@@ -419,8 +418,7 @@ class ImageWMSSourceHerald extends SorceHerald {
    * watched layer
    * @private
    */
-  handleMoveEnd_(
-    cacheItem) {
+  handleMoveEnd_(cacheItem) {
     if (cacheItem.layer.getVisible() && this.ol3map.getView().getCenter()) {
       this.updateImageOverlay_(cacheItem);
     }

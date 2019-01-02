@@ -1,13 +1,14 @@
 /**
  * @module olgm/herald/Feature
  */
-import Observable from 'ol/Observable.js';
 import Icon from 'ol/style/Icon.js';
 import {getCenterOf, getStyleOf} from '../util.js';
 import {assert} from '../asserts.js';
 import {createFeature, createStyle, createLatLng, createMapIcon,
   createLabel, createFeatureGeometry} from '../gm.js';
 import Herald from './Herald.js';
+import PropertyListener from '../listener/PropertyListener.js';
+import Listener from '../listener/Listener.js';
 
 class FeatureHerald extends Herald {
   /**
@@ -126,15 +127,12 @@ class FeatureHerald extends Herald {
       }
     }
 
-    // event listeners (todo)
-    const keys = this.listenerKeys;
-    this.geometryChangeKey_ = geometry.on(
-      'change', () => this.handleGeometryChange_());
-    keys.push(this.geometryChangeKey_);
-    keys.push(this.feature_.on(
-      'change:' + this.feature_.getGeometryName(),
-      () => this.handleGeometryReplace_()
-    ));
+    this.listener = new PropertyListener(this.feature_, null, 'geometry', (geometry, oldGeometry) => {
+      if (oldGeometry) {
+        this.handleGeometryChange_();
+      }
+      return new Listener(geometry.on('change', () => this.handleGeometryChange_()));
+    });
   }
 
 
@@ -226,22 +224,6 @@ class FeatureHerald extends Herald {
       latLng = createLatLng(getCenterOf(geometry));
       this.marker_.set('position', latLng);
     }
-  }
-
-
-  /**
-   * @private
-   */
-  handleGeometryReplace_() {
-    const keys = this.listenerKeys;
-    Observable.unByKey(this.geometryChangeKey_);
-    const index = keys.indexOf(this.geometryChangeKey_);
-    keys.splice(index, 1);
-
-    this.geometryChangeKey_ = this.feature_.getGeometry().on('change',
-      () => this.handleGeometryChange_());
-    keys.push(this.geometryChangeKey_);
-    this.handleGeometryChange_();
   }
 }
 export default FeatureHerald;
