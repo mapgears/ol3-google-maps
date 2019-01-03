@@ -3,12 +3,14 @@
  */
 import Abstract from './Abstract.js';
 import LayersHerald from './herald/Layers.js';
+import {assign} from './obj.js';
 
 /**
  * @typedef {Object} Options
  * @property {module:ol/PluggableMap} map The OpenLayers map.
  * @property {module:olgm/gm/MapIcon~Options} [mapIconOptions] Options for the MapIcon object if it exists
  * @property {module:olgm/herald/Herald~WatchOptions} [watch] For each layer type, a boolean indicating whether the library should watch and let layers of that type should be rendered by Google Maps or not. Defaults to `true` for each option.
+ * @property {google.maps.MapOptions} [gmapOptions] Options for the gmap to override the defaults
  */
 
 /**
@@ -56,7 +58,7 @@ class OLGoogleMaps extends Abstract {
     gmapEl.style.height = 'inherit';
     gmapEl.style.width = 'inherit';
 
-    const gmap = new google.maps.Map(gmapEl, {
+    const gmapOptions = assign({
       disableDefaultUI: true,
       disableDoubleClickZoom: true,
       draggable: false,
@@ -64,7 +66,9 @@ class OLGoogleMaps extends Abstract {
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       scrollwheel: false,
       streetViewControl: false
-    });
+    }, options.gmapOptions);
+
+    const gmap = new google.maps.Map(gmapEl, gmapOptions);
 
     super(options.map, gmap);
 
