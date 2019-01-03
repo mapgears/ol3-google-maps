@@ -5,7 +5,6 @@ import {createStyle} from '../gm.js';
 import SourceHerald from './Source.js';
 import VectorFeatureHerald from './VectorFeature.js';
 import PropertyListener from '../listener/PropertyListener.js';
-import Listener from '../listener/Listener.js';
 
 /**
  * @typedef {Object} LayerCache

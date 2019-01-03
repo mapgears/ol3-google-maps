@@ -1,3 +1,6 @@
+/**
+ * @module olgm/listener/Listener
+ */
 import AbstractListener from './AbstractListener';
 import {unByKey} from 'ol/Observable';
 
@@ -8,14 +11,19 @@ class Listener extends AbstractListener {
    */
   constructor(listenerKey) {
     super();
-    this.listenerKey = listenerKey;
+
+    /**
+     * @type {module:ol/events~EventsKey|Array<module:ol/events~EventsKey>}
+     * @private
+     */
+    this.listenerKey_ = listenerKey;
   }
 
   /**
    * @inheritdoc
    */
   unlisten() {
-    unByKey(this.listenerKey);
+    unByKey(this.listenerKey_);
   }
 }
 

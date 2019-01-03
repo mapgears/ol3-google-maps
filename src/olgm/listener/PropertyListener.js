@@ -1,10 +1,13 @@
+/**
+ * @module olgm/listener/PropertyListener
+ */
 import Listener from './Listener';
 
 class PropertyListener extends Listener {
   /**
    * Listener for OL object properties. Has utilities for listening on the property value.
    * @param {module:ol/Object~BaseObject} target Object with a property
-   * @param {?module:ol/Object~BaseObject} oldTarget The previous object with a property
+   * @param {module:ol/Object~BaseObject=} oldTarget The previous object with a property
    * @param {string} key Property key
    * @param {function} listen Takes the current and previous property value as arguments.
    * Called on initialization and when the property value changes.
@@ -16,21 +19,25 @@ class PropertyListener extends Listener {
       if (this.innerListener) {
         this.innerListener.unlisten();
       }
-      this.innerListener = listen(e.target.get(e.key), e.oldValue);
+      this.innerListener_ = listen(e.target.get(e.key), e.oldValue);
     }));
 
-    this.innerListener = listen(target.get(key), oldTarget && oldTarget.get(key));
+    /**
+     * @type {?module:olgm/AbstractListener~AbstractListener|Array<module:olgm/AbstractListener~AbstractListener>}
+     * @private
+     */
+    this.innerListener_ = listen(target.get(key), oldTarget && oldTarget.get(key));
   }
 
   /**
    * @inheritdoc
    */
   unlisten() {
-    if (this.innerListener) {
-      if (Array.isArray(this.innerListener)) {
+    if (this.innerListener_) {
+      if (Array.isArray(this.innerListener_)) {
         this.innerListener.forEach(listener => listener.unlisten());
       } else {
-        this.innerListener.unlisten();
+        this.innerListener_.unlisten();
       }
     }
     super.unlisten();
