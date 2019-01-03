@@ -45,7 +45,7 @@
     "clean-css-cli": "4.1.11",
     "copy-webpack-plugin": "^4.4.1",
     "coveralls": "3.0.1",
-    "eslint": "5.0.1",
+    "eslint": "5.11.1",
     "eslint-config-openlayers": "^11.0.0",
     "front-matter": "^2.1.2",
     "fs-extra": "^7.0.0",
