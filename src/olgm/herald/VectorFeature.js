@@ -3,6 +3,7 @@
  */
 import FeatureHerald from './Feature.js';
 import Herald from './Herald.js';
+import Listener from '../listener/Listener.js';
 
 /**
  * @typedef {Object} Cache
@@ -74,9 +75,10 @@ class VectorFeatureHerald extends Herald {
     this.source_.getFeatures().forEach((feature) => this.watchFeature_(feature));
 
     // event listeners
-    const keys = this.listenerKeys;
-    keys.push(this.source_.on('addfeature', (event) => this.handleAddFeature_(event)));
-    keys.push(this.source_.on('removefeature', (event) => this.handleRemoveFeature_(event)));
+    this.listener = new Listener([
+      this.source_.on('addfeature', (event) => this.handleAddFeature_(event)),
+      this.source_.on('removefeature', (event) => this.handleRemoveFeature_(event))
+    ]);
   }
 
 

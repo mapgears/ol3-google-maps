@@ -1,7 +1,6 @@
 /**
  * @module olgm/herald/Herald
  */
-import {unlistenAllByKey} from '../util.js';
 import Abstract from '../Abstract.js';
 
 /**
@@ -24,16 +23,10 @@ class Herald extends Abstract {
     super(ol3map, gmap);
 
     /**
-     * @type {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>}
+     * @type {module:olgm/AbstractListener~AbstractListener|null}
      * @protected
      */
-    this.listenerKeys = [];
-
-    /**
-     * @type {Array<module:ol/events~EventsKey>}
-     * @protected
-     */
-    this.olgmListenerKeys = [];
+    this.listener = null;
   }
 
 
@@ -47,7 +40,9 @@ class Herald extends Abstract {
    * Unregister all event listeners.
    */
   deactivate() {
-    unlistenAllByKey(this.listenerKeys, this.olgmListenerKeys);
+    if (this.listener) {
+      this.listener.unlisten();
+    }
   }
 }
 export default Herald;

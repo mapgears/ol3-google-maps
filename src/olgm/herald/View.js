@@ -3,8 +3,10 @@
  */
 import {transform} from 'ol/proj.js';
 import {getZoomFromResolution} from '../util.js';
-import {listen} from '../events.js';
+import {listen, unlistenByKey} from '../events.js';
 import Herald from './Herald.js';
+import PropertyListener from '../listener/PropertyListener.js';
+import Listener from '../listener/Listener.js';
 
 class ViewHerald extends Herald {
   /**
@@ -27,6 +29,12 @@ class ViewHerald extends Herald {
      * @private
      */
     this.windowResizeTimerId_ = null;
+
+    /**
+     * @type {?module:ol/events~EventsKey}
+     * @private
+     */
+    this.windowListenerKey_ = null;
   }
 
 
@@ -36,25 +44,30 @@ class ViewHerald extends Herald {
   activate() {
     super.activate();
 
-    const view = this.ol3map.getView();
-    const keys = this.listenerKeys;
+    this.listener = new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
+      if (oldView) {
+        this.setRotation();
+        this.setCenter();
+        this.setZoom();
+      }
 
-    // listen to center change
-    keys.push(view.on('change:center', () => this.setCenter()));
-
-    // listen to resolution change
-    keys.push(view.on('change:resolution', () => this.setZoom()));
-
-    // listen to rotation change
-    keys.push(view.on('change:rotation', () => this.setRotation()));
+      return new Listener([
+        // listen to center change
+        view.on('change:center', () => this.setCenter()),
+        // listen to resolution change
+        view.on('change:resolution', () => this.setZoom()),
+        // listen to rotation change
+        view.on('change:rotation', () => this.setRotation())
+      ]);
+    });
 
     // listen to browser window resize
-    this.olgmListenerKeys.push(listen(
+    this.windowListenerKey_ = listen(
       window,
       'resize',
       this.handleWindowResize_,
       this,
-      false));
+      false);
 
     // Rotate and recenter the map after it's ready
     google.maps.event.addListenerOnce(this.gmap, 'idle', () => {
@@ -65,11 +78,10 @@ class ViewHerald extends Herald {
   }
 
 
-  /**
-   * @inheritDoc
-   */
   deactivate() {
     super.deactivate();
+
+    unlistenByKey(this.windowListenerKey_);
   }
 
 

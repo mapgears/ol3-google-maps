@@ -26,17 +26,4 @@ describe('olgm.herald.Layers', function() {
       expect(ol3map).to.equal(originalOl3map);
     });
   });
-
-  describe('#activate()', function() {
-    it('adds listener keys for layers added and removed', function() {
-      const layersHerald = new Layers(
-        originalOl3map, originalGmap, watchVector);
-      const listenerKeys = layersHerald.listenerKeys;
-      const expectedNbListenerKeys = listenerKeys.length + 2;
-
-      layersHerald.activate();
-
-      expect(listenerKeys.length).to.equal(expectedNbListenerKeys);
-    });
-  });
 });

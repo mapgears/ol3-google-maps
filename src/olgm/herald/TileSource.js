@@ -4,9 +4,10 @@
 import {getIntersection, getSize} from 'ol/extent.js';
 import {get} from 'ol/proj.js';
 import TileImage from 'ol/source/TileImage.js';
-import {unlistenAllByKey} from '../util.js';
 import PanesOverlay from '../gm/PanesOverlay.js';
 import SourceHerald from './Source.js';
+import Listener from '../listener/Listener.js';
+import PropertyListener from '../listener/PropertyListener.js';
 
 /**
  * @typedef {Object} LayerCache
@@ -14,7 +15,7 @@ import SourceHerald from './Source.js';
  * @property {google.maps.ImageMapType} googleTileLayer
  * @property {boolean} ignoreNextOpacityChange
  * @property {module:ol/layer/Tile} layer
- * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
+ * @property {Array<module:olgm/AbstractListener~AbstractListener>} listeners
  * @property {number} opacity
  * @property {number} zIndex
  */
@@ -80,7 +81,7 @@ class TileSourceHerald extends SourceHerald {
       element: null,
       ignoreNextOpacityChange: true,
       layer: tileLayer,
-      listenerKeys: [],
+      listeners: [],
       opacity: opacity,
       zIndex: 0
     });
@@ -111,13 +112,17 @@ class TileSourceHerald extends SourceHerald {
     }
     cacheItem.googleTileLayer = googleTileLayer;
 
-    // Hide the google layer when the ol3 layer is invisible
-    cacheItem.listenerKeys.push(tileLayer.on('change:visible',
-      () => this.handleVisibleChange_(cacheItem)));
-    cacheItem.listenerKeys.push(tileLayer.on('change:opacity',
-      () => this.handleOpacityChange_(cacheItem)));
-    cacheItem.listenerKeys.push(tileLayer.getSource().on('change',
-      () => this.handleSourceChange_(cacheItem)));
+    cacheItem.listeners.push(
+      // Hide the google layer when the ol3 layer is invisible
+      new Listener(tileLayer.on('change:visible', () => this.handleVisibleChange_(cacheItem))),
+      new Listener(tileLayer.on('change:opacity', () => this.handleOpacityChange_(cacheItem))),
+      new PropertyListener(tileLayer, null, 'source', (source, oldSource) => {
+        if (oldSource) {
+          this.handleSourceChange_(cacheItem);
+        }
+        return new Listener(source.on('change', () => this.handleSourceChange_(cacheItem)));
+      })
+    );
 
     // Activate the cache item
     this.activateCacheItem_(cacheItem);
@@ -239,7 +244,7 @@ class TileSourceHerald extends SourceHerald {
       this.layers_.splice(index, 1);
 
       const cacheItem = this.cache_[index];
-      unlistenAllByKey(cacheItem.listenerKeys);
+      cacheItem.listeners.forEach(listener => listener.unlisten());
 
       // Remove the layer from google maps
       const googleTileLayer = cacheItem.googleTileLayer;

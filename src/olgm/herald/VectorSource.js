@@ -1,17 +1,17 @@
 /**
  * @module olgm/herald/VectorSource
  */
-import {unlistenAllByKey} from '../util.js';
 import {createStyle} from '../gm.js';
 import SourceHerald from './Source.js';
 import VectorFeatureHerald from './VectorFeature.js';
+import PropertyListener from '../listener/PropertyListener.js';
 
 /**
  * @typedef {Object} LayerCache
  * @property {google.maps.Data} data
  * @property {module:olgm/herald/VectorFeature} herald
  * @property {module:ol/layer/Vector} layer
- * @property {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys
+ * @property {?module:olgm/AbstractListener~AbstractListener} listeners
  * @property {number} opacity
  */
 
@@ -82,17 +82,18 @@ class VectorSourceHerald extends SourceHerald {
       data: data,
       herald: herald,
       layer: vectorLayer,
-      listenerKeys: [],
+      listeners: [],
       opacity: opacity
     });
 
-    cacheItem.listenerKeys.push(vectorLayer.on('change:visible',
-      () => this.handleVisibleChange_(cacheItem)));
-
-    const view = this.ol3map.getView();
-    cacheItem.listenerKeys.push(view.on('change:resolution',
-      () => this.handleResolutionChange_(cacheItem)));
-
+    cacheItem.listeners.push(
+      new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
+        return [
+          new PropertyListener(view, oldView, 'resolution', () => this.handleResolutionChange_(cacheItem)),
+          new PropertyListener(view, oldView, 'visible', () => this.handleVisibleChange_(cacheItem))
+        ];
+      })
+    );
 
     this.activateCacheItem_(cacheItem);
 
@@ -113,7 +114,7 @@ class VectorSourceHerald extends SourceHerald {
       this.layers_.splice(index, 1);
 
       const cacheItem = this.cache_[index];
-      unlistenAllByKey(cacheItem.listenerKeys);
+      cacheItem.listeners.forEach(listener => listener.unlisten());
 
       // data - unset
       cacheItem.data.setMap(null);

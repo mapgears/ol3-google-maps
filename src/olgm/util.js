@@ -2,13 +2,11 @@
  * @module olgm/util
  */
 import Feature from 'ol/Feature.js';
-import {unByKey} from 'ol/Observable.js';
 import {getCenter} from 'ol/extent.js';
 import Point from 'ol/geom/Point.js';
 import Polygon from 'ol/geom/Polygon.js';
 import Vector from 'ol/layer/Vector.js';
 import Style from 'ol/style/Style.js';
-import {unlistenByKey} from './events.js';
 
 /**
  * @type {!Array<number>}
@@ -208,21 +206,6 @@ export function parseRGBA(rgbaString) {
  */
 export function stringStartsWith(string, needle) {
   return (string.indexOf(needle) === 0);
-}
-
-
-/**
- * @param {Array<module:ol/events~EventsKey|Array<module:ol/events~EventsKey>>} listenerKeys listener
- * keys
- * @param {Array<module:ol/events~EventsKey>=} opt_olgmListenerKeys olgm listener keys
- */
-export function unlistenAllByKey(listenerKeys, opt_olgmListenerKeys) {
-  listenerKeys.forEach(unByKey);
-  listenerKeys.length = 0;
-  if (opt_olgmListenerKeys) {
-    opt_olgmListenerKeys.forEach(unlistenByKey);
-    opt_olgmListenerKeys.length = 0;
-  }
 }
 
 /**
