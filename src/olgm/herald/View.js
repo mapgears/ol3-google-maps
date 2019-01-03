@@ -29,6 +29,12 @@ class ViewHerald extends Herald {
      * @private
      */
     this.windowResizeTimerId_ = null;
+
+    /**
+     * @type {?module:ol/events~EventsKey}
+     * @private
+     */
+    this.windowListenerKey_ = null;
   }
 
 
@@ -56,7 +62,7 @@ class ViewHerald extends Herald {
     });
 
     // listen to browser window resize
-    this.windowListenerKey = listen(
+    this.windowListenerKey_ = listen(
       window,
       'resize',
       this.handleWindowResize_,
@@ -75,7 +81,7 @@ class ViewHerald extends Herald {
   deactivate() {
     super.deactivate();
 
-    unlistenByKey(this.windowListenerKey);
+    unlistenByKey(this.windowListenerKey_);
   }
 
 
