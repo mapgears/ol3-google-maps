@@ -1,7 +1,6 @@
-import AbstractListener from './AbstractListener';
-import {unByKey} from 'ol/Observable';
+import Listener from './Listener';
 
-class PropertyListener extends AbstractListener {
+class PropertyListener extends Listener {
   /**
    * Listener for OL object properties. Has utilities for listening on the property value.
    * @param {module:ol/Object~BaseObject} target Object with a property
@@ -13,14 +12,12 @@ class PropertyListener extends AbstractListener {
    * Can return an AbstractListener or an array of AbstractListeners which will be unlistened when the property value changes.
    */
   constructor(target, oldTarget, key, listen) {
-    super();
-
-    this.targetListenerKey = target.on('change:' + key, e => {
+    super(target.on('change:' + key, e => {
       if (this.innerListener) {
         this.innerListener.unlisten();
       }
       this.innerListener = listen(e.target.get(e.key), e.oldValue);
-    });
+    }));
 
     this.innerListener = listen(target.get(key), oldTarget && oldTarget.get(key));
   }
@@ -36,7 +33,7 @@ class PropertyListener extends AbstractListener {
         this.innerListener.unlisten();
       }
     }
-    unByKey(this.targetListenerKey);
+    super.unlisten();
   }
 }
 
