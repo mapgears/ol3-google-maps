@@ -422,6 +422,9 @@ class LayersHerald extends Herald {
       this);
 
     if (found) {
+      // activate before changing mapTypeId/styles
+      this.activateGoogleMaps_();
+
       // set mapTypeId
       this.gmap.setMapTypeId(found.getMapTypeId());
       // set styles
@@ -431,9 +434,6 @@ class LayersHerald extends Herald {
       } else {
         this.gmap.setOptions({'styles': null});
       }
-
-      // activate
-      this.activateGoogleMaps_();
     } else {
       // deactivate
       this.deactivateGoogleMaps_();
