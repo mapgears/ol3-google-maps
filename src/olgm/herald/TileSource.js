@@ -72,6 +72,11 @@ class TileSourceHerald extends SourceHerald {
       return;
     }
 
+    // If olgmWatch property is false then render using OL instead
+    if (tileLayer.get('olgmWatch') === false) {
+      return;
+    }
+
     this.layers_.push(tileLayer);
 
     // opacity
