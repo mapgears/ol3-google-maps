@@ -43,6 +43,7 @@ import Map from 'ol/Map.js';
 import GoogleLayer from 'olgm/layer/Google.js';
 import {defaults} from 'olgm/interaction.js';
 import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
+import View from 'ol/View';
 
 var center = [-7908084, 6177492];
 
@@ -56,7 +57,7 @@ var map = new Map({
     googleLayer
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: center,
     zoom: 12
   })
