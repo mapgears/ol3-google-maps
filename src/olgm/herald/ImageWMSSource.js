@@ -58,6 +58,11 @@ class ImageWMSSourceHerald extends SorceHerald {
       return;
     }
 
+    // If olgmWatch property is false then render using OL instead
+    if (imageLayer.get('olgmWatch') === false) {
+      return;
+    }
+
     this.layers_.push(imageLayer);
 
     // opacity

@@ -58,6 +58,11 @@ class VectorSourceHerald extends SourceHerald {
       return;
     }
 
+    // If olgmWatch property is false then render using OL instead
+    if (vectorLayer.get('olgmWatch') === false) {
+      return;
+    }
+
     this.layers_.push(vectorLayer);
 
     // Data
