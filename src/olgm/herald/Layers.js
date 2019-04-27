@@ -336,7 +336,10 @@ class LayersHerald extends Herald {
     if (this.googleMapsIsActive_ || !this.ol3mapIsRenderered_ || !center) {
       return;
     }
-
+	
+	if (this.targetEl_==null) {
+		this.targetEl_=this.ol3mapEl_.parentElement;
+    }
     this.targetEl_.removeChild(this.ol3mapEl_);
     this.targetEl_.appendChild(this.gmapEl_);
     const index = parseInt(google.maps.ControlPosition.TOP_LEFT, 10);
