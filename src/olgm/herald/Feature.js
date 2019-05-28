@@ -221,8 +221,8 @@ class FeatureHerald extends Herald {
 
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
 
-    let prevMarker = this.marker_;
-    let prevLabel = this.label_;
+    const prevMarker = this.marker_;
+    const prevLabel = this.label_;
 
     const style = getStyleOf(this.feature_);
     if (style) {
