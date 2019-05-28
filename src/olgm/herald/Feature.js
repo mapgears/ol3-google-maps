@@ -90,8 +90,6 @@ class FeatureHerald extends Herald {
   activate() {
     super.activate();
 
-    const geometry = this.getGeometry_();
-
     // create gmap feature
     this.gmapFeature_ = createFeature(this.feature_);
 
@@ -223,12 +221,12 @@ class FeatureHerald extends Herald {
 
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
 
-    var prevMarker = this.marker_;
-    var prevLabel = this.label_;
+    let prevMarker = this.marker_;
+    let prevLabel = this.label_;
 
     const style = getStyleOf(this.feature_);
     if (style) {
-      let latLng = createLatLng(getCenterOf(this.getGeometry_()));
+      const latLng = createLatLng(getCenterOf(this.getGeometry_()));
 
       const zIndex = style.getZIndex();
       const index = zIndex !== undefined ? zIndex : this.index_;
