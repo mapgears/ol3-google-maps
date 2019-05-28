@@ -170,7 +170,7 @@ class ViewHerald extends Herald {
   setZoom() {
     const resolution = this.ol3map.getView().getResolution();
     if (typeof resolution === 'number') {
-      const zoom = getZoomFromResolution(resolution);
+      const zoom = getZoomFromResolution(resolution, this.ol3map.getView().getMinZoom());
       this.gmap.setZoom(zoom);
     }
   }
