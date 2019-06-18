@@ -35,7 +35,7 @@ class PropertyListener extends Listener {
   unlisten() {
     if (this.innerListener_) {
       if (Array.isArray(this.innerListener_)) {
-        this.innerListener.forEach(listener => listener.unlisten());
+        this.innerListener_.forEach(listener => listener.unlisten());
       } else {
         this.innerListener_.unlisten();
       }

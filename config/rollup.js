@@ -2,7 +2,7 @@
 
 import noderesolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
-//import {uglify} from 'rollup-plugin-uglify';
+import {uglify} from 'rollup-plugin-uglify';
 import buble from 'rollup-plugin-buble';
 import sourcemaps from 'rollup-plugin-sourcemaps';
 
@@ -64,7 +64,7 @@ export default {
     noderesolve(),
     commonjs(),
     buble(),
-//    uglify(),
+    uglify(),
     sourcemaps()
   ]
 };
