@@ -108,7 +108,15 @@ class ViewHerald extends Herald {
     const rotation = view.getRotation();
 
     const mapDiv = this.gmap.getDiv();
-    const tilesDiv = mapDiv.childNodes[0].childNodes[0];
+    let childDiv;
+    for (let i = 0; i < mapDiv.childNodes.length; i++) {
+      const child = mapDiv.childNodes[i];
+      if (child.nodeName === 'DIV') {
+        childDiv = child;
+        break;
+      }
+    }
+    const tilesDiv = childDiv.childNodes[0];
 
     // If googlemaps is fully loaded
     if (tilesDiv) {
@@ -145,7 +153,7 @@ class ViewHerald extends Herald {
         this.setZoom();
 
         // Move up the elements at the bottom of the map
-        const childNodes = mapDiv.childNodes[0].childNodes;
+        const childNodes = childDiv.childNodes;
         for (let i = 0; i < childNodes.length; i++) {
           // Set the bottom to where the overflow starts being hidden
           const style = childNodes[i].style;
