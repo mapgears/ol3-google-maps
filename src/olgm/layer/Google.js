@@ -1,7 +1,8 @@
 /**
  * @module olgm/layer/Google
  */
-import LayerGroup from 'ol/layer/Group.js';
+import LayerType from 'ol/LayerType.js';
+import Layer from 'ol/layer/Layer.js';
 
 /**
  * @typedef {Object} Options
@@ -17,13 +18,13 @@ import LayerGroup from 'ol/layer/Group.js';
  * layer represents.
  * @api
  */
-class GoogleLayer extends LayerGroup {
+class GoogleLayer extends Layer {
   /**
    * @param {module:olgm/layer/Google~Options} opt_options Layer options.
    */
   constructor(opt_options) {
-    super(opt_options);
     const options = opt_options ? opt_options : {};
+    super(options);
 
     /**
      * @type {google.maps.MapTypeId<(number|string)>|string}
@@ -38,6 +39,12 @@ class GoogleLayer extends LayerGroup {
      */
     this.styles_ = options.styles ? options.styles : null;
 
+    /**
+    * The layer type.
+    * @protected
+    * @type {import("../LayerType.js").default}
+    */
+    this.type = LayerType.TILE;
   }
 
 

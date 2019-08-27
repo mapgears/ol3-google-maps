@@ -142,38 +142,12 @@ export function getStyleOf(object) {
 
 /**
  * @param {number} resolution the resolution to get the zoom from
+ * @param {number} minZoom the minimum zoom value (normally 0)
  * @return {number} the zoom from the resolution, which can be fractional
  */
-export function getZoomFromResolution(resolution) {
-
-  const resolutions = RESOLUTIONS;
-  let zoom;
-
-  let lowZoom = 0;
-  let highZoom = resolutions.length - 1;
-  let highRes = resolutions[lowZoom];
-  let lowRes = resolutions[highZoom];
-  let res;
-  for (let i = 0, len = resolutions.length; i < len; ++i) {
-    res = resolutions[i];
-    if (res >= resolution) {
-      highRes = res;
-      lowZoom = i;
-    }
-    if (res <= resolution) {
-      lowRes = res;
-      highZoom = i;
-      break;
-    }
-  }
-  const dRes = highRes - lowRes;
-  if (dRes > 0) {
-    zoom = lowZoom + ((highRes - resolution) / dRes);
-  } else {
-    zoom = lowZoom;
-  }
-
-  return Math.round(zoom * 1000) / 1000;
+export function getZoomFromResolution(resolution, minZoom) {
+  minZoom = minZoom || 0;
+  return minZoom + Math.log(RESOLUTIONS[0] / resolution) / Math.log(2);
 }
 
 
