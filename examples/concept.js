@@ -123,7 +123,7 @@ function handleMoveEvent(evt) {
                   src: 'data/icon.png'
                 })
               })
-            )
+            );
           }
         }
       }
