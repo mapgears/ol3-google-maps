@@ -108,6 +108,26 @@ function handleMoveEvent(evt) {
     const features = map.getFeaturesAtPixel(evt.pixel);
     const element = evt.map.getTargetElement();
     if (features) {
+      const style = features[0].getStyle();
+      if (style) {
+        const image = style.getImage();
+        if (image && image.getSrc) {
+          if (image.getSrc() == 'data/icon.png') {
+            features[0].setStyle(
+              new Style({
+                image: new Icon({
+                  anchor: [0.5, 46],
+                  anchorXUnits: 'fraction',
+                  anchorYUnits: 'pixels',
+                  opacity: 0.75,
+                  src: 'data/icon.png'
+                })
+              })
+            );
+          }
+        }
+      }
+
       if (element.style.cursor != this.cursor_) {
         this.previousCursor_ = element.style.cursor;
         element.style.cursor = this.cursor_;

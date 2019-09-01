@@ -32,6 +32,12 @@ class FeatureHerald extends Herald {
     this.feature_ = options.feature;
 
     /**
+     * @type {module:olgm/AbstractListener~AbstractListener|null}
+     * @protected
+     */
+    this.featureListener_ = null;
+
+    /**
      * @type {!google.maps.Data}
      * @private
      */
@@ -84,8 +90,6 @@ class FeatureHerald extends Herald {
   activate() {
     super.activate();
 
-    const geometry = this.getGeometry_();
-
     // create gmap feature
     this.gmapFeature_ = createFeature(this.feature_);
 
@@ -93,39 +97,9 @@ class FeatureHerald extends Herald {
       this.data_.add(this.gmapFeature_);
     }
 
-    // override style if a style is defined at the feature level
-    const gmStyle = createStyle(
-      this.feature_, this.mapIconOptions_, this.index_);
-    if (gmStyle) {
-      this.data_.overrideStyle(this.gmapFeature_, gmStyle);
-    }
+    this.updateStyle_();
 
-    // if the feature has text style, add a map label to gmap
-    const latLng = createLatLng(getCenterOf(geometry));
-    const style = getStyleOf(this.feature_);
-
-    if (style) {
-      const zIndex = style.getZIndex();
-      const index = zIndex !== undefined ? zIndex : this.index_;
-
-      const image = style.getImage();
-      const useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
-        this.mapIconOptions_.useCanvas : false;
-      if (image && image instanceof Icon && useCanvas) {
-        this.marker_ = createMapIcon(image, latLng, index);
-        if (this.visible_) {
-          this.marker_.setMap(this.gmap);
-        }
-      }
-
-      const text = style.getText();
-      if (text) {
-        this.label_ = createLabel(text, latLng, index);
-        if (this.visible_) {
-          this.label_.setMap(this.gmap);
-        }
-      }
-    }
+    this.featureListener_ = new Listener(this.feature_.on('change', () => this.handleFeatureChange_()));
 
     this.listener = new PropertyListener(this.feature_, null, 'geometry', (geometry, oldGeometry) => {
       if (oldGeometry) {
@@ -140,6 +114,9 @@ class FeatureHerald extends Herald {
    * @inheritDoc
    */
   deactivate() {
+    if (this.featureListener_) {
+      this.featureListener_.unlisten();
+    }
 
     // remove gmap feature
     this.data_.remove(this.gmapFeature_);
@@ -223,6 +200,61 @@ class FeatureHerald extends Herald {
     if (this.marker_) {
       latLng = createLatLng(getCenterOf(geometry));
       this.marker_.set('position', latLng);
+    }
+  }
+
+  /**
+   * @private
+   */
+  handleFeatureChange_() {
+    this.updateStyle_();
+  }
+
+  /**
+   * @private
+   */
+  updateStyle_() {
+
+    // override style if a style is defined at the feature level
+    const gmStyle = createStyle(
+      this.feature_, this.mapIconOptions_, this.index_);
+
+    this.data_.overrideStyle(this.gmapFeature_, gmStyle);
+
+    const prevMarker = this.marker_;
+    const prevLabel = this.label_;
+
+    const style = getStyleOf(this.feature_);
+    if (style) {
+      const latLng = createLatLng(getCenterOf(this.getGeometry_()));
+
+      const zIndex = style.getZIndex();
+      const index = zIndex !== undefined ? zIndex : this.index_;
+
+      const image = style.getImage();
+      const useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
+        this.mapIconOptions_.useCanvas : false;
+      if (image && image instanceof Icon && useCanvas) {
+        this.marker_ = createMapIcon(image, latLng, index);
+        if (this.visible_) {
+          this.marker_.setMap(this.gmap);
+        }
+      }
+
+      const text = style.getText();
+      if (text) {
+        this.label_ = createLabel(text, latLng, index);
+        if (this.visible_) {
+          this.label_.setMap(this.gmap);
+        }
+      }
+    }
+
+    if (prevMarker) {
+      prevMarker.setMap(null);
+    }
+    if (prevLabel) {
+      prevLabel.setMap(null);
     }
   }
 }
