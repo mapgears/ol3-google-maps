@@ -1,7 +1,7 @@
 /**
  * @module olgm/listener/PropertyListener
  */
-import Listener from './Listener';
+import Listener from './Listener.js';
 
 class PropertyListener extends Listener {
   /**
