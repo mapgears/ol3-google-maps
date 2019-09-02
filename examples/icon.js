@@ -13,6 +13,7 @@ import GoogleLayer from 'olgm/layer/Google.js';
 import {defaults as defaultInteractions} from 'olgm/interaction.js';
 
 const center = [-7908084, 6177492];
+const left = [-7928084, 6177492];
 
 const googleLayer = new GoogleLayer();
 
@@ -36,6 +37,26 @@ feature.setStyle(new Style({
   }))
 }));
 source.addFeature(feature);
+
+const bigIcon = new Feature(new Point(left));
+bigIcon.setStyle(new Style({
+  image: new Icon(({
+    anchor: [0.5, 0.5],
+    anchorXUnits: 'fraction',
+    anchorYUnits: 'fraction',
+    src: 'data/linux.png',
+    opacity: 0.5
+  }))
+}));
+
+source.addFeature(bigIcon);
+
+setInterval(function () {
+  const image = bigIcon.getStyle().getImage();
+  image.setRotation(image.getRotation() + Math.PI / 180.0);
+  bigIcon.changed();
+}, 30);
+
 const vector = new VectorLayer({
   source: source
 });
