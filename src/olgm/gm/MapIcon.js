@@ -54,6 +54,14 @@ class MapIcon extends MapElement {
     }
   }
 
+  /**
+   * Rotate a point around the origin by a given angle expressed as a (cos, sin) pair.
+   * @private
+   */
+
+  rotate_(cosTheta, sinTheta, x, y) {
+    return [x * cosTheta - y * sinTheta, x * sinTheta + y * cosTheta];
+  }
 
   /**
    * Draws the icon to the canvas 2d context.
@@ -74,13 +82,32 @@ class MapIcon extends MapElement {
 
     style.zIndex = /** @type {number} */ (this.get('zIndex'));
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const anchor = this.imageStyle_.getAnchor() || [0, 0];
     const scale = this.imageStyle_.getScale() || 1;
+    const anchor = this.imageStyle_.getAnchor() || [0, 0];
     const rotation = this.imageStyle_.getRotation() || 0;
     const opacity = this.imageStyle_.getOpacity() || 1;
+
+    const w_2 = image.width * scale * 0.5;
+    const h_2 = image.height * scale * 0.5;
+
+    const cosTheta = Math.cos(rotation);
+    const sinTheta = Math.sin(rotation);
+
+    const p1 = this.rotate_(cosTheta, sinTheta, -w_2, -h_2);
+    const p2 = this.rotate_(cosTheta, sinTheta, +w_2, -h_2);
+    const p3 = this.rotate_(cosTheta, sinTheta, -w_2, +h_2);
+    const p4 = this.rotate_(cosTheta, sinTheta, +w_2, +h_2);
+
+    const minX = Math.min(p1[0], p2[0], p3[0], p4[0]);
+    const maxX = Math.max(p1[0], p2[0], p3[0], p4[0]);
+    const minY = Math.min(p1[1], p2[1], p3[1], p4[1]);
+    const maxY = Math.max(p1[1], p2[1], p3[1], p4[1]);
+
+    canvas.width = maxX - minX;
+    canvas.height = maxY - minY;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = anchor[0] * scale;
     const offsetY = anchor[1] * scale;
@@ -96,7 +123,6 @@ class MapIcon extends MapElement {
     ctx.drawImage(image, x, y,
       image.width * scale, image.height * scale);
   }
-
 
   /**
    * Manage feature being added to the map
