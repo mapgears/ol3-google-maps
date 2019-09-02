@@ -351,9 +351,8 @@ class LayersHerald extends Herald {
 
     // it's also possible that the google maps map is not exactly at the
     // correct location. Fix this manually here
-    this.viewHerald_.setCenter();
     this.viewHerald_.setRotation();
-    this.viewHerald_.setZoom();
+    this.viewHerald_.setZoomAndCenter();
 
     this.setGoogleMapsActive_(true);
 
