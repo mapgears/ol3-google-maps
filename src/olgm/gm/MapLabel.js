@@ -150,7 +150,15 @@ class MapLabel extends MapElement {
 
     const panes = this.getPanes();
     if (panes) {
-      panes.markerLayer.appendChild(canvas);
+      let pane = this.get('pane');
+      if (pane) {
+        pane = panes[pane];
+      }
+      else {
+        pane = panes.markerLayer;
+      }
+
+      pane.appendChild(canvas);
     }
   }
 }

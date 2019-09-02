@@ -405,11 +405,12 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
  * @param {number} index index for the label
  * @return {module:olgm/gm/MapLabel} map label
  */
-export function createLabel(textStyle, latLng, index) {
+export function createLabel(textStyle, latLng, index, pane) {
 
   const labelOptions = {
     align: 'center',
     position: latLng,
+    pane: pane,
     zIndex: index * 2 + 1
   };
 
@@ -475,11 +476,12 @@ export function createLabel(textStyle, latLng, index) {
  * @param {number} index index for the label
  * @return {module:olgm/gm/MapIcon} map icon
  */
-export function createMapIcon(iconStyle, latLng, index) {
+export function createMapIcon(iconStyle, latLng, index, pane) {
 
   const iconOptions = {
     align: 'center',
     position: latLng,
+    pane: pane,
     zIndex: index * 2 + 1
   };
 
