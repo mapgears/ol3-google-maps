@@ -51,7 +51,7 @@ bigIcon.setStyle(new Style({
 
 source.addFeature(bigIcon);
 
-setInterval(function () {
+setInterval(function() {
   const image = bigIcon.getStyle().getImage();
   image.setRotation(image.getRotation() + Math.PI / 180.0);
   bigIcon.changed();
