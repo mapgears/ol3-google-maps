@@ -216,7 +216,7 @@ class FeatureHerald extends Herald {
   updateStyle_() {
 
     // override style if a style is defined at the feature level
-    const mapIconOptions = { useCanvas: this.feature_.useCanvas || this.mapIconOptions_.useCanvas };
+    const mapIconOptions = {useCanvas: this.feature_.useCanvas || this.mapIconOptions_.useCanvas};
 
     const gmStyle = createStyle(
       this.feature_, mapIconOptions, this.index_);

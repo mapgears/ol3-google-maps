@@ -228,7 +228,7 @@ const addPointFeatures = function(len, opt_style, pane) {
     }
     feature.usePane = pane;
     vector.getSource().addFeature(feature);
-   }
+  }
 };
 
 const addMarkerFeatures = function(len, pane) {

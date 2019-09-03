@@ -153,8 +153,7 @@ class MapLabel extends MapElement {
       let pane = this.get('pane');
       if (pane) {
         pane = panes[pane];
-      }
-      else {
+      } else {
         pane = panes.markerLayer;
       }
 
