@@ -217,7 +217,7 @@ const generateLineFeature = function() {
   );
 };
 
-const addPointFeatures = function(len, opt_style) {
+const addPointFeatures = function(len, opt_style, pane) {
   let feature;
   for (let i = 0; i < len; i++) {
     feature = generatePointFeature();
@@ -226,11 +226,12 @@ const addPointFeatures = function(len, opt_style) {
       style.setZIndex(Math.floor(Math.random() * 1000));
       feature.setStyle(style);
     }
+    feature.usePane = pane;
     vector.getSource().addFeature(feature);
-  }
+   }
 };
 
-const addMarkerFeatures = function(len) {
+const addMarkerFeatures = function(len, pane) {
   addPointFeatures(len, {
     image: new Icon(/** @type {olx.style.IconOptions} */ ({
       anchor: [0.5, 46],
@@ -247,7 +248,7 @@ const addMarkerFeatures = function(len) {
       fill: new Fill({color: 'black'}),
       stroke: new Stroke({color: '#ffffff', width: 5})
     })
-  });
+  }, pane);
 };
 
 const addCircleFeatures = function(len) {
@@ -286,7 +287,7 @@ addPointFeatures(3, {
     stroke: new Stroke({color: 'white', width: 3})
   })
 });
-addMarkerFeatures(3);
+addMarkerFeatures(3, 'overlayLayer');
 addCircleFeatures(3);
 addLineFeatures(1);
 // line with custom style
