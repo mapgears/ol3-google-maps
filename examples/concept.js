@@ -217,7 +217,7 @@ const generateLineFeature = function() {
   );
 };
 
-const addPointFeatures = function(len, opt_style, pane) {
+const addPointFeatures = function(len, opt_style, opt_pane) {
   let feature;
   for (let i = 0; i < len; i++) {
     feature = generatePointFeature();
@@ -226,12 +226,12 @@ const addPointFeatures = function(len, opt_style, pane) {
       style.setZIndex(Math.floor(Math.random() * 1000));
       feature.setStyle(style);
     }
-    feature.usePane = pane;
+    feature.set('olgm_pane', opt_pane);
     vector.getSource().addFeature(feature);
   }
 };
 
-const addMarkerFeatures = function(len, pane) {
+const addMarkerFeatures = function (len, opt_pane) {
   addPointFeatures(len, {
     image: new Icon(/** @type {olx.style.IconOptions} */ ({
       anchor: [0.5, 46],
@@ -248,7 +248,7 @@ const addMarkerFeatures = function(len, pane) {
       fill: new Fill({color: 'black'}),
       stroke: new Stroke({color: '#ffffff', width: 5})
     })
-  }, pane);
+  }, opt_pane);
 };
 
 const addCircleFeatures = function(len) {

@@ -235,7 +235,7 @@ class FeatureHerald extends Herald {
 
       const image = style.getImage();
       if (image && image instanceof Icon && mapIconOptions.useCanvas) {
-        this.marker_ = createMapIcon(image, latLng, index, this.feature_.usePane);
+        this.marker_ = createMapIcon(image, latLng, index, this.feature_.get('olgm_pane'));
         if (this.visible_) {
           this.marker_.setMap(this.gmap);
         }
@@ -243,7 +243,7 @@ class FeatureHerald extends Herald {
 
       const text = style.getText();
       if (text) {
-        this.label_ = createLabel(text, latLng, index, this.feature_.usePane);
+        this.label_ = createLabel(text, latLng, index, this.feature_.get('olgm_pane'));
         if (this.visible_) {
           this.label_.setMap(this.gmap);
         }

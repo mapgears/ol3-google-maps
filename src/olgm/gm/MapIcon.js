@@ -112,10 +112,11 @@ class MapIcon extends MapElement {
 
     const panes = this.getPanes();
     if (panes) {
-      let pane = this.get('pane');
+      let pane = this.get('olgm_pane');
       if (pane) {
         pane = panes[pane];
-      } else {
+      }
+      if (!pane) {
         pane = panes.markerLayer;
       }
 
