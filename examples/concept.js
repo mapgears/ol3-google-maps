@@ -231,7 +231,7 @@ const addPointFeatures = function(len, opt_style, opt_pane) {
   }
 };
 
-const addMarkerFeatures = function (len, opt_pane) {
+const addMarkerFeatures = function(len, opt_pane) {
   addPointFeatures(len, {
     image: new Icon(/** @type {olx.style.IconOptions} */ ({
       anchor: [0.5, 46],
