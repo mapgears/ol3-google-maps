@@ -112,7 +112,15 @@ class MapIcon extends MapElement {
 
     const panes = this.getPanes();
     if (panes) {
-      panes.markerLayer.appendChild(canvas);
+      let pane = this.get('olgm_pane');
+      if (pane) {
+        pane = panes[pane];
+      }
+      if (!pane) {
+        pane = panes.markerLayer;
+      }
+
+      pane.appendChild(canvas);
     }
   }
 }

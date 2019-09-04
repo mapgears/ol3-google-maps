@@ -216,8 +216,10 @@ class FeatureHerald extends Herald {
   updateStyle_() {
 
     // override style if a style is defined at the feature level
+    const mapIconOptions = {useCanvas: this.feature_.useCanvas || this.mapIconOptions_.useCanvas};
+
     const gmStyle = createStyle(
-      this.feature_, this.mapIconOptions_, this.index_);
+      this.feature_, mapIconOptions, this.index_);
 
     this.data_.overrideStyle(this.gmapFeature_, gmStyle);
 
@@ -232,10 +234,8 @@ class FeatureHerald extends Herald {
       const index = zIndex !== undefined ? zIndex : this.index_;
 
       const image = style.getImage();
-      const useCanvas = this.mapIconOptions_.useCanvas !== undefined ?
-        this.mapIconOptions_.useCanvas : false;
-      if (image && image instanceof Icon && useCanvas) {
-        this.marker_ = createMapIcon(image, latLng, index);
+      if (image && image instanceof Icon && mapIconOptions.useCanvas) {
+        this.marker_ = createMapIcon(image, latLng, index, this.feature_.get('olgm_pane'));
         if (this.visible_) {
           this.marker_.setMap(this.gmap);
         }
@@ -243,7 +243,7 @@ class FeatureHerald extends Herald {
 
       const text = style.getText();
       if (text) {
-        this.label_ = createLabel(text, latLng, index);
+        this.label_ = createLabel(text, latLng, index, this.feature_.get('olgm_pane'));
         if (this.visible_) {
           this.label_.setMap(this.gmap);
         }
