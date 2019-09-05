@@ -41,9 +41,9 @@ source.addFeature(feature);
 const bigIcon = new Feature(new Point(left));
 bigIcon.setStyle(new Style({
   image: new Icon(({
-    anchor: [0.5, 0.5],
-    anchorXUnits: 'fraction',
-    anchorYUnits: 'fraction',
+    anchor: [132, 468],
+    anchorXUnits: 'pixels',
+    anchorYUnits: 'pixels',
     src: 'data/linux.png',
     opacity: 0.5
   }))

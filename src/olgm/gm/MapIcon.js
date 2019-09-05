@@ -87,8 +87,14 @@ class MapIcon extends MapElement {
     const rotation = this.imageStyle_.getRotation() || 0;
     const opacity = this.imageStyle_.getOpacity() || 1;
 
-    const w_2 = image.width * scale * 0.5;
-    const h_2 = image.height * scale * 0.5;
+    const offsetX = anchor[0] * scale;
+    const offsetY = anchor[1] * scale;
+
+    let w_2 = image.width * scale * 0.5;
+    let h_2 = image.height * scale * 0.5;
+
+    w_2 += Math.abs(w_2 - offsetX);
+    h_2 += Math.abs(h_2 - offsetY);
 
     const cosTheta = Math.cos(rotation);
     const sinTheta = Math.sin(rotation);
@@ -103,14 +109,11 @@ class MapIcon extends MapElement {
     const minY = Math.min(p1[1], p2[1], p3[1], p4[1]);
     const maxY = Math.max(p1[1], p2[1], p3[1], p4[1]);
 
-    canvas.width = maxX - minX;
-    canvas.height = maxY - minY;
+    canvas.width = Math.round(maxX - minX);
+    canvas.height = Math.round(maxY - minY);
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const offsetX = anchor[0] * scale;
-    const offsetY = anchor[1] * scale;
 
     const x = canvas.width / 2 - offsetX;
     const y = canvas.height / 2 - offsetY;
