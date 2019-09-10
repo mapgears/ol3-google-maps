@@ -108,6 +108,26 @@ function handleMoveEvent(evt) {
     const features = map.getFeaturesAtPixel(evt.pixel);
     const element = evt.map.getTargetElement();
     if (features) {
+      const style = features[0].getStyle();
+      if (style) {
+        const image = style.getImage();
+        if (image && image.getSrc) {
+          if (image.getSrc() == 'data/icon.png') {
+            features[0].setStyle(
+              new Style({
+                image: new Icon({
+                  anchor: [0.5, 46],
+                  anchorXUnits: 'fraction',
+                  anchorYUnits: 'pixels',
+                  opacity: 0.75,
+                  src: 'data/icon.png'
+                })
+              })
+            );
+          }
+        }
+      }
+
       if (element.style.cursor != this.cursor_) {
         this.previousCursor_ = element.style.cursor;
         element.style.cursor = this.cursor_;
@@ -197,7 +217,7 @@ const generateLineFeature = function() {
   );
 };
 
-const addPointFeatures = function(len, opt_style) {
+const addPointFeatures = function(len, opt_style, opt_pane) {
   let feature;
   for (let i = 0; i < len; i++) {
     feature = generatePointFeature();
@@ -206,11 +226,12 @@ const addPointFeatures = function(len, opt_style) {
       style.setZIndex(Math.floor(Math.random() * 1000));
       feature.setStyle(style);
     }
+    feature.set('olgm_pane', opt_pane);
     vector.getSource().addFeature(feature);
   }
 };
 
-const addMarkerFeatures = function(len) {
+const addMarkerFeatures = function(len, opt_pane) {
   addPointFeatures(len, {
     image: new Icon(/** @type {olx.style.IconOptions} */ ({
       anchor: [0.5, 46],
@@ -227,7 +248,7 @@ const addMarkerFeatures = function(len) {
       fill: new Fill({color: 'black'}),
       stroke: new Stroke({color: '#ffffff', width: 5})
     })
-  });
+  }, opt_pane);
 };
 
 const addCircleFeatures = function(len) {
@@ -266,7 +287,7 @@ addPointFeatures(3, {
     stroke: new Stroke({color: 'white', width: 3})
   })
 });
-addMarkerFeatures(3);
+addMarkerFeatures(3, 'overlayLayer');
 addCircleFeatures(3);
 addLineFeatures(1);
 // line with custom style

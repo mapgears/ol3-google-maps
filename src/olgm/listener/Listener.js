@@ -1,8 +1,8 @@
 /**
  * @module olgm/listener/Listener
  */
-import AbstractListener from './AbstractListener';
-import {unByKey} from 'ol/Observable';
+import AbstractListener from './AbstractListener.js';
+import {unByKey} from 'ol/Observable.js';
 
 class Listener extends AbstractListener {
   /**

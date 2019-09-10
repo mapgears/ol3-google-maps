@@ -1,7 +1,7 @@
 /**
  * @module olgm/listener/PropertyListener
  */
-import Listener from './Listener';
+import Listener from './Listener.js';
 
 class PropertyListener extends Listener {
   /**
@@ -16,8 +16,8 @@ class PropertyListener extends Listener {
    */
   constructor(target, oldTarget, key, listen) {
     super(target.on('change:' + key, e => {
-      if (this.innerListener) {
-        this.innerListener.unlisten();
+      if (this.innerListener_) {
+        this.innerListener_.unlisten();
       }
       this.innerListener_ = listen(e.target.get(e.key), e.oldValue);
     }));

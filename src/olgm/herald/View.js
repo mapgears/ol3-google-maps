@@ -108,7 +108,15 @@ class ViewHerald extends Herald {
     const rotation = view.getRotation();
 
     const mapDiv = this.gmap.getDiv();
-    const tilesDiv = mapDiv.childNodes[0].childNodes[0];
+    let childDiv;
+    for (let i = 0; i < mapDiv.childNodes.length; i++) {
+      const child = mapDiv.childNodes[i];
+      if (child.nodeName === 'DIV') {
+        childDiv = child;
+        break;
+      }
+    }
+    const tilesDiv = childDiv.childNodes[0];
 
     // If googlemaps is fully loaded
     if (tilesDiv) {
@@ -116,6 +124,10 @@ class ViewHerald extends Herald {
       // Rotate the div containing the map tiles
       const tilesDivStyle = tilesDiv.style;
       tilesDivStyle.transform = 'rotate(' + rotation + 'rad)';
+
+      if (!this.ol3map.getSize()) {
+        return;
+      }
 
       const width = this.ol3map.getSize()[0];
       const height = this.ol3map.getSize()[1];
@@ -145,7 +157,7 @@ class ViewHerald extends Herald {
         this.setZoom();
 
         // Move up the elements at the bottom of the map
-        const childNodes = mapDiv.childNodes[0].childNodes;
+        const childNodes = childDiv.childNodes;
         for (let i = 0; i < childNodes.length; i++) {
           // Set the bottom to where the overflow starts being hidden
           const style = childNodes[i].style;
@@ -170,7 +182,7 @@ class ViewHerald extends Herald {
   setZoom() {
     const resolution = this.ol3map.getView().getResolution();
     if (typeof resolution === 'number') {
-      const zoom = getZoomFromResolution(resolution);
+      const zoom = getZoomFromResolution(resolution, this.ol3map.getView().getMinZoom());
       this.gmap.setZoom(zoom);
     }
   }
