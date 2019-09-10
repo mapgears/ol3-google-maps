@@ -403,13 +403,15 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
  * @param {module:ol/style/Text} textStyle style for the text
  * @param {google.maps.LatLng} latLng position of the label
  * @param {number} index index for the label
+ * @param {string=} opt_pane name of Google Maps pane to use (defaults to 'markerLayer' if not specified)
  * @return {module:olgm/gm/MapLabel} map label
  */
-export function createLabel(textStyle, latLng, index) {
+export function createLabel(textStyle, latLng, index, opt_pane) {
 
   const labelOptions = {
     align: 'center',
     position: latLng,
+    olgm_pane: opt_pane,
     zIndex: index * 2 + 1
   };
 
@@ -473,13 +475,15 @@ export function createLabel(textStyle, latLng, index) {
  * @param {module:ol/style/Icon} iconStyle style for the icon
  * @param {google.maps.LatLng} latLng position of the label
  * @param {number} index index for the label
+ * @param {string=} opt_pane name of Google Maps pane to use (defaults to 'markerLayer' if not specified)
  * @return {module:olgm/gm/MapIcon} map icon
  */
-export function createMapIcon(iconStyle, latLng, index) {
+export function createMapIcon(iconStyle, latLng, index, opt_pane) {
 
   const iconOptions = {
     align: 'center',
     position: latLng,
+    olgm_pane: opt_pane,
     zIndex: index * 2 + 1
   };
 

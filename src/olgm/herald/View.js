@@ -123,6 +123,10 @@ class ViewHerald extends Herald {
       const tilesDivStyle = tilesDiv.style;
       tilesDivStyle.transform = 'rotate(' + rotation + 'rad)';
 
+      if (!this.ol3map.getSize()) {
+        return;
+      }
+
       const width = this.ol3map.getSize()[0];
       const height = this.ol3map.getSize()[1];
 
