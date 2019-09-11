@@ -33,6 +33,7 @@ export function defaults(opt_options) {
   options['altShiftDragRotate'] = false;
   options['dragPan'] = false;
   options['pinchRotate'] = false;
+  options['zoomDuration'] = 0;
 
   return olDefaults(options).extend([
     new DragPan()
