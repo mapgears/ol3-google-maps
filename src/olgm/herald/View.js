@@ -47,15 +47,14 @@ class ViewHerald extends Herald {
     this.listener = new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
       if (oldView) {
         this.setRotation();
-        this.setCenter();
-        this.setZoom();
+        this.setZoomAndCenter();
       }
 
       return new Listener([
         // listen to center change
         view.on('change:center', () => this.setCenter()),
         // listen to resolution change
-        view.on('change:resolution', () => this.setZoom()),
+        view.on('change:resolution', () => this.setZoomAndCenter()),
         // listen to rotation change
         view.on('change:rotation', () => this.setRotation())
       ]);
@@ -72,8 +71,7 @@ class ViewHerald extends Herald {
     // Rotate and recenter the map after it's ready
     google.maps.event.addListenerOnce(this.gmap, 'idle', () => {
       this.setRotation();
-      this.setCenter();
-      this.setZoom();
+      this.setZoomAndCenter();
     });
   }
 
@@ -153,8 +151,7 @@ class ViewHerald extends Herald {
         google.maps.event.trigger(this.gmap, 'resize');
 
         // Replace the map
-        this.setCenter();
-        this.setZoom();
+        this.setZoomAndCenter();
 
         // Move up the elements at the bottom of the map
         const childNodes = childDiv.childNodes;
@@ -177,14 +174,16 @@ class ViewHerald extends Herald {
 
 
   /**
-   * Set the gmap map zoom level at the ol3 map view zoom level.
+   * Set the gmap map zoom level at the ol3 map view zoom level and the same for the center
    */
-  setZoom() {
+  setZoomAndCenter() {
     const resolution = this.ol3map.getView().getResolution();
     if (typeof resolution === 'number') {
       const zoom = getZoomFromResolution(resolution, this.ol3map.getView().getMinZoom());
       this.gmap.setZoom(zoom);
     }
+
+    this.setCenter();
   }
 
 
