@@ -68,6 +68,10 @@ olGM.activate();
 
 ## Live examples
 
+See the following example for more detail on bundling OL3-Google-Maps with your application:
+
+ * Using [Webpack](https://github.com/geopamplona/olgm-webpack)
+ 
 See OL3-Google-Maps in action (version v0.20.0):
 
  * [Simple](http://mapgears.github.io/ol3-google-maps/examples/dist/examples/simple.html)
