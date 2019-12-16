@@ -17,7 +17,11 @@ class PropertyListener extends Listener {
   constructor(target, oldTarget, key, listen) {
     super(target.on('change:' + key, e => {
       if (this.innerListener_) {
-        this.innerListener_.unlisten();
+        if (Array.isArray(this.innerListener_)) {
+          this.innerListener_.forEach(listener => listener.unlisten());
+        } else {
+          this.innerListener_.unlisten();
+        }
       }
       this.innerListener_ = listen(e.target.get(e.key), e.oldValue);
     }));
