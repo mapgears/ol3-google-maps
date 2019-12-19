@@ -1,8 +1,7 @@
 /**
  * @module olgm/layer/Google
  */
-import LayerType from 'ol/LayerType.js';
-import Layer from 'ol/layer/Layer.js';
+import TileLayer from 'ol/layer/Tile.js';
 
 /**
  * @typedef {Object} Options
@@ -18,7 +17,7 @@ import Layer from 'ol/layer/Layer.js';
  * layer represents.
  * @api
  */
-class GoogleLayer extends Layer {
+class GoogleLayer extends TileLayer {
   /**
    * @param {module:olgm/layer/Google~Options} opt_options Layer options.
    */
@@ -38,13 +37,6 @@ class GoogleLayer extends Layer {
      * @private
      */
     this.styles_ = options.styles ? options.styles : null;
-
-    /**
-    * The layer type.
-    * @protected
-    * @type {import("../LayerType.js").default}
-    */
-    this.type = LayerType.TILE;
   }
 
 
