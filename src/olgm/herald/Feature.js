@@ -101,7 +101,7 @@ class FeatureHerald extends Herald {
 
     this.featureListener_ = new Listener(this.feature_.on('change', () => this.handleFeatureChange_()));
 
-    this.listener = new PropertyListener(this.feature_, null, this.feature_.geometryName_ ? this.feature_.geometryName_ : 'geometry', (geometry, oldGeometry) => {
+    this.listener = new PropertyListener(this.feature_, null, this.feature_.getGeometryName(), (geometry, oldGeometry) => {
       if (oldGeometry) {
         this.handleGeometryChange_();
       }
