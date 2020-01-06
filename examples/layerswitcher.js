@@ -2,6 +2,7 @@ import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import TileLayer from 'ol/layer/Tile.js';
 import OSMSource from 'ol/source/OSM.js';
+import 'ol-layerswitcher/src/ol-layerswitcher.css';
 import LayerSwitcher from 'ol-layerswitcher';
 import OLGoogleMaps from 'olgm/OLGoogleMaps.js';
 import GoogleLayer from 'olgm/layer/Google.js';

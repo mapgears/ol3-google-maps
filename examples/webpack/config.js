@@ -31,6 +31,13 @@ module.exports = {
         path.join(__dirname, '..', '..', 'src'),
         path.join(__dirname, '..')
       ]
+    },
+    {
+      test: /\.css$/,
+      use: [
+        {loader: 'style-loader'},
+        {loader: 'css-loader'}
+      ]
     }]
   },
   optimization: {
