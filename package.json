@@ -36,7 +36,7 @@
     "url": "https://github.com/mapgears/ol3-google-maps/issues"
   },
   "peerDependencies": {
-    "ol": "^5.0.0 || ^4.0.0"
+    "ol": "^6.0.0"
   },
   "devDependencies": {
     "buble": "^0.19.3",
@@ -64,7 +64,7 @@
     "marked": "0.4.0",
     "mkdirp": "^0.5.1",
     "mocha": "5.2.0",
-    "ol": "5.0.3",
+    "ol": "^6.1.1",
     "ol-layerswitcher": "^3.3.0",
     "phantomjs-prebuilt": "^2.1.16",
     "recast": "0.15.2",
