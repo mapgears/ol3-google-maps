@@ -112,8 +112,9 @@ class ImageWMSSourceHerald extends SorceHerald {
       this.layers_.splice(index, 1);
 
       const cacheItem = this.cache_[index];
-      if (cacheItem.listeners)
+      if (cacheItem.listeners) {
         cacheItem.listeners.forEach(listener => listener.unlisten());
+      }
 
       // Clean previous overlay
       this.resetImageOverlay_(cacheItem);
