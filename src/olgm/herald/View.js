@@ -44,6 +44,8 @@ class ViewHerald extends Herald {
   activate() {
     super.activate();
 
+    this.ol3map.getView().setConstrainResolution(true);
+
     this.listener = new PropertyListener(this.ol3map, null, 'view', (view, oldView) => {
       if (oldView) {
         this.setRotation();
@@ -78,6 +80,8 @@ class ViewHerald extends Herald {
 
   deactivate() {
     super.deactivate();
+
+    this.ol3map.getView().setConstrainResolution(false);
 
     unlistenByKey(this.windowListenerKey_);
   }
