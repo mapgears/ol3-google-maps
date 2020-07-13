@@ -160,7 +160,7 @@ class TileSourceHerald extends SourceHerald {
     const proj = get('EPSG:3857');
 
     // Convert the coords from google maps to ol3 tile format
-    const ol3Coords = [zoom, coords.x, (-coords.y) - 1];
+    const ol3Coords = [zoom, coords.x, coords.y];
 
     // Save the extent for this layer, default to the one for the projection
     let extent = tileLayer.getExtent();
