@@ -1,6 +1,6 @@
 {
-  "name": "olgm",
-  "version": "1.6.0",
+  "name": "@geosolutions/olgm",
+  "version": "1.6.1",
   "description": "OpenLayers Google Maps integration library",
   "keywords": [
     "map",
@@ -9,7 +9,7 @@
     "google maps"
   ],
   "private": true,
-  "homepage": "http://mapgears.github.io/ol3-google-maps/",
+  "homepage": "https://github.com/geosolutions-it/ol3-google-maps",
   "scripts": {
     "lint": "eslint tasks test src/olgm examples",
     "pretest": "npm run lint",
@@ -29,11 +29,11 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mapgears/ol3-google-maps.git"
+    "url": "git://github.com/geosolutions-it/ol3-google-maps.git"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mapgears/ol3-google-maps/issues"
+    "url": "https://github.com/geosolutions-it/ol3-google-maps/issues"
   },
   "peerDependencies": {
     "ol": "^6.0.0"
@@ -89,5 +89,11 @@
   },
   "sideEffects": [
     "olgm.css"
-  ]
+  ],
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "dependencies": {},
+  "author": "geosolutions"
 }
