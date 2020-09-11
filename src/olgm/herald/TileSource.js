@@ -224,7 +224,7 @@ class TileSourceHerald extends SourceHerald {
       }
     }
 
-    let result = getTileUrlFunction(ol3Coords, 1, proj);
+    let result = source.tileUrlFunction(ol3Coords, 1, proj);
 
     // TileJSON sources don't have their url function right away, try again
     if (result === undefined) {
