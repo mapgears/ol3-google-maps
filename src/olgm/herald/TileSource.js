@@ -186,8 +186,6 @@ class TileSourceHerald extends SourceHerald {
       return;
     }
 
-    // Get a few variables from the source object
-    let getTileUrlFunction = source.getTileUrlFunction();
     const proj = get("EPSG:3857");
 
     // Convert the coords from google maps to ol3 tile format
@@ -263,7 +261,7 @@ class TileSourceHerald extends SourceHerald {
 
     // TileJSON sources don't have their url function right away, try again
     if (result === undefined) {
-      getTileUrlFunction = source.getTileUrlFunction();
+      let getTileUrlFunction = source.getTileUrlFunction();
       result = getTileUrlFunction(ol3Coords, 1, proj);
     }
 
