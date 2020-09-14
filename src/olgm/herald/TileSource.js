@@ -53,7 +53,7 @@ class TileSourceHerald extends SourceHerald {
      * Accessing that pane means we can reorder the div for each tile layer
      * Google Maps is rendering.
      */
-    google.maps.event.addListenerOnce(gmap, "idle", () => {
+    google.maps.event.addListenerOnce(gmap, 'idle', () => {
       this.orderLayers();
     });
   }
@@ -72,7 +72,7 @@ class TileSourceHerald extends SourceHerald {
     }
 
     // If olgmWatch property is false then render using OL instead
-    if (tileLayer.get("olgmWatch") === false) {
+    if (tileLayer.get('olgmWatch') === false) {
       return;
     }
 
@@ -87,7 +87,7 @@ class TileSourceHerald extends SourceHerald {
       layer: tileLayer,
       listeners: [],
       opacity: opacity,
-      zIndex: 0,
+      zIndex: 0
     });
 
     const tileGrid = source.getTileGrid();
@@ -95,7 +95,7 @@ class TileSourceHerald extends SourceHerald {
 
     if (tileGrid) {
       const tileGridTileSize = tileGrid.getTileSize(0);
-      if (typeof tileGridTileSize === "number") {
+      if (typeof tileGridTileSize === 'number') {
         tileSize = tileGridTileSize;
       }
     }
@@ -106,7 +106,7 @@ class TileSourceHerald extends SourceHerald {
       getTileUrl: this.googleGetTileUrlFunction_.bind(this, tileLayer),
       tileSize: googleTileSize,
       isPng: true,
-      opacity: opacity,
+      opacity: opacity
     };
 
     // Create the tiled layer on the google layer
@@ -119,22 +119,22 @@ class TileSourceHerald extends SourceHerald {
     cacheItem.listeners.push(
       // Hide the google layer when the ol3 layer is invisible
       new Listener(
-        tileLayer.on("change:visible", () =>
+        tileLayer.on('change:visible', () =>
           this.handleVisibleChange_(cacheItem)
         )
       ),
-      new Listener(tileLayer.on("change", () => this.handleChange_(cacheItem))),
+      new Listener(tileLayer.on('change', () => this.handleChange_(cacheItem))),
       new Listener(
-        tileLayer.on("change:opacity", () =>
+        tileLayer.on('change:opacity', () =>
           this.handleOpacityChange_(cacheItem)
         )
       ),
-      new PropertyListener(tileLayer, null, "source", (source, oldSource) => {
+      new PropertyListener(tileLayer, null, 'source', (source, oldSource) => {
         if (oldSource) {
           this.handleSourceChange_(cacheItem);
         }
         return new Listener(
-          source.on("change", () => this.handleSourceChange_(cacheItem))
+          source.on('change', () => this.handleSourceChange_(cacheItem))
         );
       })
     );
@@ -150,9 +150,6 @@ class TileSourceHerald extends SourceHerald {
    * @private
    */
   handleChange_(cacheItem) {
-    const layer = cacheItem.layer;
-    const visible = layer.getVisible();
-
     const googleTileLayer = cacheItem.googleTileLayer;
     const googleMapsLayers = this.gmap.overlayMapTypes;
 
@@ -186,7 +183,7 @@ class TileSourceHerald extends SourceHerald {
       return;
     }
 
-    const proj = get("EPSG:3857");
+    const proj = get('EPSG:3857');
 
     // Convert the coords from google maps to ol3 tile format
     const ol3Coords = [zoom, coords.x, coords.y];
@@ -261,7 +258,7 @@ class TileSourceHerald extends SourceHerald {
 
     // TileJSON sources don't have their url function right away, try again
     if (result === undefined) {
-      let getTileUrlFunction = source.getTileUrlFunction();
+      const getTileUrlFunction = source.getTileUrlFunction();
       result = getTileUrlFunction(ol3Coords, 1, proj);
     }
 
@@ -388,12 +385,9 @@ class TileSourceHerald extends SourceHerald {
           if (childNodes.indexOf(childNodesWithLayer[j]) == -1) {
             // Set a timeout because otherwise it won't work
             cacheItem.element = childNodesWithLayer[j];
-            setTimeout(
-              function () {
-                this.element.style.zIndex = this.zIndex;
-              }.bind(cacheItem),
-              0
-            );
+            setTimeout(function() {
+              this.element.style.zIndex = this.zIndex;
+            }.bind(cacheItem), 0);
           }
         }
       }
@@ -472,7 +466,7 @@ class TileSourceHerald extends SourceHerald {
   handleSourceChange_(cacheItem) {
     // Note: The 'changed' method of google.maps.MVCObject requires a param,
     //       but it's not acutally used here.  It's just to satisfy the compiler.
-    cacheItem.googleTileLayer.changed("foo");
+    cacheItem.googleTileLayer.changed('foo');
   }
 }
 
