@@ -123,7 +123,6 @@ class TileSourceHerald extends SourceHerald {
           this.handleVisibleChange_(cacheItem)
         )
       ),
-      new Listener(tileLayer.on('change', () => this.handleChange_(cacheItem))),
       new Listener(
         tileLayer.on('change:opacity', () =>
           this.handleOpacityChange_(cacheItem)
@@ -144,22 +143,6 @@ class TileSourceHerald extends SourceHerald {
     this.cache_.push(cacheItem);
   }
 
-  /**
-   * reset the googlemap layers
-   * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem for the
-   * @private
-   */
-  handleChange_(cacheItem) {
-    const googleTileLayer = cacheItem.googleTileLayer;
-    const googleMapsLayers = this.gmap.overlayMapTypes;
-
-    // Get the position of the google layer so we can remove it
-    const layerIndex = googleMapsLayers.getArray().indexOf(googleTileLayer);
-    googleMapsLayers.removeAt(layerIndex);
-    this.deactivateCacheItem_(cacheItem);
-    googleMapsLayers.push(googleTileLayer);
-    this.activateCacheItem_(cacheItem);
-  }
   /**
    * This function is used by google maps to get the url for a tile at the given
    * coordinates and zoom level
