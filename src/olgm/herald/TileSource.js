@@ -30,15 +30,15 @@ class TileSourceHerald extends SourceHerald {
     super(ol3map, gmap);
 
     /**
-    * @type {Array<module:olgm/herald/TileSource~LayerCache>}
-    * @private
-    */
+     * @type {Array<module:olgm/herald/TileSource~LayerCache>}
+     * @private
+     */
     this.cache_ = [];
 
     /**
-    * @type {Array<module:ol/layer/Tile>}
-    * @private
-    */
+     * @type {Array<module:ol/layer/Tile>}
+     * @private
+     */
     this.layers_ = [];
 
     /**
@@ -57,7 +57,6 @@ class TileSourceHerald extends SourceHerald {
       this.orderLayers();
     });
   }
-
 
   /**
    * @param {module:ol/layer/Base} layer layer to watch
@@ -104,10 +103,10 @@ class TileSourceHerald extends SourceHerald {
     const googleTileSize = new google.maps.Size(tileSize, tileSize);
 
     const options = {
-      'getTileUrl': this.googleGetTileUrlFunction_.bind(this, tileLayer),
-      'tileSize': googleTileSize,
-      'isPng': true,
-      'opacity': opacity
+      getTileUrl: this.googleGetTileUrlFunction_.bind(this, tileLayer),
+      tileSize: googleTileSize,
+      isPng: true,
+      opacity: opacity
     };
 
     // Create the tiled layer on the google layer
@@ -119,13 +118,23 @@ class TileSourceHerald extends SourceHerald {
 
     cacheItem.listeners.push(
       // Hide the google layer when the ol3 layer is invisible
-      new Listener(tileLayer.on('change:visible', () => this.handleVisibleChange_(cacheItem))),
-      new Listener(tileLayer.on('change:opacity', () => this.handleOpacityChange_(cacheItem))),
+      new Listener(
+        tileLayer.on('change:visible', () =>
+          this.handleVisibleChange_(cacheItem)
+        )
+      ),
+      new Listener(
+        tileLayer.on('change:opacity', () =>
+          this.handleOpacityChange_(cacheItem)
+        )
+      ),
       new PropertyListener(tileLayer, null, 'source', (source, oldSource) => {
         if (oldSource) {
           this.handleSourceChange_(cacheItem);
         }
-        return new Listener(source.on('change', () => this.handleSourceChange_(cacheItem)));
+        return new Listener(
+          source.on('change', () => this.handleSourceChange_(cacheItem))
+        );
       })
     );
 
@@ -133,7 +142,6 @@ class TileSourceHerald extends SourceHerald {
     this.activateCacheItem_(cacheItem);
     this.cache_.push(cacheItem);
   }
-
 
   /**
    * This function is used by google maps to get the url for a tile at the given
@@ -151,12 +159,13 @@ class TileSourceHerald extends SourceHerald {
     const minResolution = tileLayer.getMinResolution();
     const maxResolution = tileLayer.getMaxResolution();
     const currentResolution = this.ol3map.getView().getResolution();
-    if (currentResolution < minResolution || currentResolution > maxResolution) {
+    if (
+      currentResolution < minResolution ||
+      currentResolution > maxResolution
+    ) {
       return;
     }
 
-    // Get a few variables from the source object
-    let getTileUrlFunction = source.getTileUrlFunction();
     const proj = get('EPSG:3857');
 
     // Convert the coords from google maps to ol3 tile format
@@ -169,19 +178,19 @@ class TileSourceHerald extends SourceHerald {
     }
 
     /* Perform some verifications only possible with a TileGrid:
-    * 1. If the origin for the layer isn't in the upper left corner, we need
-    *    to move the tiles there. Google Maps doesn't support custom origins.
-    * 2. Google Maps checks for tiles which might not exist, for example tiles
-    *    above the world map. We need to filter out these to avoid invalid
-    *    requests.
-    */
+     * 1. If the origin for the layer isn't in the upper left corner, we need
+     *    to move the tiles there. Google Maps doesn't support custom origins.
+     * 2. Google Maps checks for tiles which might not exist, for example tiles
+     *    above the world map. We need to filter out these to avoid invalid
+     *    requests.
+     */
     const tileGrid = source.getTileGrid();
     if (tileGrid) {
       /* Google maps always draws the tiles from the top left corner. We need to
-      * adjust for that if our origin isn't at that location
-      * The default origin is at the top left corner, and the default tile size
-      * is 256.
-      */
+       * adjust for that if our origin isn't at that location
+       * The default origin is at the top left corner, and the default tile size
+       * is 256.
+       */
       const defaultOrigin = [-20037508.342789244, 20037508.342789244];
       const defaultTileSize = 256;
       const origin = tileGrid.getOrigin(0);
@@ -189,17 +198,19 @@ class TileSourceHerald extends SourceHerald {
       // Skip this step if the origin is at the top left corner
       if (origin[0] != defaultOrigin[0] || origin[1] != defaultOrigin[1]) {
         /* Tiles have a size equal to 2^n. Find the difference between the n for
-        * the current tileGrid versus the n for the expected tileGrid.
-        */
-        const tileGridTileSize = /** @type {number} */ (tileGrid.getTileSize(zoom));
+         * the current tileGrid versus the n for the expected tileGrid.
+         */
+        const tileGridTileSize = /** @type {number} */ (tileGrid.getTileSize(
+          zoom
+        ));
 
         const defaultTileSizeExponent = Math.log2(defaultTileSize);
         const tileSizeExponent = Math.log2(tileGridTileSize);
         const exponentDifference = tileSizeExponent - defaultTileSizeExponent;
 
         /* Calculate the offset to add to the tile coordinates, assuming the
-        * origin to fix is equal to [0, 0]. TODO: Support different origins
-        */
+         * origin to fix is equal to [0, 0]. TODO: Support different origins
+         */
         const nbTilesSide = Math.pow(2, zoom - exponentDifference);
         const offset = nbTilesSide / 2;
 
@@ -209,13 +220,15 @@ class TileSourceHerald extends SourceHerald {
       }
 
       /* Get the intersection area between the wanted tile's extent and the
-      * layer's extent. If that intersection has an area smaller than 1, it
-      * means it's not part of the map. We do this because a tile directly
-      * above the map but not inside it still counts as an intersection, but
-      * with a size of 0.
-      */
+       * layer's extent. If that intersection has an area smaller than 1, it
+       * means it's not part of the map. We do this because a tile directly
+       * above the map but not inside it still counts as an intersection, but
+       * with a size of 0.
+       */
       const intersection = getIntersection(
-        extent, tileGrid.getTileCoordExtent(ol3Coords));
+        extent,
+        tileGrid.getTileCoordExtent(ol3Coords)
+      );
       const intersectionSize = getSize(intersection);
       const intersectionArea = intersectionSize[0] * intersectionSize[1];
 
@@ -224,17 +237,16 @@ class TileSourceHerald extends SourceHerald {
       }
     }
 
-    let result = getTileUrlFunction(ol3Coords, 1, proj);
+    let result = source.tileUrlFunction(ol3Coords, 1, proj);
 
     // TileJSON sources don't have their url function right away, try again
     if (result === undefined) {
-      getTileUrlFunction = source.getTileUrlFunction();
+      const getTileUrlFunction = source.getTileUrlFunction();
       result = getTileUrlFunction(ol3Coords, 1, proj);
     }
 
     return result;
   }
-
 
   /**
    * Unwatch the tile layer
@@ -249,7 +261,7 @@ class TileSourceHerald extends SourceHerald {
       this.layers_.splice(index, 1);
 
       const cacheItem = this.cache_[index];
-      cacheItem.listeners.forEach(listener => listener.unlisten());
+      cacheItem.listeners.forEach((listener) => listener.unlisten());
 
       // Remove the layer from google maps
       const googleTileLayer = cacheItem.googleTileLayer;
@@ -268,7 +280,6 @@ class TileSourceHerald extends SourceHerald {
     }
   }
 
-
   /**
    * Activate all cache items
    * @api
@@ -278,7 +289,6 @@ class TileSourceHerald extends SourceHerald {
     super.activate();
     this.cache_.forEach(this.activateCacheItem_, this);
   }
-
 
   /**
    * Activates an tile layer cache item.
@@ -294,7 +304,6 @@ class TileSourceHerald extends SourceHerald {
     }
   }
 
-
   /**
    * Deactivate all cache items
    * @api
@@ -305,7 +314,6 @@ class TileSourceHerald extends SourceHerald {
     this.cache_.forEach(this.deactivateCacheItem_, this);
   }
 
-
   /**
    * Deactivates a Tile layer cache item.
    * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem to deactivate
@@ -315,7 +323,6 @@ class TileSourceHerald extends SourceHerald {
     cacheItem.ignoreNextOpacityChange = true;
     cacheItem.layer.setOpacity(cacheItem.opacity);
   }
-
 
   /**
    * This function finds the div associated to each tile layer we watch, then
@@ -370,7 +377,6 @@ class TileSourceHerald extends SourceHerald {
     }
   }
 
-
   /**
    * Handle the opacity being changed on the tile layer
    * @param {module:olgm/herald/TileSource~LayerCache} cacheItem cacheItem for the
@@ -390,7 +396,6 @@ class TileSourceHerald extends SourceHerald {
     if (cacheItem.ignoreNextOpacityChange) {
       cacheItem.ignoreNextOpacityChange = false;
     } else {
-
       cacheItem.googleTileLayer.setOpacity(newOpacity);
       cacheItem.opacity = newOpacity;
 
@@ -432,7 +437,6 @@ class TileSourceHerald extends SourceHerald {
       this.deactivateCacheItem_(cacheItem);
     }
   }
-
 
   /**
    * Called the source of layer fires the 'change' event. Reload the google tile
