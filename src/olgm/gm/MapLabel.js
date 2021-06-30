@@ -127,11 +127,45 @@ class MapLabel extends MapElement {
         ctx.lineWidth = strokeWeight;
         ctx.strokeText(text, x, y);
       }
-
-      ctx.fillText(text, x, y);
+      this.wrapText(ctx, text, x, y);
+      // ctx.fillText(text, x, y);
     }
   }
 
+  measureCanvas() {
+    var words = this.get('text').split('\r\n'),
+      metrics,
+      lineHeight,
+      y;
+    const context = this.canvas_.getContext('2d');
+    for (var i = 0; i < words.length; i++) {
+      var metrics = context.measureText(words[i]);
+      lineHeight =
+        1.2 *
+        (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+      if (metrics.width > this.canvas_.width) {
+        this.canvas_.width += metrics.width;
+      }
+    }
+    if (lineHeight > this.canvas_.height) {
+      this.canvas_.height = y;
+    }
+    this.canvas_.width *= 2;
+  }
+
+  wrapText(context, text, x, y) {
+    var words = text.split('\r\n'),
+      metrics,
+      lineHeight;
+    for (var i = 0; i < words.length; i++) {
+      var metrics = context.measureText(words[i]);
+      lineHeight =
+        1.2 *
+        (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+      context.fillText(words[i], x, y);
+      y += lineHeight;
+    }
+  }
 
   /**
    * Note: mark as `@api` to make the minimized version include this method.
@@ -140,6 +174,7 @@ class MapLabel extends MapElement {
    */
   onAdd() {
     const canvas = this.canvas_ = document.createElement('canvas');
+    this.measureCanvas();
     const style = canvas.style;
     style.position = 'absolute';
 
