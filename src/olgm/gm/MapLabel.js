@@ -128,37 +128,69 @@ class MapLabel extends MapElement {
         ctx.strokeText(text, x, y);
       }
       this.wrapText(ctx, text, x, y);
-      // ctx.fillText(text, x, y);
     }
   }
 
-  measureCanvas() {
-    var words = this.get('text').split('\r\n'),
-      metrics,
-      lineHeight,
-      y;
-    const context = this.canvas_.getContext('2d');
-    for (var i = 0; i < words.length; i++) {
-      var metrics = context.measureText(words[i]);
-      lineHeight =
-        1.2 *
-        (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+  /**
+   * Adjust the canvas default size based on the text.
+   * @private
+   */
+  adjustCanvasSize() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const words = this.get('text').split('\r\n');
+    let lineHeight = this.measureTextHeight(this.get('font'));
+
+    const context = canvas.getContext('2d');
+    context.font = this.get('font');
+    for (let i = 0; i < words.length; i++) {
+      const metrics = context.measureText(words[i]);
       if (metrics.width > this.canvas_.width) {
         this.canvas_.width += metrics.width;
       }
     }
-    if (lineHeight > this.canvas_.height) {
-      this.canvas_.height = y;
+    const renderHeight = (lineHeight * words.length)*2;
+    if (renderHeight > this.canvas_.height) {
+      this.canvas_.height = renderHeight;
     }
-    this.canvas_.width *= 2;
+    // make canvas 2 pixels wider to account for italic text width
+    const width = (this.canvas_.width + 2)*2;
+    this.canvas_.width = width;
   }
 
+  /**
+   * Measure line height for provided font
+   * @private
+   */
+  measureTextHeight(font) {
+    let height = 0;
+    if (font) {
+      let div = document.createElement('div');
+      div.innerHTML = 'M';
+      div.style.margin = div.style.padding = '0 !important';
+      div.style.position = 'absolute !important';
+      div.style.left = '-99999px !important';
+      div.style.font = font;
+      document.body.appendChild(div);
+      height = div.offsetHeight;
+      document.body.removeChild(div);
+    }
+    return height;
+  }
+
+  /**
+   * Handle newline character to support multiline
+   * @private
+   * @param {CanvasRenderingContext2D} context Canvas context to fill text
+   * @param {string} text label text
+   * @param {number} x canvas relative x coordinate for the text to start
+   * @param {number} y canvas relative y coordinate for the text to start
+   */
   wrapText(context, text, x, y) {
-    var words = text.split('\r\n'),
-      metrics,
-      lineHeight;
-    for (var i = 0; i < words.length; i++) {
-      var metrics = context.measureText(words[i]);
+    const words = text.split('\r\n');
+    let lineHeight = 0;
+    for (let i = 0; i < words.length; i++) {
+      const metrics = context.measureText(words[i]);
       lineHeight =
         1.2 *
         (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
@@ -174,7 +206,7 @@ class MapLabel extends MapElement {
    */
   onAdd() {
     const canvas = this.canvas_ = document.createElement('canvas');
-    this.measureCanvas();
+    this.adjustCanvasSize();
     const style = canvas.style;
     style.position = 'absolute';
 
