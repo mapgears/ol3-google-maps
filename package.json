@@ -61,7 +61,7 @@
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "4.0.0-beta.0",
-    "marked": "0.4.0",
+    "marked": "0.7.0",
     "mkdirp": "^0.5.1",
     "mocha": "5.2.0",
     "ol": "^6.1.1",
