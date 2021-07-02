@@ -127,11 +127,79 @@ class MapLabel extends MapElement {
         ctx.lineWidth = strokeWeight;
         ctx.strokeText(text, x, y);
       }
-
-      ctx.fillText(text, x, y);
+      this.wrapText(ctx, text, x, y);
     }
   }
 
+  /**
+   * Adjust the canvas default size based on the text.
+   * @private
+   */
+  adjustCanvasSize() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const words = this.get('text').split('\r\n');
+    const lineHeight = this.measureTextHeight(this.get('font'));
+
+    const context = canvas.getContext('2d');
+    context.font = this.get('font');
+    for (let i = 0; i < words.length; i++) {
+      const metrics = context.measureText(words[i]);
+      if (metrics.width > this.canvas_.width) {
+        this.canvas_.width += metrics.width;
+      }
+    }
+    const renderHeight = (lineHeight * words.length) * 2;
+    if (renderHeight > this.canvas_.height) {
+      this.canvas_.height = renderHeight;
+    }
+    // make canvas 2 pixels wider to account for italic text width
+    const width = (this.canvas_.width + 2) * 2;
+    this.canvas_.width = width;
+  }
+
+  /**
+   * Measure line height for provided font
+   * @private
+   * @param {string} font font style
+   * @returns {number} line height for given font style
+   */
+  measureTextHeight(font) {
+    let height = 0;
+    if (font) {
+      const div = document.createElement('div');
+      div.innerHTML = 'M';
+      div.style.margin = div.style.padding = '0 !important';
+      div.style.position = 'absolute !important';
+      div.style.left = '-99999px !important';
+      div.style.font = font;
+      document.body.appendChild(div);
+      height = div.offsetHeight;
+      document.body.removeChild(div);
+    }
+    return height;
+  }
+
+  /**
+   * Handle newline character to support multiline
+   * @private
+   * @param {CanvasRenderingContext2D} context Canvas context to fill text
+   * @param {string} text label text
+   * @param {number} x canvas relative x coordinate for the text to start
+   * @param {number} y canvas relative y coordinate for the text to start
+   */
+  wrapText(context, text, x, y) {
+    const words = text.split('\r\n');
+    let lineHeight = 0;
+    for (let i = 0; i < words.length; i++) {
+      const metrics = context.measureText(words[i]);
+      lineHeight =
+        1.2 *
+        (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+      context.fillText(words[i], x, y);
+      y += lineHeight;
+    }
+  }
 
   /**
    * Note: mark as `@api` to make the minimized version include this method.
@@ -140,6 +208,7 @@ class MapLabel extends MapElement {
    */
   onAdd() {
     const canvas = this.canvas_ = document.createElement('canvas');
+    this.adjustCanvasSize();
     const style = canvas.style;
     style.position = 'absolute';
 

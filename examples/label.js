@@ -72,6 +72,34 @@ feature3.setStyle(new Style({
   })
 }));
 
+const feature4 = new Feature(new Point([-7937700, 6184600]));
+
+feature4.setStyle(
+  new Style({
+    text: new Text({
+      textAlign: 'left',
+      textBaseline: 'hanging',
+      font: 'normal 11pt Arial',
+      text: 'Many maps are static, fixed to paper or some other durable medium, while others are dynamic or interactive. Although most commonly used to depict geography',
+      fill: new Fill({color: 'black'})
+    })
+  })
+);
+
+const feature5 = new Feature(new Point([-7936319, 6181097]));
+
+feature5.setStyle(
+  new Style({
+    text: new Text({
+      textAlign: 'left',
+      textBaseline: 'hanging',
+      font: 'normal 11pt Arial',
+      text: 'Many maps are static, fixed to paper or some otherdurable medium,\r\n while others are dynamic or interactive.\r\n Although most commonly used to depict geography,\r\n maps may represent any space, real or fictional,\r\n without regard to context or scale, such as in brain mapping, \r\n DNA mapping, or computer network topology mapping.',
+      fill: new Fill({color: 'black'})
+    })
+  })
+);
+
 const marker = new Feature(new Point([-7912700, 6176500]));
 marker.setStyle(new Style({
   image: new Icon(/** @type {olx.style.IconOptions} */ ({
@@ -90,7 +118,7 @@ marker.setStyle(new Style({
   })
 }));
 
-source.addFeatures([feature, feature2, feature3, marker]);
+source.addFeatures([feature, feature2, feature3, feature4, feature5, marker]);
 
 // Add some randomly generated markers
 
