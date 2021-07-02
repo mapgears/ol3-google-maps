@@ -139,7 +139,7 @@ class MapLabel extends MapElement {
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = 1;
     const words = this.get('text').split('\r\n');
-    let lineHeight = this.measureTextHeight(this.get('font'));
+    const lineHeight = this.measureTextHeight(this.get('font'));
 
     const context = canvas.getContext('2d');
     context.font = this.get('font');
@@ -149,23 +149,25 @@ class MapLabel extends MapElement {
         this.canvas_.width += metrics.width;
       }
     }
-    const renderHeight = (lineHeight * words.length)*2;
+    const renderHeight = (lineHeight * words.length) * 2;
     if (renderHeight > this.canvas_.height) {
       this.canvas_.height = renderHeight;
     }
     // make canvas 2 pixels wider to account for italic text width
-    const width = (this.canvas_.width + 2)*2;
+    const width = (this.canvas_.width + 2) * 2;
     this.canvas_.width = width;
   }
 
   /**
    * Measure line height for provided font
    * @private
+   * @param {string} font font style
+   * @returns {number} line height for given font style
    */
   measureTextHeight(font) {
     let height = 0;
     if (font) {
-      let div = document.createElement('div');
+      const div = document.createElement('div');
       div.innerHTML = 'M';
       div.style.margin = div.style.padding = '0 !important';
       div.style.position = 'absolute !important';
