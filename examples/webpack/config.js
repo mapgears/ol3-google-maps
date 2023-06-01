@@ -23,16 +23,6 @@ module.exports = {
   },
   module: {
     rules: [{
-      use: {
-        loader: 'buble-loader'
-      },
-      test: /\.js$/,
-      include: [
-        path.join(__dirname, '..', '..', 'src'),
-        path.join(__dirname, '..')
-      ]
-    },
-    {
       test: /\.css$/,
       use: [
         {loader: 'style-loader'},

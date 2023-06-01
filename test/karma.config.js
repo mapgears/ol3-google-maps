@@ -13,7 +13,7 @@ module.exports = function(karma) {
       }
     },
     files: [
-      `https://maps.googleapis.com/maps/api/js?v=3&key=${process.env.GOOGLE_MAPS_API_KEY}`,
+      `https://maps.googleapis.com/maps/api/js?v=3&callback=Function.prototype&key=${process.env.GOOGLE_MAPS_API_KEY}`,
       {
         pattern: path.resolve(__dirname, './index_test.js'),
         watched: false
@@ -31,21 +31,13 @@ module.exports = function(karma) {
       mode: 'development',
       resolve: {
         modules: [path.resolve(__dirname, '..', 'src'), 'node_modules']
-      },
-      module: {
-        rules: [{
-          use: {
-            loader: 'buble-loader'
-          },
-          test: /\.js$/
-        }]
       }
     },
     webpackMiddleware: {
       noInfo: true
     },
     crossOriginAttribute: false,
-    browsers: ['PhantomJS']
+    browsers: ['Chrome']
   });
 
   if (process.env.TRAVIS) {
