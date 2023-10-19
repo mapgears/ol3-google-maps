@@ -7,12 +7,12 @@ import Polygon from 'ol/geom/Polygon.js';
 import MultiLineString from 'ol/geom/MultiLineString.js';
 import MultiPolygon from 'ol/geom/MultiPolygon.js';
 import MultiPoint from 'ol/geom/MultiPoint.js';
-import {transform} from 'ol/proj.js';
+import { transform } from 'ol/proj.js';
 import Circle from 'ol/style/Circle.js';
 import Icon from 'ol/style/Icon.js';
 import RegularShape from 'ol/style/RegularShape.js';
-import {getStyleOf, getColor, getColorOpacity} from './util.js';
-import {assert} from './asserts.js';
+import { getStyleOf, getColor, getColorOpacity } from './util.js';
+import { assert } from './asserts.js';
 import MapLabel from './gm/MapLabel.js';
 import MapIcon from './gm/MapIcon.js';
 
@@ -48,10 +48,10 @@ export function createFeatureGeometry(geometry, opt_ol3map) {
   if (geometry instanceof Point) {
     gmapGeometry = createLatLng(geometry, opt_ol3map);
   } else if (geometry instanceof MultiPoint ||
-             geometry instanceof LineString ||
-             geometry instanceof MultiLineString ||
-             geometry instanceof Polygon ||
-             geometry instanceof MultiPolygon) {
+    geometry instanceof LineString ||
+    geometry instanceof MultiLineString ||
+    geometry instanceof Polygon ||
+    geometry instanceof MultiPolygon) {
     gmapGeometry = createGeometry(geometry, opt_ol3map);
   }
 
@@ -226,11 +226,11 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
   // strokeColor
   // strokeOpacity
   // strokeWeight
-   // Checking style variable if it is array or object
+  // Checking style variable if it is array or object
   let stroke;
-  if(style instanceof Array){
+  if (style instanceof Array) {
     stroke = style[0].getStroke();
-  }else{
+  } else {
     stroke = style.getStroke();
   }
 
@@ -253,12 +253,12 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
   // fillColor
   // fillOpacity
   let fill;
-  if(style instanceof Array){
+  if (style instanceof Array) {
     fill = style[0].getFill();
-  }else{
+  } else {
     fill = style.getFill();
   }
-   // Checking style variable if it is array or object
+  // Checking style variable if it is array or object
   if (fill) {
     const fillColor = fill.getColor();
     if (fillColor) {
@@ -270,11 +270,11 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
     }
   }
 
-   // Checking style variable if it is array or object
+  // Checking style variable if it is array or object
   let image;
-  if(style instanceof Array){
+  if (style instanceof Array) {
     image = style[0].getFill();
-  }else{
+  } else {
     image = style.getFill();
   }
   if (image) {
@@ -403,7 +403,7 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
   // if, at this very last point, there aren't any style options that have
   // been set, then tell Google Maps to render the feature invisible because
   // we're dealing with an empty `module:ol/style/Style` object.
-  if (Object.keys(/** @type {!Object} */ (gmStyle)).length === 0) {
+  if (Object.keys(/** @type {!Object} */(gmStyle)).length === 0) {
     gmStyle['visible'] = false;
   } else if (opt_index !== undefined) {
     const zIndex = opt_index * 2;

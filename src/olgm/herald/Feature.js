@@ -2,10 +2,12 @@
  * @module olgm/herald/Feature
  */
 import Icon from 'ol/style/Icon.js';
-import {getCenterOf, getStyleOf} from '../util.js';
-import {assert} from '../asserts.js';
-import {createFeature, createStyle, createLatLng, createMapIcon,
-  createLabel, createFeatureGeometry} from '../gm.js';
+import { getCenterOf, getStyleOf } from '../util.js';
+import { assert } from '../asserts.js';
+import {
+  createFeature, createStyle, createLatLng, createMapIcon,
+  createLabel, createFeatureGeometry
+} from '../gm.js';
 import Herald from './Herald.js';
 import PropertyListener from '../listener/PropertyListener.js';
 import Listener from '../listener/Listener.js';
@@ -216,7 +218,7 @@ class FeatureHerald extends Herald {
   updateStyle_() {
 
     // override style if a style is defined at the feature level
-    const mapIconOptions = {useCanvas: this.feature_.useCanvas || this.mapIconOptions_.useCanvas};
+    const mapIconOptions = { useCanvas: this.feature_.useCanvas || this.mapIconOptions_.useCanvas };
 
     const gmStyle = createStyle(
       this.feature_, mapIconOptions, this.index_);
@@ -231,17 +233,17 @@ class FeatureHerald extends Herald {
       const latLng = createLatLng(getCenterOf(this.getGeometry_()));
       // Checking style variable if it is array or object
       let zIndex;
-      if(style instanceof Array){
+      if (style instanceof Array) {
         zIndex = style[0].getZIndex();
-      }else{
+      } else {
         zIndex = style.getZIndex();
       }
       const index = zIndex !== undefined ? zIndex : this.index_;
- // Checking style variable if it is array or object
+      // Checking style variable if it is array or object
       let image;
-      if(style instanceof Array){
+      if (style instanceof Array) {
         image = style[0].getImage();
-      }else{
+      } else {
         image = style.getImage();
       }
       if (image && image instanceof Icon && mapIconOptions.useCanvas) {
@@ -250,11 +252,11 @@ class FeatureHerald extends Herald {
           this.marker_.setMap(this.gmap);
         }
       }
- // Checking style variable if it is array or object
+      // Checking style variable if it is array or object
       let text;
-      if(style instanceof Array){
+      if (style instanceof Array) {
         text = style[0].getText();
-      }else{
+      } else {
         text = style.getText();
       }
       if (text) {
