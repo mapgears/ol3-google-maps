@@ -226,7 +226,14 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
   // strokeColor
   // strokeOpacity
   // strokeWeight
-  const stroke = style.getStroke();
+   // Checking style variable if it is array or object
+  let stroke;
+  if(style instanceof Array){
+    stroke = style[0].getStroke();
+  }else{
+    stroke = style.getStroke();
+  }
+
   if (stroke) {
     const strokeColor = stroke.getColor();
     if (strokeColor) {
@@ -245,7 +252,13 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
 
   // fillColor
   // fillOpacity
-  const fill = style.getFill();
+  let fill;
+  if(style instanceof Array){
+    fill = style[0].getFill();
+  }else{
+    fill = style.getFill();
+  }
+   // Checking style variable if it is array or object
   if (fill) {
     const fillColor = fill.getColor();
     if (fillColor) {
@@ -257,7 +270,13 @@ export function createStyleInternal(style, mapIconOptions, opt_index) {
     }
   }
 
-  const image = style.getImage();
+   // Checking style variable if it is array or object
+  let image;
+  if(style instanceof Array){
+    image = style[0].getFill();
+  }else{
+    image = style.getFill();
+  }
   if (image) {
 
     const gmIcon = {};

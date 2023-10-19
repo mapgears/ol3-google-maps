@@ -229,19 +229,34 @@ class FeatureHerald extends Herald {
     const style = getStyleOf(this.feature_);
     if (style) {
       const latLng = createLatLng(getCenterOf(this.getGeometry_()));
-
-      const zIndex = style.getZIndex();
+      // Checking style variable if it is array or object
+      let zIndex;
+      if(style instanceof Array){
+        zIndex = style[0].getZIndex();
+      }else{
+        zIndex = style.getZIndex();
+      }
       const index = zIndex !== undefined ? zIndex : this.index_;
-
-      const image = style.getImage();
+ // Checking style variable if it is array or object
+      let image;
+      if(style instanceof Array){
+        image = style[0].getImage();
+      }else{
+        image = style.getImage();
+      }
       if (image && image instanceof Icon && mapIconOptions.useCanvas) {
         this.marker_ = createMapIcon(image, latLng, index, this.feature_.get('olgm_pane'));
         if (this.visible_) {
           this.marker_.setMap(this.gmap);
         }
       }
-
-      const text = style.getText();
+ // Checking style variable if it is array or object
+      let text;
+      if(style instanceof Array){
+        text = style[0].getText();
+      }else{
+        text = style.getText();
+      }
       if (text) {
         this.label_ = createLabel(text, latLng, index, this.feature_.get('olgm_pane'));
         if (this.visible_) {
