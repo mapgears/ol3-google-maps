@@ -2,7 +2,15 @@
 
 [![Build Status](https://travis-ci.org/mapgears/ol3-google-maps.svg)](https://travis-ci.org/mapgears/ol3-google-maps)
 
-OpenLayers - Google Maps integration library. Create a map using [OpenLayers](http://openlayers.org/) with the possibility to use Google Maps as base map and much more.
+## OL-Google-Maps is deprecated
+
+OpenLayers - Google Maps integration library, which is now deprecated.
+
+The [OpenLayers](http://openlayers.org/) library now supports the possibility to use Google Maps as base maps from version [v9.0.0+](https://github.com/openlayers/openlayers/releases/tag/v9.0.0).
+
+In the past, Google Maps did not provide an API to requests tiles directly. You had to use the Google Maps API for that. OLGM provided a way to indirectly use tiles from Google Maps by using its Maps API.
+
+Now, Google have a [Map Tiles API](https://developers.google.com/maps/documentation/tile), which is what OpenLayers uses. Therefore, the use of the OLGM library is no longer recommended. You should upgrade to the latest version of OpenLayers.
 
 ## Features
 
@@ -83,38 +91,9 @@ See OL3-Google-Maps in action (version v0.20.0):
 See all other examples at:
 http://mapgears.github.io/ol3-google-maps/examples/
 
-## Developing
+## The End
 
-See the [developing](DEVELOPING.md) instructions if you want to
-contribute new features or patches to OL3-Google-Maps or if you want
-to see the examples in action using the latest version.
+OLGM no longer needs development as it is now deprecated. Upgrade to the latest version of OpenLayers instead.
 
-Note that contributions have to meet some minimum quality requirements
-in order to be included in the official package, but that's the same
-as with any mature open source project.
+Thanks to everyone who contributed during the lifespan of the library!
 
-## Known Limitations
-
-Please see the known [limitations](LIMITATIONS.md) of this library in details.
-
-## Bugs and issues
-
-For bugs or feature requests, use the
-[issue tracker](https://github.com/mapgears/ol3-google-maps/issues)
-
-If you need help with the library, use
-[StackOverflow under the ol3-google-maps tag](http://stackoverflow.com/questions/tagged/ol3-google-maps)
-
-## Our commitment
-
-We, at Mapgears, are definitely committed to continuing to support
-this project as long as it will make sense to do so. We use it for our
-own products and for projects with our customers, and will continue to
-make it evolve and address issues as we go as part of that work.
-
-However, just like with any open source project, its development is
-driven by the funding we can get through customer projects, so if
-there are some limitations or issues that are important to you and
-your organization, we'd be happy to provide you a quote for a support
-package or for working on those specific limitations, and of course
-you are also welcome to work on them yourself and contribute the fix.
